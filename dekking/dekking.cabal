@@ -1,0 +1,69 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.7.
+--
+-- see: https://github.com/sol/hpack
+
+name:           dekking
+version:        0.0.0.0
+homepage:       https://github.com/NorfairKing/dekking#readme
+bug-reports:    https://github.com/NorfairKing/dekking/issues
+author:         Tom Sydney Kerckhove
+maintainer:     Tom Sydney Kerckhove
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/NorfairKing/dekking
+
+library
+  exposed-modules:
+      Dekking
+      Dekking.Coverable
+      Dekking.Coverage
+      Dekking.Plugin
+      Dekking.Report
+      Dekking.SourceAdapter
+      Dekking.ValueLevelAdapter
+  other-modules:
+      Paths_dekking
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      aeson
+    , aeson-pretty
+    , autodocodec
+    , base >=4.7 && <5
+    , bytestring
+    , ghc
+    , mtl
+    , path
+    , path-io
+    , pretty-show
+  default-language: Haskell2010
+
+executable dekking
+  main-is: Main.hs
+  other-modules:
+      Paths_dekking
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -optP-Wno-nonportable-include-path
+  build-depends:
+      base >=4.7 && <5
+    , dekking
+  default-language: Haskell2010
+
+test-suite dekking-test
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  other-modules:
+      Paths_dekking
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , dekking
+  default-language: Haskell2010
