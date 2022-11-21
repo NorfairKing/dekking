@@ -1,6 +1,8 @@
 { lib, haskell, haskellPackages, rsync }:
 pkg:
 
+# Add a 'coverable' output to a package by plugging in the 'Dekking' plugin and
+# outputting all the source files and '.coverables' files.
 
 let
   # Inspired by:
@@ -9,8 +11,8 @@ let
   pluginPackage = haskellPackages.dekking;
   pluginOpts = [ ];
   # Build the plugin options.
-  string-opt = arg: " -fplugin-opt=${pluginName}:${arg}";
-  string-opts = lib.concatMapStrings string-opt pluginOpts;
+  stringOpt = arg: "-fplugin-opt=${pluginName}:${arg}";
+  stringOpts = lib.concatStringsSep " " (builtins.map stringOpt pluginOpts);
 in
 (haskell.lib.overrideCabal pkg (old: {
   buildFlags = (old.buildFlags or [ ]) ++ [
@@ -27,7 +29,7 @@ in
     # This works because we also add dekking to the 'buildDepends' below.
     "--ghc-option=-plugin-package=${pluginPackage.pname}"
     # Here we pass the command-line options to the 'Dekking' plugin
-    "--ghc-options=\"${string-opts}\""
+    "--ghc-options=\"${stringOpts}\""
     # The -package option is required because the result of the plugin's
     # source-to-source transformation adds an import of
     # Dekking.ValueLevelAdapter that would not resolve otherwise, without the
@@ -54,12 +56,8 @@ in
       --exclude='*' \
       . $coverables
   '';
-  postCheck = (old.postCheck or "") + ''
-    cp coverage.dat $coverage
-  '';
 })).overrideAttrs (old: {
   outputs = (old.outputs or [ ]) ++ [
     "coverables"
-    "coverage"
   ];
 })

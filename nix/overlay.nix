@@ -6,6 +6,7 @@ with final.haskell.lib;
     let
       pkg = final.haskellPackages.dekking;
       addCoverables = final.callPackage ./addCoverables.nix { };
+      addCoverage = final.callPackage ./addCoverage.nix { };
       compileCoverageReport = final.callPackage ./compileCoverageReport.nix {
         dekking = pkg;
       };
@@ -14,7 +15,7 @@ with final.haskell.lib;
       passthru = (old.passthru or { }) // {
         inherit addCoverables compileCoverageReport;
         makeCoverageReport = final.callPackage ./makeCoverageReport.nix {
-          inherit addCoverables compileCoverageReport;
+          inherit addCoverables addCoverage compileCoverageReport;
         };
       };
     });

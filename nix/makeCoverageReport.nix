@@ -1,9 +1,9 @@
-{ lib, stdenv, addCoverables, compileCoverageReport }:
+{ lib, stdenv, addCoverables, addCoverage, compileCoverageReport }:
 { name ? "coverage-report"
 , packages ? [ ]
 , extraScript ? ""
 }:
 compileCoverageReport {
   inherit name extraScript;
-  packages = builtins.map addCoverables packages;
+  packages = builtins.map (pkg: addCoverage (addCoverables pkg)) packages;
 }

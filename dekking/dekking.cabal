@@ -65,7 +65,6 @@ test-suite dekking-test
   other-modules:
       Examples.TopLevel
       ExamplesSpec
-      Main
       Paths_dekking
   hs-source-dirs:
       test

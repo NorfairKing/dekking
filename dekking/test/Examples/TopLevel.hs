@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -fplugin=Dekking #-}
+{-# OPTIONS_GHC -fplugin=Dekking -w #-}
 
 module Examples.TopLevel where
 

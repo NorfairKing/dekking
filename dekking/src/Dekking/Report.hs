@@ -1,29 +1,41 @@
-{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Dekking.Report (reportMain) where
 
+import Control.Monad
 import Data.List
 import Dekking.Coverable
 import Dekking.Coverage
 import Dekking.OptParse
 import Path
 import Path.IO
-import System.Environment (getArgs)
 import Text.Show.Pretty
 
 reportMain :: IO ()
 reportMain = do
   Settings {..} <- getSettings
 
-  coverablesFiles <- concat <$> mapM (fmap snd . listDirRecur) settingCoverablesDirs
-  coverables <-
-    foldMap readCoverableFile $
-      filter
-        (maybe False (isSuffixOf "coverable") . fileExtension)
-        coverablesFiles
+  coverablesFiles <-
+    filter
+      (maybe False (isSuffixOf "coverable") . fileExtension)
+      . concat
+      <$> mapM (fmap snd . listDirRecur) settingCoverablesDirs
 
-  coverage <- foldMap readCoverageFile settingCoverageFiles
+  let coverageFiles = settingCoverageFiles
+
+  coverables <- fmap mconcat $
+    forM coverablesFiles $ \coverablesFile -> do
+      print coverablesFile
+      coverables <- readCoverableFile coverablesFile
+      pPrint coverables
+      pure coverables
+
+  coverage <- fmap mconcat $
+    forM coverageFiles $ \coverageFile -> do
+      print coverageFile
+      coverage <- readCoverageFile coverageFile
+      pPrint coverage
+      pure coverage
 
   pPrint coverables
   pPrint coverage

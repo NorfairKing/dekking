@@ -1,8 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Dekking.OptParse
   ( getSettings,
@@ -11,12 +9,10 @@ module Dekking.OptParse
 where
 
 import Control.Applicative
-import Data.Maybe
 import GHC.Generics (Generic)
 import Options.Applicative as OptParse
 import Path
 import Path.IO
-import System.Exit
 
 getSettings :: IO Settings
 getSettings = getFlags >>= combineToSettings
@@ -54,25 +50,24 @@ parseFlags = OptParse.info parser modifier
   where
     modifier = OptParse.fullDesc <> OptParse.progDesc "Fill a template"
     parser =
-      ( Flags
-          <$> many
-            ( strOption
-                ( mconcat
-                    [ long "coverable",
-                      help "A directory with coverables",
-                      metavar "DIRECTORY",
-                      completer $ bashCompleter "directory"
-                    ]
-                )
-            )
-          <*> many
-            ( strOption
-                ( mconcat
-                    [ long "coverage",
-                      help "A coverage file",
-                      metavar "FILE",
-                      completer $ bashCompleter "file"
-                    ]
-                )
-            )
-      )
+      Flags
+        <$> many
+          ( strOption
+              ( mconcat
+                  [ long "coverable",
+                    help "A directory with coverables",
+                    metavar "DIRECTORY",
+                    completer $ bashCompleter "directory"
+                  ]
+              )
+          )
+        <*> many
+          ( strOption
+              ( mconcat
+                  [ long "coverage",
+                    help "A coverage file",
+                    metavar "FILE",
+                    completer $ bashCompleter "file"
+                  ]
+              )
+          )
