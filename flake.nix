@@ -12,7 +12,6 @@
     safe-coloured-text.flake = false;
     sydtest.url = "github:NorfairKing/sydtest?ref=flake";
     sydtest.flake = false;
-
   };
 
   outputs =
@@ -47,6 +46,7 @@
       checks.${system} = {
         release = self.packages.${system}.default;
         shell = self.devShells.${system}.default;
+        e2e-test = import ./e2e-test { inherit pkgs; };
         pre-commit = pre-commit-hooks.lib.${system}.run {
           src = ./.;
           hooks = {

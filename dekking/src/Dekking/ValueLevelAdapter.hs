@@ -21,3 +21,6 @@ adaptValue logStr a = unsafePerformIO $ do
   hPutStrLn coverageHandle logStr
   hFlush coverageHandle
   pure a
+
+-- TODO try out 'unsafeDupablePerformIO' and consider whether I
+-- need 'unsafeInterleaveIO'
