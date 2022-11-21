@@ -12,8 +12,10 @@ author:         Tom Sydney Kerckhove
 maintainer:     Tom Sydney Kerckhove
 build-type:     Simple
 extra-source-files:
-    test_resources/Examples/TopLevel.hs.coverable
+    test_resources/Examples/coverables
+    test_resources/Examples/TopLevel.hs.coverables
     test_resources/Examples/TopLevel.hs.coverage
+    test_resources/Examples/TopLevel.hs.report
 
 source-repository head
   type: git

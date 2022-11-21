@@ -60,7 +60,7 @@ instance HasCodec Location where
         <*> requiredField "end" "the end column" .= locationColumnEnd
 
 data TopLevelBinding = TopLevelBinding
-  { topLevelBindingModule :: Maybe String,
+  { topLevelBindingModuleName :: Maybe ModuleName,
     topLevelBindingIdentifier :: String
   }
   deriving stock (Show, Eq, Ord)
@@ -69,8 +69,10 @@ instance HasCodec TopLevelBinding where
   codec =
     object "TopLevelBinding" $
       TopLevelBinding
-        <$> optionalField "module" "the module in which this binding was found" .= topLevelBindingModule
+        <$> optionalField "module" "the module in which this binding was found" .= topLevelBindingModuleName
         <*> requiredField "identifier" "the identifier of the top level binding" .= topLevelBindingIdentifier
+
+type ModuleName = String
 
 readCoverableFile :: Path Abs File -> IO Coverables
 readCoverableFile p = do
@@ -78,3 +80,6 @@ readCoverableFile p = do
   case errOrRes of
     Left err -> fail err
     Right result -> pure result
+
+coverablesExtension :: String
+coverablesExtension = "coverables"

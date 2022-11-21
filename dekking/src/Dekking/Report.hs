@@ -2,11 +2,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Dekking.Report (reportMain, computeCoverageReport) where
+module Dekking.Report (reportMain, computeModuleCoverageReport) where
 
 import Autodocodec
 import Data.Aeson (FromJSON, ToJSON)
 import Data.List
+import Data.Map (Map)
 import Data.Set (Set)
 import qualified Data.Set as S
 import Dekking.Coverable
@@ -22,7 +23,7 @@ reportMain = do
 
   coverablesFiles <-
     filter
-      (maybe False (isSuffixOf "coverable") . fileExtension)
+      (maybe False (isSuffixOf "coverables") . fileExtension)
       . concat
       <$> mapM (fmap snd . listDirRecur) (S.toList settingCoverablesDirs)
 
@@ -44,26 +45,33 @@ reportMain = do
 
   pPrint coverables
   pPrint coverage
-  pPrint (computeCoverageReport coverables coverage)
+  pPrint (computeModuleCoverageReport coverables coverage)
 
-computeCoverageReport :: Coverables -> Set TopLevelBinding -> CoverageReport
-computeCoverageReport Coverables {..} topLevelCoverage =
-  CoverageReport
-    { coverageReportTopLevelBindings =
+computeModuleCoverageReport :: Coverables -> Set TopLevelBinding -> ModuleCoverageReport
+computeModuleCoverageReport Coverables {..} topLevelCoverage =
+  ModuleCoverageReport
+    { moduleCoverageReportTopLevelBindings =
         computeCoverage coverableTopLevelBindings topLevelCoverage
     }
 
-data CoverageReport = CoverageReport
-  { coverageReportTopLevelBindings :: Coverage TopLevelBinding
-  }
+newtype CoverageReport = CoverageReport {coverageReportModules :: Map String ModuleCoverageReport}
   deriving (Show, Eq)
   deriving (FromJSON, ToJSON) via (Autodocodec CoverageReport)
 
 instance HasCodec CoverageReport where
+  codec = dimapCodec CoverageReport coverageReportModules codec
+
+data ModuleCoverageReport = ModuleCoverageReport
+  { moduleCoverageReportTopLevelBindings :: Coverage TopLevelBinding
+  }
+  deriving (Show, Eq)
+  deriving (FromJSON, ToJSON) via (Autodocodec ModuleCoverageReport)
+
+instance HasCodec ModuleCoverageReport where
   codec =
-    object "CoverageReport" $
-      CoverageReport
-        <$> requiredField "top-level-bindings" "top level bindings" .= coverageReportTopLevelBindings
+    object "ModuleCoverageReport" $
+      ModuleCoverageReport
+        <$> requiredField "top-level-bindings" "top level bindings" .= moduleCoverageReportTopLevelBindings
 
 data Coverage a = Coverage
   { coverageCovered :: Set (Coverable a),

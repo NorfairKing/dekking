@@ -9,8 +9,8 @@ import Control.Monad.Writer.Strict
 import qualified Data.Set as S
 import Dekking.Coverable
 import GHC
-import GHC.Driver.Types
-import GHC.Plugins
+import GHC.Driver.Types as GHC
+import GHC.Plugins as GHC
 
 addCoverableTopLevelBinding :: Coverable TopLevelBinding -> AdaptM ()
 addCoverableTopLevelBinding a = tell (mempty {coverableTopLevelBindings = S.singleton a})
@@ -20,7 +20,7 @@ type AdaptM = WriterT Coverables Hsc
 adapterImport :: LImportDecl GhcPs
 adapterImport = noLoc (simpleImportDecl adapterModuleName)
 
-adapterModuleName :: ModuleName
+adapterModuleName :: GHC.ModuleName
 adapterModuleName = mkModuleName "Dekking.ValueLevelAdapter"
 
 adaptLocatedHsModule :: Located HsModule -> AdaptM (Located HsModule)
@@ -33,7 +33,7 @@ adaptHsModule m = do
   decls' <- concat <$> mapM (adaptLocatedTopLevelDecl (unLoc <$> hsmodName m)) (hsmodDecls m)
   pure (m {hsmodDecls = decls', hsmodImports = adapterImport : hsmodImports m})
 
-adaptLocatedTopLevelDecl :: Maybe ModuleName -> Located (HsDecl GhcPs) -> AdaptM [Located (HsDecl GhcPs)]
+adaptLocatedTopLevelDecl :: Maybe GHC.ModuleName -> Located (HsDecl GhcPs) -> AdaptM [Located (HsDecl GhcPs)]
 adaptLocatedTopLevelDecl mModuleName lDecl = do
   lDecls' <- adaptTopLevelDecl mModuleName (unLoc lDecl)
   case lDecls' of
@@ -43,7 +43,7 @@ adaptLocatedTopLevelDecl mModuleName lDecl = do
       pure [L (getLoc lDecl) decl, noLoc modifiedDecl]
     _ -> error "must not happen either, otherwise we're making too many extra decls"
 
-adaptTopLevelDecl :: Maybe ModuleName -> HsDecl GhcPs -> AdaptM [HsDecl GhcPs]
+adaptTopLevelDecl :: Maybe GHC.ModuleName -> HsDecl GhcPs -> AdaptM [HsDecl GhcPs]
 adaptTopLevelDecl mModuleName = \case
   ValD x bind -> fmap (ValD x) <$> adaptBind mModuleName bind
   d -> pure [d]
@@ -64,7 +64,7 @@ adaptTopLevelOccName on = do
 adaptTopLevelExactName :: Name -> AdaptM Name
 adaptTopLevelExactName = undefined
 
-adaptBind :: Maybe ModuleName -> HsBind GhcPs -> AdaptM [HsBind GhcPs]
+adaptBind :: Maybe GHC.ModuleName -> HsBind GhcPs -> AdaptM [HsBind GhcPs]
 adaptBind mModuleName = \case
   FunBind x originalName originalMatches originalTicks -> do
     let nameString = rdrNameToString (unLoc originalName)
@@ -76,7 +76,7 @@ adaptBind mModuleName = \case
       Coverable
         { coverableValue =
             TopLevelBinding
-              { topLevelBindingModule = moduleNameString <$> mModuleName,
+              { topLevelBindingModuleName = moduleNameString <$> mModuleName,
                 topLevelBindingIdentifier = nameString
               },
           coverableLocation = case getLoc originalName of

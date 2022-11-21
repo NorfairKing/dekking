@@ -2,13 +2,16 @@
 --
 -- Keep this module as small as possible, because it will be imported to adapt
 -- values.
-module Dekking.ValueLevelAdapter (adaptValue) where
+module Dekking.ValueLevelAdapter (coverageFileName, adaptValue) where
 
 import System.IO
 import System.IO.Unsafe
 
+coverageFileName :: FilePath
+coverageFileName = "coverage.dat"
+
 withCoverageHandle :: (Handle -> IO a) -> IO a
-withCoverageHandle func = withFile "coverage.dat" AppendMode $ \h -> do
+withCoverageHandle func = withFile coverageFileName AppendMode $ \h -> do
   hSetBuffering h NoBuffering
   func h
 

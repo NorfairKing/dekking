@@ -13,8 +13,8 @@ spec :: Spec
 spec = sequential $ do
   it "Makes the same coverables for TopLevel.hs" $
     goldenStringFile
-      "test_resources/Examples/TopLevel.hs.coverable"
-      (readFile "test/Examples/TopLevel.hs.coverable")
+      "test_resources/Examples/TopLevel.hs.coverables"
+      (readFile "test/Examples/TopLevel.hs.coverables")
   it "outputs some coverage information" $ do
     let don't _ = pure ()
     coverageFile <- resolveFile' "coverage.dat"
@@ -25,8 +25,8 @@ spec = sequential $ do
     don't $ uncoveredWithArg 5
     pure $ goldenStringFile "test_resources/Examples/TopLevel.hs.coverage" (readFile (fromAbsFile coverageFile))
   it "makes a coverage report" $ do
-    coverableFile <- resolveFile' "test_resources/Examples/TopLevel.hs.coverable"
+    coverableFile <- resolveFile' "test_resources/Examples/TopLevel.hs.coverables"
     coverables <- readCoverableFile coverableFile
     coverageFile <- resolveFile' "test_resources/Examples/TopLevel.hs.coverage"
     coverage <- readCoverageFile coverageFile
-    pure $ pureGoldenJSONValueFile "test_resources/Examples/TopLevel.hs.report" (computeCoverageReport coverables coverage)
+    pure $ pureGoldenJSONValueFile "test_resources/Examples/TopLevel.hs.report" (computeModuleCoverageReport coverables coverage)
