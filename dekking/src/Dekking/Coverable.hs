@@ -6,7 +6,6 @@ module Dekking.Coverable where
 import Autodocodec
 import Data.Aeson (FromJSON, ToJSON, eitherDecodeFileStrict)
 import Data.Set (Set)
-import qualified Data.Set as S
 import Path
 
 data Coverables = Coverables

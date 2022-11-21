@@ -9,6 +9,8 @@ module Dekking.OptParse
 where
 
 import Control.Applicative
+import Data.Set (Set)
+import qualified Data.Set as S
 import GHC.Generics (Generic)
 import Options.Applicative as OptParse
 import Path
@@ -18,15 +20,15 @@ getSettings :: IO Settings
 getSettings = getFlags >>= combineToSettings
 
 data Settings = Settings
-  { settingCoverablesDirs :: [Path Abs Dir],
-    settingCoverageFiles :: [Path Abs File]
+  { settingCoverablesDirs :: Set (Path Abs Dir),
+    settingCoverageFiles :: Set (Path Abs File)
   }
   deriving (Show, Eq, Generic)
 
 combineToSettings :: Flags -> IO Settings
 combineToSettings Flags {..} = do
-  settingCoverablesDirs <- mapM resolveDir' flagCoverablesDirs
-  settingCoverageFiles <- mapM resolveFile' flagCoverageFiles
+  settingCoverablesDirs <- S.fromList <$> mapM resolveDir' flagCoverablesDirs
+  settingCoverageFiles <- S.fromList <$> mapM resolveFile' flagCoverageFiles
   pure Settings {..}
 
 getFlags :: IO Flags

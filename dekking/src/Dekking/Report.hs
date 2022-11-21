@@ -2,7 +2,6 @@
 
 module Dekking.Report (reportMain) where
 
-import Control.Monad
 import Data.List
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -21,19 +20,19 @@ reportMain = do
     filter
       (maybe False (isSuffixOf "coverable") . fileExtension)
       . concat
-      <$> mapM (fmap snd . listDirRecur) settingCoverablesDirs
+      <$> mapM (fmap snd . listDirRecur) (S.toList settingCoverablesDirs)
 
   let coverageFiles = settingCoverageFiles
 
-  coverables <- fmap mconcat $
-    forM coverablesFiles $ \coverablesFile -> do
+  coverables <-
+    flip foldMap coverablesFiles $ \coverablesFile -> do
       print coverablesFile
       coverables <- readCoverableFile coverablesFile
       pPrint coverables
       pure coverables
 
-  coverage <- fmap mconcat $
-    forM coverageFiles $ \coverageFile -> do
+  coverage <-
+    flip foldMap coverageFiles $ \coverageFile -> do
       print coverageFile
       coverage <- readCoverageFile coverageFile
       pPrint coverage

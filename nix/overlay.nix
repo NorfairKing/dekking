@@ -13,7 +13,7 @@ with final.haskell.lib;
     in
     (justStaticExecutables pkg).overrideAttrs (old: {
       passthru = (old.passthru or { }) // {
-        inherit addCoverables compileCoverageReport;
+        inherit addCoverables addCoverage compileCoverageReport;
         makeCoverageReport = final.callPackage ./makeCoverageReport.nix {
           inherit addCoverables addCoverage compileCoverageReport;
         };
@@ -24,8 +24,7 @@ with final.haskell.lib;
     (old: {
       overrides = final.lib.composeExtensions (old.overrides or (_: _: { })) (
         self: super: {
-          # TODO buildStrictly
-          dekking = self.callPackage ../dekking { };
+          dekking = buildStrictly (self.callPackage ../dekking { });
         }
       );
     });

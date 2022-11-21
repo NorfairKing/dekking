@@ -1,6 +1,5 @@
 module ExamplesSpec (spec) where
 
-import Dekking.Coverable
 import Test.Syd
 
 spec :: Spec

@@ -2,7 +2,7 @@
 
 let
   rawExamplePkg = pkgs.haskellPackages.callPackage ./example { };
-  examplePkgWithCoverables = pkgs.dekking.addCoverables rawExamplePkg;
+  examplePkgWithCoverables = pkgs.dekking.addCoverage (pkgs.dekking.addCoverables rawExamplePkg);
   tests = {
     # The example package can 'just' build
     sanity = rawExamplePkg;
