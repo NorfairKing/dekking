@@ -4,6 +4,8 @@ module Dekking.Report (reportMain) where
 
 import Control.Monad
 import Data.List
+import Data.Set (Set)
+import qualified Data.Set as S
 import Dekking.Coverable
 import Dekking.Coverage
 import Dekking.OptParse
@@ -41,24 +43,25 @@ reportMain = do
   pPrint coverage
   pPrint (computeCoverageReport coverables coverage)
 
-computeCoverageReport :: Coverables -> [TopLevelBinding] -> CoverageReport
+computeCoverageReport :: Coverables -> Set TopLevelBinding -> CoverageReport
 computeCoverageReport Coverables {..} topLevelCoverage =
   CoverageReport
-    { coverageReportTopLevelBindings = computeCoverage coverableTopLevelBindings topLevelCoverage
+    { coverageReportTopLevelBindings =
+        computeCoverage coverableTopLevelBindings topLevelCoverage
     }
 
 data CoverageReport = CoverageReport {coverageReportTopLevelBindings :: Coverage String}
   deriving (Show, Eq)
 
 data Coverage a = Coverage
-  { coverageCovered :: [a],
-    coverageUncovered :: [a]
+  { coverageCovered :: Set a,
+    coverageUncovered :: Set a
   }
   deriving (Show, Eq)
 
-computeCoverage :: Eq a => [a] -> [a] -> Coverage a
+computeCoverage :: Ord a => Set a -> Set a -> Coverage a
 computeCoverage coverables covereds =
   Coverage
-    { coverageCovered = coverables `intersect` covereds,
-      coverageUncovered = coverables \\ covereds
+    { coverageCovered = coverables `S.intersection` covereds,
+      coverageUncovered = coverables `S.difference` covereds
     }

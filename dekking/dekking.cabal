@@ -39,6 +39,7 @@ library
     , autodocodec
     , base >=4.7 && <5
     , bytestring
+    , containers
     , ghc
     , mtl
     , optparse-applicative

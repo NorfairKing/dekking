@@ -25,6 +25,7 @@ library:
   - aeson-pretty
   - autodocodec
   - bytestring
+  - containers
   - ghc
   - mtl
   - optparse-applicative

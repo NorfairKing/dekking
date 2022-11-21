@@ -6,13 +6,14 @@ module Dekking.SourceAdapter (adaptLocatedHsModule) where
 
 import Control.Monad.Reader
 import Control.Monad.Writer.Strict
+import qualified Data.Set as S
 import Dekking.Coverable
 import GHC
 import GHC.Driver.Types
 import GHC.Plugins
 
 addCoverableTopLevelBinding :: CoverableTopLevelBinding -> AdaptM ()
-addCoverableTopLevelBinding a = tell (mempty {coverableTopLevelBindings = [a]})
+addCoverableTopLevelBinding a = tell (mempty {coverableTopLevelBindings = S.singleton a})
 
 type AdaptM = WriterT Coverables Hsc
 

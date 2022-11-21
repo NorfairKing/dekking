@@ -5,10 +5,12 @@ module Dekking.Coverable where
 
 import Autodocodec
 import Data.Aeson (FromJSON, ToJSON, eitherDecodeFileStrict)
+import Data.Set (Set)
+import qualified Data.Set as S
 import Path
 
 data Coverables = Coverables
-  { coverableTopLevelBindings :: [CoverableTopLevelBinding]
+  { coverableTopLevelBindings :: Set CoverableTopLevelBinding
   }
   deriving stock (Show, Eq)
   deriving (FromJSON, ToJSON) via (Autodocodec Coverables)
@@ -30,7 +32,6 @@ type CoverableTopLevelBinding = String
 
 readCoverableFile :: Path Abs File -> IO Coverables
 readCoverableFile p = do
-  print p
   errOrRes <- eitherDecodeFileStrict (fromAbsFile p)
   case errOrRes of
     Left err -> fail err
