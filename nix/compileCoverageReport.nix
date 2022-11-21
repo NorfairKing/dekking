@@ -1,5 +1,5 @@
 { lib, stdenv, dekking }:
-{ name ? "coverage"
+{ name ? "coverage-report"
 , packages ? [ ]
 , extraScript ? ""
 }:
@@ -14,6 +14,7 @@ stdenv.mkDerivation {
   srcs = [ ];
   buildInputs = [ dekking ];
   buildCommand = ''
+
     ${extraScript}
 
     # Make coverage report

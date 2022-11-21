@@ -40,6 +40,8 @@ in
   # --include='*/': Include all directories
   # --include='*.hs': Include Haskell source files
   # --include='*.hs.coverables': Include Haskell source files
+  # --include='*.lhs': Include literate Haskell source files
+  # --include='*.lhs.coverables': Include literate Haskell source files
   # --exclude='*': Exclude everything else
   postBuild = (old.postBuild or "") + ''
     mkdir -p $coverables

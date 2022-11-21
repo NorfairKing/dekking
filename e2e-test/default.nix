@@ -8,9 +8,13 @@ let
     sanity = rawExamplePkg;
     # We can add coverables to the example package.
     withCoverables = examplePkgWithCoverables;
-    report = pkgs.dekking.mkCoverageReport {
-      name = "e2e-coverage-report";
+    compiled-report = pkgs.dekking.compileCoverageReport {
+      name = "compiled-coverage-report";
       packages = [ examplePkgWithCoverables ];
+    };
+    report = pkgs.dekking.makeCoverageReport {
+      name = "made-coverage-report";
+      packages = [ rawExamplePkg ];
     };
   };
 in

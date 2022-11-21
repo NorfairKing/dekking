@@ -3,12 +3,18 @@ with final.lib;
 with final.haskell.lib;
 {
   dekking =
-    let pkg = final.haskellPackages.dekking;
-    in (justStaticExecutables pkg).overrideAttrs (old: {
+    let
+      pkg = final.haskellPackages.dekking;
+      addCoverables = final.callPackage ./addCoverables.nix { };
+      compileCoverageReport = final.callPackage ./compileCoverageReport.nix {
+        dekking = pkg;
+      };
+    in
+    (justStaticExecutables pkg).overrideAttrs (old: {
       passthru = (old.passthru or { }) // {
-        addCoverables = final.callPackage ./addCoverables.nix { };
-        mkCoverageReport = final.callPackage ./mkCoverageReport.nix {
-          dekking = pkg;
+        inherit addCoverables compileCoverageReport;
+        makeCoverageReport = final.callPackage ./makeCoverageReport.nix {
+          inherit addCoverables compileCoverageReport;
         };
       };
     });
