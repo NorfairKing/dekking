@@ -1,5 +1,6 @@
 { mkDerivation, aeson, aeson-pretty, autodocodec, base, bytestring
-, ghc, lib, mtl, path, path-io, pretty-show
+, ghc, lib, mtl, path, path-io, pretty-show, sydtest
+, sydtest-discover
 }:
 mkDerivation {
   pname = "dekking";
@@ -12,7 +13,8 @@ mkDerivation {
     pretty-show
   ];
   executableHaskellDepends = [ base ];
-  testHaskellDepends = [ base ];
+  testHaskellDepends = [ base sydtest ];
+  testToolDepends = [ sydtest-discover ];
   homepage = "https://github.com/NorfairKing/dekking#readme";
   license = "unknown";
   mainProgram = "dekking";

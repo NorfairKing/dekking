@@ -1,0 +1,8 @@
+{
+    "top-level-bindings": [
+        "Examples.TopLevel.covered",
+        "Examples.TopLevel.coveredWithArg",
+        "Examples.TopLevel.uncovered",
+        "Examples.TopLevel.uncoveredWithArg"
+    ]
+}

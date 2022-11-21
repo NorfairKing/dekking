@@ -6,6 +6,9 @@ author: "Tom Sydney Kerckhove"
 dependencies:
 - base >= 4.7 && < 5
 
+extra-source-files:
+- test_resources/**/*
+
 ghc-options:
 - -Wall
 - -Widentities
@@ -42,11 +45,13 @@ executables:
 
 tests:
   dekking-test:
-    main:                Main.hs
-    source-dirs:         test
+    main: Spec.hs
+    source-dirs: test
+    build-tools: sydtest-discover
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
     - dekking
+    - sydtest
