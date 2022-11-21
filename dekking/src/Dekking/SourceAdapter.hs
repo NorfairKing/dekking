@@ -12,7 +12,7 @@ import GHC
 import GHC.Driver.Types
 import GHC.Plugins
 
-addCoverableTopLevelBinding :: TopLevelBinding -> AdaptM ()
+addCoverableTopLevelBinding :: Coverable TopLevelBinding -> AdaptM ()
 addCoverableTopLevelBinding a = tell (mempty {coverableTopLevelBindings = S.singleton a})
 
 type AdaptM = WriterT Coverables Hsc
@@ -71,10 +71,23 @@ adaptBind mModuleName = \case
     liftIO $ putStrLn $ "Adapting bind: " ++ nameString
     adaptedName <- noLoc <$> adaptTopLevelName (unLoc originalName)
     let strToLog = rdrNameToString (maybe mkRdrUnqual mkRdrQual mModuleName (rdrNameOcc (unLoc originalName)))
+    let
     addCoverableTopLevelBinding
-      TopLevelBinding
-        { topLevelBindingModule = moduleNameString <$> mModuleName,
-          topLevelBindingIdentifier = nameString
+      Coverable
+        { coverableValue =
+            TopLevelBinding
+              { topLevelBindingModule = moduleNameString <$> mModuleName,
+                topLevelBindingIdentifier = nameString
+              },
+          coverableLocation = case getLoc originalName of
+            RealSrcSpan s _ ->
+              Just
+                Location
+                  { locationLine = fromIntegral (srcSpanStartLine s),
+                    locationColumnStart = fromIntegral (srcSpanStartCol s),
+                    locationColumnEnd = fromIntegral (srcSpanEndCol s)
+                  }
+            UnhelpfulSpan _ -> Nothing
         }
     let applyAdapter :: HsExpr GhcPs -> HsExpr GhcPs
         applyAdapter e =

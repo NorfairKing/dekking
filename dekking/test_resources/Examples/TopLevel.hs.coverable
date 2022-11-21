@@ -1,20 +1,48 @@
 {
     "top-level-bindings": [
         {
-            "identifier": "covered",
-            "module": "Examples.TopLevel"
+            "location": {
+                "end": 8,
+                "line": 6,
+                "start": 1
+            },
+            "value": {
+                "identifier": "covered",
+                "module": "Examples.TopLevel"
+            }
         },
         {
-            "identifier": "coveredWithArg",
-            "module": "Examples.TopLevel"
+            "location": {
+                "end": 15,
+                "line": 9,
+                "start": 1
+            },
+            "value": {
+                "identifier": "coveredWithArg",
+                "module": "Examples.TopLevel"
+            }
         },
         {
-            "identifier": "uncovered",
-            "module": "Examples.TopLevel"
+            "location": {
+                "end": 10,
+                "line": 12,
+                "start": 1
+            },
+            "value": {
+                "identifier": "uncovered",
+                "module": "Examples.TopLevel"
+            }
         },
         {
-            "identifier": "uncoveredWithArg",
-            "module": "Examples.TopLevel"
+            "location": {
+                "end": 17,
+                "line": 15,
+                "start": 1
+            },
+            "value": {
+                "identifier": "uncoveredWithArg",
+                "module": "Examples.TopLevel"
+            }
         }
     ]
 }

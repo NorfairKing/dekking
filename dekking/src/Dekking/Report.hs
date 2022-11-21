@@ -55,14 +55,14 @@ data CoverageReport = CoverageReport
   deriving (Show, Eq)
 
 data Coverage a = Coverage
-  { coverageCovered :: Set a,
-    coverageUncovered :: Set a
+  { coverageCovered :: Set (Coverable a),
+    coverageUncovered :: Set (Coverable a)
   }
   deriving (Show, Eq)
 
-computeCoverage :: Ord a => Set a -> Set a -> Coverage a
+computeCoverage :: Ord a => Set (Coverable a) -> Set a -> Coverage a
 computeCoverage coverables covereds =
   Coverage
-    { coverageCovered = coverables `S.intersection` covereds,
-      coverageUncovered = coverables `S.difference` covereds
+    { coverageCovered = S.filter ((`S.member` covereds) . coverableValue) coverables,
+      coverageUncovered = S.filter (not . (`S.member` covereds) . coverableValue) coverables
     }

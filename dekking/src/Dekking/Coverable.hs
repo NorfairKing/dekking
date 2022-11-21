@@ -9,13 +9,17 @@ import Data.Set (Set)
 import Path
 
 data Coverables = Coverables
-  { coverableTopLevelBindings :: Set TopLevelBinding
+  { coverableTopLevelBindings :: Set (Coverable TopLevelBinding)
   }
   deriving stock (Show, Eq)
   deriving (FromJSON, ToJSON) via (Autodocodec Coverables)
 
 instance Semigroup Coverables where
-  (<>) c1 c2 = Coverables {coverableTopLevelBindings = coverableTopLevelBindings c1 Prelude.<> coverableTopLevelBindings c2}
+  (<>) c1 c2 =
+    Coverables
+      { coverableTopLevelBindings =
+          coverableTopLevelBindings c1 Prelude.<> coverableTopLevelBindings c2
+      }
 
 instance Monoid Coverables where
   mempty = Coverables {coverableTopLevelBindings = mempty}
@@ -26,6 +30,34 @@ instance HasCodec Coverables where
     object "Coverables" $
       Coverables
         <$> optionalFieldWithOmittedDefault "top-level-bindings" mempty "Top level bindings" .= coverableTopLevelBindings
+
+data Coverable a = Coverable
+  { coverableValue :: a,
+    coverableLocation :: Maybe Location
+  }
+  deriving stock (Show, Eq, Ord)
+
+instance HasCodec a => HasCodec (Coverable a) where
+  codec =
+    object "Coverable" $
+      Coverable
+        <$> requiredField "value" "the value to be covered" .= coverableValue
+        <*> optionalField "location" "the location of the value to be covered" .= coverableLocation
+
+data Location = Location
+  { locationLine :: Word,
+    locationColumnStart :: Word,
+    locationColumnEnd :: Word
+  }
+  deriving stock (Show, Eq, Ord)
+
+instance HasCodec Location where
+  codec =
+    object "Location" $
+      Location
+        <$> requiredField "line" "the line number" .= locationLine
+        <*> requiredField "start" "the start column" .= locationColumnStart
+        <*> requiredField "end" "the end column" .= locationColumnEnd
 
 data TopLevelBinding = TopLevelBinding
   { topLevelBindingModule :: Maybe String,
