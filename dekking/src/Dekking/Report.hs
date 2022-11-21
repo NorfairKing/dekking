@@ -6,6 +6,7 @@ module Dekking.Report (reportMain) where
 import Data.List
 import Dekking.Coverable
 import Dekking.Coverage
+import Dekking.OptParse
 import Path
 import Path.IO
 import System.Environment (getArgs)
@@ -13,24 +14,16 @@ import Text.Show.Pretty
 
 reportMain :: IO ()
 reportMain = do
-  args <- getArgs :: IO [FilePath]
+  Settings {..} <- getSettings
 
-  dirs <- case args of
-    [] -> (: []) <$> getCurrentDir
-    _ -> mapM resolveDir' args
-
-  fs <- concat <$> mapM ((fmap snd . listDirRecur) :: Path Abs Dir -> IO [Path Abs File]) (dirs :: [Path Abs Dir])
-
-  coverage <-
-    foldMap readCoverageFile $
-      filter
-        ((== [relfile|coverage.dat|]) . filename)
-        (fs :: [Path Abs File])
+  coverablesFiles <- concat <$> mapM (fmap snd . listDirRecur) settingCoverablesDirs
   coverables <-
     foldMap readCoverableFile $
       filter
         (maybe False (isSuffixOf "coverable") . fileExtension)
-        (fs :: [Path Abs File])
+        coverablesFiles
+
+  coverage <- foldMap readCoverageFile settingCoverageFiles
 
   pPrint coverables
   pPrint coverage

@@ -27,6 +27,7 @@ library:
   - bytestring
   - ghc
   - mtl
+  - optparse-applicative
   - path
   - path-io
   - pretty-show

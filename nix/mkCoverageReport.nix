@@ -1,14 +1,14 @@
-{ stdenv, dekking }:
+{ lib, stdenv, dekking }:
 { name ? "coverage"
 , packages ? [ ]
 , extraScript ? ""
 }:
-# foobar: Library
-# foobar-gen: Library + test suite
-
-# let
-#   packagesWithCoverables = ;
-# in
+let
+  coverablesOption = package: "--coverable ${package.coverables}";
+  coverablesOptions = lib.concatStringsSep " " (builtins.map coverablesOption packages);
+  coverageOption = package: "--coverage ${package.coverage}";
+  coverageOptions = lib.concatStringsSep " " (builtins.map coverageOption packages);
+in
 stdenv.mkDerivation {
   inherit name;
   srcs = [ ];
@@ -17,6 +17,8 @@ stdenv.mkDerivation {
     ${extraScript}
 
     # Make coverage report
-    dekking > $out
+    set -x
+    dekking ${coverablesOptions} ${coverageOptions} > $out
+    set +x
   '';
 }

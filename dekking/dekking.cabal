@@ -23,6 +23,7 @@ library
       Dekking
       Dekking.Coverable
       Dekking.Coverage
+      Dekking.OptParse
       Dekking.Plugin
       Dekking.Report
       Dekking.SourceAdapter
@@ -40,6 +41,7 @@ library
     , bytestring
     , ghc
     , mtl
+    , optparse-applicative
     , path
     , path-io
     , pretty-show
