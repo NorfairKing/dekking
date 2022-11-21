@@ -34,6 +34,6 @@ parseIdentifier s =
     (x : rest) ->
       Just
         TopLevelBinding
-          { topLevelBindingModule = Just $ concat $ intersperse "." (reverse rest),
+          { topLevelBindingModule = Just $ intercalate "." (reverse rest),
             topLevelBindingIdentifier = x
           }

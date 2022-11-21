@@ -13,6 +13,7 @@ maintainer:     Tom Sydney Kerckhove
 build-type:     Simple
 extra-source-files:
     test_resources/Examples/TopLevel.hs.coverable
+    test_resources/Examples/TopLevel.hs.coverage
 
 source-repository head
   type: git
@@ -75,5 +76,8 @@ test-suite dekking-test
   build-depends:
       base >=4.7 && <5
     , dekking
+    , path
+    , path-io
     , sydtest
+    , sydtest-aeson
   default-language: Haskell2010

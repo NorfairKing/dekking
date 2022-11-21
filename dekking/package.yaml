@@ -56,4 +56,7 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - dekking
+    - path
+    - path-io
     - sydtest
+    - sydtest-aeson

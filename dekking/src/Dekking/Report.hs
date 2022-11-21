@@ -1,7 +1,11 @@
+{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Dekking.Report (reportMain) where
+module Dekking.Report (reportMain, computeCoverageReport) where
 
+import Autodocodec
+import Data.Aeson (FromJSON, ToJSON)
 import Data.List
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -53,12 +57,26 @@ data CoverageReport = CoverageReport
   { coverageReportTopLevelBindings :: Coverage TopLevelBinding
   }
   deriving (Show, Eq)
+  deriving (FromJSON, ToJSON) via (Autodocodec CoverageReport)
+
+instance HasCodec CoverageReport where
+  codec =
+    object "CoverageReport" $
+      CoverageReport
+        <$> requiredField "top-level-bindings" "top level bindings" .= coverageReportTopLevelBindings
 
 data Coverage a = Coverage
   { coverageCovered :: Set (Coverable a),
     coverageUncovered :: Set (Coverable a)
   }
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
+
+instance (Ord a, HasCodec a) => HasCodec (Coverage a) where
+  codec =
+    object "Coverage" $
+      Coverage
+        <$> requiredField "covered" "covered values" .= coverageCovered
+        <*> requiredField "uncovered" "uncovered values" .= coverageUncovered
 
 computeCoverage :: Ord a => Set (Coverable a) -> Set a -> Coverage a
 computeCoverage coverables covereds =
