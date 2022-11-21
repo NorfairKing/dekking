@@ -47,9 +47,17 @@ in
       --include='*/' \
       --include='*.hs' \
       --include='*.hs.coverable' \
+      --include='*.lhs' \
+      --include='*.lhs.coverable' \
       --exclude='*' \
       . $coverables
   '';
+  postCheck = (old.postCheck or "") + ''
+    cp coverage.dat $coverage
+  '';
 })).overrideAttrs (old: {
-  outputs = (old.outputs or [ ]) ++ [ "coverables" ];
+  outputs = (old.outputs or [ ]) ++ [
+    "coverables"
+    "coverage"
+  ];
 })

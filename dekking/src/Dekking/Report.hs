@@ -8,18 +8,29 @@ import Dekking.Coverable
 import Dekking.Coverage
 import Path
 import Path.IO
+import System.Environment (getArgs)
 import Text.Show.Pretty
 
 reportMain :: IO ()
 reportMain = do
-  here <- getCurrentDir
-  fs <- snd <$> listDirRecur here
+  args <- getArgs :: IO [FilePath]
+
+  dirs <- case args of
+    [] -> (: []) <$> getCurrentDir
+    _ -> mapM resolveDir' args
+
+  fs <- concat <$> mapM ((fmap snd . listDirRecur) :: Path Abs Dir -> IO [Path Abs File]) (dirs :: [Path Abs Dir])
+
   coverage <-
     foldMap readCoverageFile $
-      filter ((== [relfile|coverage.dat|]) . filename) fs
+      filter
+        ((== [relfile|coverage.dat|]) . filename)
+        (fs :: [Path Abs File])
   coverables <-
     foldMap readCoverableFile $
-      filter (maybe False (isSuffixOf "coverable") . fileExtension) fs
+      filter
+        (maybe False (isSuffixOf "coverable") . fileExtension)
+        (fs :: [Path Abs File])
 
   pPrint coverables
   pPrint coverage

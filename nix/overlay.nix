@@ -2,14 +2,16 @@ final: prev:
 with final.lib;
 with final.haskell.lib;
 {
-  dekking = (justStaticExecutables final.haskellPackages.dekking).overrideAttrs (old: {
-    passthru = (old.passthru or { }) // {
-      addCoverables = final.callPackage ./addCoverables.nix { };
-      mkCoverageReport = final.callPackage ./mkCoverageReport.nix {
-        dekking = final.haskellPackages.dekking;
+  dekking =
+    let pkg = final.haskellPackages.dekking;
+    in (justStaticExecutables pkg).overrideAttrs (old: {
+      passthru = (old.passthru or { }) // {
+        addCoverables = final.callPackage ./addCoverables.nix { };
+        mkCoverageReport = final.callPackage ./mkCoverageReport.nix {
+          dekking = pkg;
+        };
       };
-    };
-  });
+    });
 
   haskellPackages = prev.haskellPackages.override
     (old: {
