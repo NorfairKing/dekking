@@ -12,7 +12,7 @@ import GHC
 import GHC.Driver.Types
 import GHC.Plugins
 
-addCoverableTopLevelBinding :: CoverableTopLevelBinding -> AdaptM ()
+addCoverableTopLevelBinding :: TopLevelBinding -> AdaptM ()
 addCoverableTopLevelBinding a = tell (mempty {coverableTopLevelBindings = S.singleton a})
 
 type AdaptM = WriterT Coverables Hsc
@@ -67,10 +67,15 @@ adaptTopLevelExactName = undefined
 adaptBind :: Maybe ModuleName -> HsBind GhcPs -> AdaptM [HsBind GhcPs]
 adaptBind mModuleName = \case
   FunBind x originalName originalMatches originalTicks -> do
-    liftIO $ putStrLn $ "Adapting bind: " ++ rdrNameToString (unLoc originalName)
+    let nameString = rdrNameToString (unLoc originalName)
+    liftIO $ putStrLn $ "Adapting bind: " ++ nameString
     adaptedName <- noLoc <$> adaptTopLevelName (unLoc originalName)
     let strToLog = rdrNameToString (maybe mkRdrUnqual mkRdrQual mModuleName (rdrNameOcc (unLoc originalName)))
-    addCoverableTopLevelBinding strToLog
+    addCoverableTopLevelBinding
+      TopLevelBinding
+        { topLevelBindingModule = moduleNameString <$> mModuleName,
+          topLevelBindingIdentifier = nameString
+        }
     let applyAdapter :: HsExpr GhcPs -> HsExpr GhcPs
         applyAdapter e =
           HsApp

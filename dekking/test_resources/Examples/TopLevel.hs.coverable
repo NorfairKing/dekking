@@ -1,8 +1,20 @@
 {
     "top-level-bindings": [
-        "Examples.TopLevel.covered",
-        "Examples.TopLevel.coveredWithArg",
-        "Examples.TopLevel.uncovered",
-        "Examples.TopLevel.uncoveredWithArg"
+        {
+            "identifier": "covered",
+            "module": "Examples.TopLevel"
+        },
+        {
+            "identifier": "coveredWithArg",
+            "module": "Examples.TopLevel"
+        },
+        {
+            "identifier": "uncovered",
+            "module": "Examples.TopLevel"
+        },
+        {
+            "identifier": "uncoveredWithArg",
+            "module": "Examples.TopLevel"
+        }
     ]
 }

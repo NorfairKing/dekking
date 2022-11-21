@@ -9,7 +9,7 @@ import Data.Set (Set)
 import Path
 
 data Coverables = Coverables
-  { coverableTopLevelBindings :: Set CoverableTopLevelBinding
+  { coverableTopLevelBindings :: Set TopLevelBinding
   }
   deriving stock (Show, Eq)
   deriving (FromJSON, ToJSON) via (Autodocodec Coverables)
@@ -27,7 +27,18 @@ instance HasCodec Coverables where
       Coverables
         <$> optionalFieldWithOmittedDefault "top-level-bindings" mempty "Top level bindings" .= coverableTopLevelBindings
 
-type CoverableTopLevelBinding = String
+data TopLevelBinding = TopLevelBinding
+  { topLevelBindingModule :: Maybe String,
+    topLevelBindingIdentifier :: String
+  }
+  deriving stock (Show, Eq, Ord)
+
+instance HasCodec TopLevelBinding where
+  codec =
+    object "TopLevelBinding" $
+      TopLevelBinding
+        <$> optionalField "module" "the module in which this binding was found" .= topLevelBindingModule
+        <*> requiredField "identifier" "the identifier of the top level binding" .= topLevelBindingIdentifier
 
 readCoverableFile :: Path Abs File -> IO Coverables
 readCoverableFile p = do

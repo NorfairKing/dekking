@@ -49,7 +49,9 @@ computeCoverageReport Coverables {..} topLevelCoverage =
         computeCoverage coverableTopLevelBindings topLevelCoverage
     }
 
-data CoverageReport = CoverageReport {coverageReportTopLevelBindings :: Coverage String}
+data CoverageReport = CoverageReport
+  { coverageReportTopLevelBindings :: Coverage TopLevelBinding
+  }
   deriving (Show, Eq)
 
 data Coverage a = Coverage
