@@ -26,7 +26,7 @@ spec = sequential $ do
     pure $ goldenStringFile "test_resources/Examples/TopLevel.hs.coverage" (readFile (fromAbsFile coverageFile))
   it "makes a coverage report" $ do
     coverableFile <- resolveFile' "test_resources/Examples/TopLevel.hs.coverables"
-    coverables <- readCoverableFile coverableFile
+    coverables <- readModuleCoverablesFile coverableFile
     coverageFile <- resolveFile' "test_resources/Examples/TopLevel.hs.coverage"
     coverage <- readCoverageFile coverageFile
     pure $ pureGoldenJSONValueFile "test_resources/Examples/TopLevel.hs.report" (computeModuleCoverageReport coverables coverage)

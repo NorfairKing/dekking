@@ -32,7 +32,7 @@ reportMain = do
   coverables <-
     flip foldMap coverablesFiles $ \coverablesFile -> do
       print coverablesFile
-      coverables <- readCoverableFile coverablesFile
+      coverables <- readModuleCoverablesFile coverablesFile
       pPrint coverables
       pure coverables
 
@@ -47,19 +47,22 @@ reportMain = do
   pPrint coverage
   pPrint (computeModuleCoverageReport coverables coverage)
 
-computeModuleCoverageReport :: Coverables -> Set TopLevelBinding -> ModuleCoverageReport
-computeModuleCoverageReport Coverables {..} topLevelCoverage =
-  ModuleCoverageReport
-    { moduleCoverageReportTopLevelBindings =
-        computeCoverage coverableTopLevelBindings topLevelCoverage
-    }
+computeCoverageReport :: Coverables -> Set TopLevelBinding -> CoverageReport
+computeCoverageReport Coverables {..} topLevelCoverage = undefined
 
-newtype CoverageReport = CoverageReport {coverageReportModules :: Map String ModuleCoverageReport}
+newtype CoverageReport = CoverageReport {coverageReportModules :: Map ModuleName ModuleCoverageReport}
   deriving (Show, Eq)
   deriving (FromJSON, ToJSON) via (Autodocodec CoverageReport)
 
 instance HasCodec CoverageReport where
   codec = dimapCodec CoverageReport coverageReportModules codec
+
+computeModuleCoverageReport :: ModuleCoverables -> Set TopLevelBinding -> ModuleCoverageReport
+computeModuleCoverageReport ModuleCoverables {..} topLevelCoverage =
+  ModuleCoverageReport
+    { moduleCoverageReportTopLevelBindings =
+        computeCoverage moduleCoverablesTopLevelBindings topLevelCoverage
+    }
 
 data ModuleCoverageReport = ModuleCoverageReport
   { moduleCoverageReportTopLevelBindings :: Coverage TopLevelBinding
