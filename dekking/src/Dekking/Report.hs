@@ -92,3 +92,12 @@ computeCoverage coverables covereds =
     { coverageCovered = S.filter ((`S.member` covereds) . coverableValue) coverables,
       coverageUncovered = S.filter (not . (`S.member` covereds) . coverableValue) coverables
     }
+
+data Covered = Covered | Uncovered | Uncoverable
+  deriving (Show, Eq, Generic)
+
+newtype AnnotatedSource = AnnotatedSource {unAnnotatedSource :: [(String, Covered)]}
+  deriving (Show, Eq, Generic)
+
+produceAnnotatedSource :: Coverage TopLevelBinding -> [(String, Covered)]
+produceAnnotatedSource = undefined
