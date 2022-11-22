@@ -5,9 +5,12 @@
 module Dekking.Report (reportMain, computeModuleCoverageReport) where
 
 import Autodocodec
+import Control.Monad
 import Data.Aeson (FromJSON, ToJSON)
 import Data.List
 import Data.Map (Map)
+import qualified Data.Map as M
+import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
 import Dekking.Coverable
@@ -20,21 +23,9 @@ import Text.Show.Pretty
 reportMain :: IO ()
 reportMain = do
   Settings {..} <- getSettings
-
-  coverablesFiles <-
-    filter
-      (maybe False (isSuffixOf "coverables") . fileExtension)
-      . concat
-      <$> mapM (fmap snd . listDirRecur) (S.toList settingCoverablesDirs)
-
   let coverageFiles = settingCoverageFiles
 
-  coverables <-
-    flip foldMap coverablesFiles $ \coverablesFile -> do
-      print coverablesFile
-      coverables <- readModuleCoverablesFile coverablesFile
-      pPrint coverables
-      pure coverables
+  coverables <- readCoverablesFiles settingCoverablesDirs
 
   coverage <-
     flip foldMap coverageFiles $ \coverageFile -> do
@@ -45,10 +36,26 @@ reportMain = do
 
   pPrint coverables
   pPrint coverage
-  pPrint (computeModuleCoverageReport coverables coverage)
+  pPrint (computeCoverageReport coverables coverage)
 
-computeCoverageReport :: Coverables -> Set TopLevelBinding -> CoverageReport
-computeCoverageReport Coverables {..} topLevelCoverage = undefined
+computeCoverageReport :: Coverables -> Set (Maybe ModuleName, TopLevelBinding) -> CoverageReport
+computeCoverageReport Coverables {..} topLevelCoverage =
+  CoverageReport $
+    M.mapWithKey
+      ( \moduleName moduleCoverables ->
+          let relevantCoverage =
+                S.fromList
+                  . mapMaybe
+                    ( \(mm, tlb) ->
+                        if mm == Just moduleName
+                          then Just tlb
+                          else Nothing
+                    )
+                  . S.toList
+                  $ topLevelCoverage
+           in computeModuleCoverageReport moduleName moduleCoverables relevantCoverage
+      )
+      coverablesModules
 
 newtype CoverageReport = CoverageReport {coverageReportModules :: Map ModuleName ModuleCoverageReport}
   deriving (Show, Eq)
@@ -57,11 +64,10 @@ newtype CoverageReport = CoverageReport {coverageReportModules :: Map ModuleName
 instance HasCodec CoverageReport where
   codec = dimapCodec CoverageReport coverageReportModules codec
 
-computeModuleCoverageReport :: ModuleCoverables -> Set TopLevelBinding -> ModuleCoverageReport
-computeModuleCoverageReport ModuleCoverables {..} topLevelCoverage =
+computeModuleCoverageReport :: ModuleName -> ModuleCoverables -> Set TopLevelBinding -> ModuleCoverageReport
+computeModuleCoverageReport moduleName ModuleCoverables {..} topLevelCoverage =
   ModuleCoverageReport
-    { moduleCoverageReportTopLevelBindings =
-        computeCoverage moduleCoverablesTopLevelBindings topLevelCoverage
+    { moduleCoverageReportTopLevelBindings = computeCoverage moduleCoverablesTopLevelBindings topLevelCoverage
     }
 
 data ModuleCoverageReport = ModuleCoverageReport

@@ -7,10 +7,7 @@
                     "line": 6,
                     "start": 1
                 },
-                "value": {
-                    "identifier": "covered",
-                    "module": "Examples.TopLevel"
-                }
+                "value": "covered"
             },
             {
                 "location": {
@@ -18,10 +15,7 @@
                     "line": 9,
                     "start": 1
                 },
-                "value": {
-                    "identifier": "coveredWithArg",
-                    "module": "Examples.TopLevel"
-                }
+                "value": "coveredWithArg"
             }
         ],
         "uncovered": [
@@ -31,10 +25,7 @@
                     "line": 12,
                     "start": 1
                 },
-                "value": {
-                    "identifier": "uncovered",
-                    "module": "Examples.TopLevel"
-                }
+                "value": "uncovered"
             },
             {
                 "location": {
@@ -42,10 +33,7 @@
                     "line": 15,
                     "start": 1
                 },
-                "value": {
-                    "identifier": "uncoveredWithArg",
-                    "module": "Examples.TopLevel"
-                }
+                "value": "uncoveredWithArg"
             }
         ]
     }

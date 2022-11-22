@@ -13,7 +13,9 @@ mkDerivation {
     optparse-applicative path path-io pretty-show
   ];
   executableHaskellDepends = [ base ];
-  testHaskellDepends = [ base path path-io sydtest sydtest-aeson ];
+  testHaskellDepends = [
+    base containers path path-io sydtest sydtest-aeson
+  ];
   testToolDepends = [ sydtest-discover ];
   homepage = "https://github.com/NorfairKing/dekking#readme";
   license = "unknown";

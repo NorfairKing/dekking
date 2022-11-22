@@ -6,6 +6,7 @@ module Dekking.SourceAdapter (adaptLocatedHsModule) where
 
 import Control.Monad.Reader
 import Control.Monad.Writer.Strict
+import Data.Set (Set)
 import qualified Data.Set as S
 import Dekking.Coverable
 import GHC
@@ -13,9 +14,9 @@ import GHC.Driver.Types as GHC
 import GHC.Plugins as GHC
 
 addCoverableTopLevelBinding :: Coverable TopLevelBinding -> AdaptM ()
-addCoverableTopLevelBinding a = tell (mempty {moduleCoverablesTopLevelBindings = S.singleton a})
+addCoverableTopLevelBinding a = tell (S.singleton a)
 
-type AdaptM = WriterT ModuleCoverables Hsc
+type AdaptM = WriterT (Set (Coverable TopLevelBinding)) Hsc
 
 adapterImport :: LImportDecl GhcPs
 adapterImport = noLoc (simpleImportDecl adapterModuleName)
@@ -74,11 +75,7 @@ adaptBind mModuleName = \case
     let
     addCoverableTopLevelBinding
       Coverable
-        { coverableValue =
-            TopLevelBinding
-              { topLevelBindingModuleName = moduleNameString <$> mModuleName,
-                topLevelBindingIdentifier = nameString
-              },
+        { coverableValue = TopLevelBinding {topLevelBindingIdentifier = nameString},
           coverableLocation = case getLoc originalName of
             RealSrcSpan s _ ->
               Just

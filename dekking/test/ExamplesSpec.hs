@@ -1,5 +1,6 @@
 module ExamplesSpec (spec) where
 
+import qualified Data.Set as S
 import Dekking.Coverable
 import Dekking.Coverage
 import Dekking.Report
@@ -29,4 +30,7 @@ spec = sequential $ do
     coverables <- readModuleCoverablesFile coverableFile
     coverageFile <- resolveFile' "test_resources/Examples/TopLevel.hs.coverage"
     coverage <- readCoverageFile coverageFile
-    pure $ pureGoldenJSONValueFile "test_resources/Examples/TopLevel.hs.report" (computeModuleCoverageReport coverables coverage)
+    pure $
+      pureGoldenJSONValueFile
+        "test_resources/Examples/TopLevel.hs.report"
+        (computeModuleCoverageReport "Examples.TopLevel" coverables (S.map snd coverage))
