@@ -5,6 +5,7 @@
 module Dekking.Report (reportMain, computeCoverageReport, computeModuleCoverageReport) where
 
 import Autodocodec
+import Control.Arrow (left)
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -14,6 +15,7 @@ import qualified Data.Set as S
 import Dekking.Coverable
 import Dekking.Coverage
 import Dekking.OptParse
+import Path
 import Text.Show.Pretty
 
 reportMain :: IO ()

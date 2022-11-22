@@ -1,5 +1,6 @@
 {
     "module-name": "Examples.TopLevel",
+    "source": "{-# OPTIONS_GHC -fplugin=Dekking -w #-}\n\nmodule Examples.TopLevel where\n\ncovered :: IO ()\ncovered = pure ()\n\ncoveredWithArg :: Int -> IO ()\ncoveredWithArg _ = pure ()\n\nuncovered :: IO ()\nuncovered = pure ()\n\nuncoveredWithArg :: Int -> IO ()\nuncoveredWithArg _ = pure ()\n",
     "top-level-bindings": [
         {
             "location": {

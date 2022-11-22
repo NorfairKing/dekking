@@ -22,10 +22,12 @@ adaptParseResult _ ms pr = do
     -- Output the coverables
     liftIO $ do
       p <- resolveFile' sourceFile
+      sourceCode <- readFile sourceFile
       coverablesFile <- addExtension coverablesExtension p
       writeModuleCoverablesFile coverablesFile $
         ModuleCoverables
           { moduleCoverablesModuleName = moduleNameString (moduleName (ms_mod ms)),
+            moduleCoverablesSource = sourceCode,
             moduleCoverablesTopLevelBindings = bindings
           }
   pure pr {hpm_module = lm'}

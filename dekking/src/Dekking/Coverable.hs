@@ -37,6 +37,7 @@ instance HasCodec Coverables where
 
 data ModuleCoverables = ModuleCoverables
   { moduleCoverablesModuleName :: ModuleName,
+    moduleCoverablesSource :: String,
     moduleCoverablesTopLevelBindings :: Set (Coverable TopLevelBinding)
   }
   deriving stock (Show, Eq)
@@ -47,6 +48,7 @@ instance HasCodec ModuleCoverables where
     object "ModuleCoverables" $
       ModuleCoverables
         <$> requiredField "module-name" "Module name" .= moduleCoverablesModuleName
+        <*> requiredField "source" "source code" .= moduleCoverablesSource
         <*> optionalFieldWithOmittedDefault "top-level-bindings" mempty "Top level bindings" .= moduleCoverablesTopLevelBindings
 
 data Coverable a = Coverable
