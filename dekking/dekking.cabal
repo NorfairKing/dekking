@@ -13,6 +13,8 @@ maintainer:     Tom Sydney Kerckhove
 build-type:     Simple
 extra-source-files:
     test_resources/Examples/Multi.coverables
+    test_resources/Examples/Multi.coverage
+    test_resources/Examples/Multi.report
     test_resources/Examples/TopLevel.hs.coverables
     test_resources/Examples/TopLevel.hs.coverage
     test_resources/Examples/TopLevel.hs.report
