@@ -16,7 +16,6 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Path
 import Path.IO
-import Text.Show.Pretty (pPrint)
 
 newtype Coverables = Coverables {coverablesModules :: Map ModuleName ModuleCoverables}
   deriving stock (Show, Eq)
@@ -106,9 +105,7 @@ readCoverablesFiles dirs = do
       <$> mapM (fmap snd . listDirRecur) (S.toList dirs)
   fmap (Coverables . M.fromList) $
     forM coverablesFiles $ \coverablesFile -> do
-      print coverablesFile
       coverables <- readModuleCoverablesFile coverablesFile
-      pPrint coverables
       pure (moduleCoverablesModuleName coverables, coverables)
 
 coverablesExtension :: String

@@ -12,7 +12,7 @@ author:         Tom Sydney Kerckhove
 maintainer:     Tom Sydney Kerckhove
 build-type:     Simple
 extra-source-files:
-    test_resources/Examples/coverables
+    test_resources/Examples/Multi.coverables
     test_resources/Examples/TopLevel.hs.coverables
     test_resources/Examples/TopLevel.hs.coverage
     test_resources/Examples/TopLevel.hs.report
@@ -67,6 +67,8 @@ test-suite dekking-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Examples.Multi.A
+      Examples.Multi.B
       Examples.TopLevel
       ExamplesSpec
       Paths_dekking

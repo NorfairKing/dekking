@@ -2,12 +2,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Dekking.Report (reportMain, computeModuleCoverageReport) where
+module Dekking.Report (reportMain, computeCoverageReport, computeModuleCoverageReport) where
 
 import Autodocodec
-import Control.Monad
 import Data.Aeson (FromJSON, ToJSON)
-import Data.List
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe
@@ -16,23 +14,14 @@ import qualified Data.Set as S
 import Dekking.Coverable
 import Dekking.Coverage
 import Dekking.OptParse
-import Path
-import Path.IO
 import Text.Show.Pretty
 
 reportMain :: IO ()
 reportMain = do
   Settings {..} <- getSettings
-  let coverageFiles = settingCoverageFiles
 
   coverables <- readCoverablesFiles settingCoverablesDirs
-
-  coverage <-
-    flip foldMap coverageFiles $ \coverageFile -> do
-      print coverageFile
-      coverage <- readCoverageFile coverageFile
-      pPrint coverage
-      pure coverage
+  coverage <- readCoverageFiles settingCoverageFiles
 
   pPrint coverables
   pPrint coverage
@@ -53,7 +42,7 @@ computeCoverageReport Coverables {..} topLevelCoverage =
                     )
                   . S.toList
                   $ topLevelCoverage
-           in computeModuleCoverageReport moduleName moduleCoverables relevantCoverage
+           in computeModuleCoverageReport moduleCoverables relevantCoverage
       )
       coverablesModules
 
@@ -64,8 +53,8 @@ newtype CoverageReport = CoverageReport {coverageReportModules :: Map ModuleName
 instance HasCodec CoverageReport where
   codec = dimapCodec CoverageReport coverageReportModules codec
 
-computeModuleCoverageReport :: ModuleName -> ModuleCoverables -> Set TopLevelBinding -> ModuleCoverageReport
-computeModuleCoverageReport moduleName ModuleCoverables {..} topLevelCoverage =
+computeModuleCoverageReport :: ModuleCoverables -> Set TopLevelBinding -> ModuleCoverageReport
+computeModuleCoverageReport ModuleCoverables {..} topLevelCoverage =
   ModuleCoverageReport
     { moduleCoverageReportTopLevelBindings = computeCoverage moduleCoverablesTopLevelBindings topLevelCoverage
     }

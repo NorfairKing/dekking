@@ -9,6 +9,9 @@ import qualified Data.Set as S
 import Dekking.Coverable
 import Path
 
+readCoverageFiles :: Set (Path Abs File) -> IO (Set (Maybe ModuleName, TopLevelBinding))
+readCoverageFiles = foldMap readCoverageFile
+
 readCoverageFile :: Path Abs File -> IO (Set (Maybe ModuleName, TopLevelBinding))
 readCoverageFile p = S.fromList . mapMaybe parseIdentifier . lines <$> readFile (fromAbsFile p)
 

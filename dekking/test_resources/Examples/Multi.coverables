@@ -1,0 +1,28 @@
+{
+    "Examples.Multi.A": {
+        "module-name": "Examples.Multi.A",
+        "top-level-bindings": [
+            {
+                "location": {
+                    "end": 5,
+                    "line": 6,
+                    "start": 1
+                },
+                "value": "five"
+            }
+        ]
+    },
+    "Examples.Multi.B": {
+        "module-name": "Examples.Multi.B",
+        "top-level-bindings": [
+            {
+                "location": {
+                    "end": 4,
+                    "line": 6,
+                    "start": 1
+                },
+                "value": "six"
+            }
+        ]
+    }
+}

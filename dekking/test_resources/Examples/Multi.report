@@ -1,0 +1,32 @@
+{
+    "Examples.Multi.A": {
+        "top-level-bindings": {
+            "covered": [
+                {
+                    "location": {
+                        "end": 5,
+                        "line": 6,
+                        "start": 1
+                    },
+                    "value": "five"
+                }
+            ],
+            "uncovered": []
+        }
+    },
+    "Examples.Multi.B": {
+        "top-level-bindings": {
+            "covered": [],
+            "uncovered": [
+                {
+                    "location": {
+                        "end": 4,
+                        "line": 6,
+                        "start": 1
+                    },
+                    "value": "six"
+                }
+            ]
+        }
+    }
+}
