@@ -47,12 +47,6 @@ let
         "foobar-gen"
       ];
     };
-
-    ## E2E tests of coverage for external packages that we know test eachother.
-    safe-coloured-text = pkgs.dekking.makeCoverageReport {
-      name = "safe-coloured-text-report";
-      packages = builtins.map (p: p.pname) (builtins.attrValues haskellPackages.safeColouredTextPackages);
-    };
   };
 in
 (pkgs.linkFarm "e2e-tests" (builtins.attrValues (builtins.mapAttrs
