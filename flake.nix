@@ -23,7 +23,6 @@
     , safe-coloured-text
     , sydtest
     , autodocodec
-
     }:
     let
       system = "x86_64-linux";

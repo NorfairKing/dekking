@@ -9,9 +9,9 @@ import Control.Monad.Writer.Strict
 import Data.Set (Set)
 import qualified Data.Set as S
 import Dekking.Coverable
-import GHC
+import GHC hiding (moduleName)
 import GHC.Driver.Types as GHC
-import GHC.Plugins as GHC
+import GHC.Plugins as GHC hiding (moduleName)
 
 addCoverableTopLevelBinding :: Coverable TopLevelBinding -> AdaptM ()
 addCoverableTopLevelBinding a = tell (S.singleton a)
@@ -24,19 +24,18 @@ adapterImport = noLoc (simpleImportDecl adapterModuleName)
 adapterModuleName :: GHC.ModuleName
 adapterModuleName = mkModuleName "Dekking.ValueLevelAdapter"
 
-adaptLocatedHsModule :: Located HsModule -> AdaptM (Located HsModule)
-adaptLocatedHsModule = adaptLocated adaptHsModule
+adaptLocatedHsModule :: GHC.ModuleName -> Located HsModule -> AdaptM (Located HsModule)
+adaptLocatedHsModule moduleName = adaptLocated (adaptHsModule moduleName)
 
-adaptHsModule :: HsModule -> AdaptM HsModule
-adaptHsModule m = do
-  forM_ (hsmodName m) $ \name -> do
-    liftIO $ putStrLn $ "Adapting module: " ++ moduleNameString (unLoc name)
-  decls' <- concat <$> mapM (adaptLocatedTopLevelDecl (unLoc <$> hsmodName m)) (hsmodDecls m)
+adaptHsModule :: GHC.ModuleName -> HsModule -> AdaptM HsModule
+adaptHsModule moduleName m = do
+  liftIO $ putStrLn $ "Adapting module: " ++ moduleNameString moduleName
+  decls' <- concat <$> mapM (adaptLocatedTopLevelDecl moduleName) (hsmodDecls m)
   pure (m {hsmodDecls = decls', hsmodImports = adapterImport : hsmodImports m})
 
-adaptLocatedTopLevelDecl :: Maybe GHC.ModuleName -> Located (HsDecl GhcPs) -> AdaptM [Located (HsDecl GhcPs)]
-adaptLocatedTopLevelDecl mModuleName lDecl = do
-  lDecls' <- adaptTopLevelDecl mModuleName (unLoc lDecl)
+adaptLocatedTopLevelDecl :: GHC.ModuleName -> Located (HsDecl GhcPs) -> AdaptM [Located (HsDecl GhcPs)]
+adaptLocatedTopLevelDecl moduleName lDecl = do
+  lDecls' <- adaptTopLevelDecl moduleName (unLoc lDecl)
   case lDecls' of
     [] -> error "must not happen, otherwise we're deleting decls."
     [x] -> pure [L (getLoc lDecl) x] -- Nothing was adapted
@@ -44,9 +43,9 @@ adaptLocatedTopLevelDecl mModuleName lDecl = do
       pure [L (getLoc lDecl) decl, noLoc modifiedDecl]
     _ -> error "must not happen either, otherwise we're making too many extra decls"
 
-adaptTopLevelDecl :: Maybe GHC.ModuleName -> HsDecl GhcPs -> AdaptM [HsDecl GhcPs]
-adaptTopLevelDecl mModuleName = \case
-  ValD x bind -> fmap (ValD x) <$> adaptBind mModuleName bind
+adaptTopLevelDecl :: GHC.ModuleName -> HsDecl GhcPs -> AdaptM [HsDecl GhcPs]
+adaptTopLevelDecl moduleName = \case
+  ValD x bind -> fmap (ValD x) <$> adaptBind moduleName bind
   SigD x sig -> (: []) . SigD x <$> adaptSig sig
   d -> pure [d]
 
@@ -78,13 +77,13 @@ adaptTopLevelOccName on = do
 adaptTopLevelExactName :: Name -> AdaptM Name
 adaptTopLevelExactName = undefined
 
-adaptBind :: Maybe GHC.ModuleName -> HsBind GhcPs -> AdaptM [HsBind GhcPs]
-adaptBind mModuleName = \case
+adaptBind :: GHC.ModuleName -> HsBind GhcPs -> AdaptM [HsBind GhcPs]
+adaptBind moduleName = \case
   FunBind x originalName originalMatches originalTicks -> do
     let nameString = rdrNameToString (unLoc originalName)
     liftIO $ putStrLn $ "Adapting bind: " ++ nameString
     adaptedName <- noLoc <$> adaptTopLevelName (unLoc originalName)
-    let strToLog = rdrNameToString (maybe mkRdrUnqual mkRdrQual mModuleName (rdrNameOcc (unLoc originalName)))
+    let strToLog = rdrNameToString (mkRdrQual moduleName (rdrNameOcc (unLoc originalName)))
     let
     addCoverableTopLevelBinding
       Coverable

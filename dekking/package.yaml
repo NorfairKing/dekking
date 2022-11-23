@@ -26,6 +26,7 @@ library:
   - autodocodec
   - bytestring
   - containers
+  - filelock
   - ghc
   - mtl
   - optparse-applicative

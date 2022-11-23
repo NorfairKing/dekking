@@ -1,7 +1,10 @@
 module Lib
-  ( someFunc,
+  ( covered,
   )
 where
 
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
+covered :: IO ()
+covered = pure ()
+
+uncovered :: IO ()
+uncovered = pure ()

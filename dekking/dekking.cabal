@@ -45,6 +45,7 @@ library
     , base >=4.7 && <5
     , bytestring
     , containers
+    , filelock
     , ghc
     , mtl
     , optparse-applicative

@@ -4,16 +4,22 @@
 -- values.
 module Dekking.ValueLevelAdapter (coverageFileName, adaptValue) where
 
+import System.FileLock
 import System.IO
 import System.IO.Unsafe
 
 coverageFileName :: FilePath
 coverageFileName = "coverage.dat"
 
+coverageLockFileName :: FilePath
+coverageLockFileName = "coverage.lock"
+
 withCoverageHandle :: (Handle -> IO a) -> IO a
-withCoverageHandle func = withFile coverageFileName AppendMode $ \h -> do
-  hSetBuffering h NoBuffering
-  func h
+withCoverageHandle func =
+  withFileLock coverageLockFileName Exclusive $ \_ ->
+    withFile coverageFileName AppendMode $ \h -> do
+      hSetBuffering h NoBuffering
+      func h
 
 {-# NOINLINE adaptValue #-}
 adaptValue :: String -> a -> a

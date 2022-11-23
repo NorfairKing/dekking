@@ -6,7 +6,12 @@ pkg:
 
 (haskell.lib.overrideCabal pkg (old: {
   postCheck = (old.postCheck or "") + ''
-    cp coverage.dat $coverage
+    if [[ -f coverage.dat ]]
+    then
+      cp coverage.dat $coverage
+    else
+      touch $coverage
+    fi
   '';
 })).overrideAttrs (old: {
   outputs = (old.outputs or [ ]) ++ [ "coverage" ];
