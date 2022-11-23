@@ -1,16 +1,22 @@
 { pkgs }:
 
 let
-  rawExamplePkg = pkgs.haskellPackages.callPackage ./example { };
-  rawFoobarPkg = pkgs.haskellPackages.callPackage ./foobar { };
-  rawFoobarGenPkg = pkgs.haskellPackages.callPackage ./foobar-gen { foobar = rawFoobarPkg; };
-  examplePkgWithCoverables = pkgs.dekking.addCoverablesAndCoverage rawExamplePkg;
-  foobarPkgWithCoverables = pkgs.dekking.addCoverablesAndCoverage rawFoobarPkg;
-  foobarGenPkgWithCoverables = pkgs.dekking.addCoverablesAndCoverage rawFoobarGenPkg;
+  haskellPackages = pkgs.haskellPackages.override (old: {
+    overrides = pkgs.lib.composeExtensions (old.overrides or (_:_: { })) (
+      self: super: {
+        example = self.callPackage ./example { };
+        foobar = self.callPackage ./foobar { };
+        foobar-gen = self.callPackage ./foobar-gen { };
+      }
+    );
+  });
+  examplePkgWithCoverables = pkgs.dekking.addCoverablesAndCoverage haskellPackages.example;
+  foobarPkgWithCoverables = pkgs.dekking.addCoverablesAndCoverage haskellPackages.foobar;
+  foobarGenPkgWithCoverables = pkgs.dekking.addCoverablesAndCoverage haskellPackages.foobar-gen;
   tests = {
     # Single example package
     ## The example package can 'just' build
-    example = rawExamplePkg;
+    example = haskellPackages.example;
     ## We can add coverables to the example package.
     example-with-coverables = examplePkgWithCoverables;
     ## We can compile a report when we add coverables and coverage manually
@@ -21,30 +27,31 @@ let
     ## We can make a coverage report for the raw package
     example-report = pkgs.dekking.makeCoverageReport {
       name = "made-coverage-report";
-      packages = [ rawExamplePkg ];
+      inherit haskellPackages;
+      packages = [ "example" ];
     };
+
     # Multi-package example
     ## Raw packages
-    foobar = rawFoobarPkg;
-    foobar-gen = rawFoobarGenPkg;
+    foobar = haskellPackages.foobar;
+    foobar-gen = haskellPackages.foobar-gen;
     ## Packages with coverables
     foobar-with-coverables = foobarPkgWithCoverables;
     foobar-gen-with-coverables = foobarGenPkgWithCoverables;
-    ## Coverage report compilation for both together
-    foobar-compiled-report = pkgs.dekking.compileCoverageReport {
-      name = "foobar-compiled-coverage-report";
-      packages = [ foobarPkgWithCoverables foobarGenPkgWithCoverables ];
-    };
     ## Coverage report compilation for both raw together
     foobar-report = pkgs.dekking.makeCoverageReport {
       name = "foobar-made-coverage-report";
-      packages = [ rawFoobarPkg rawFoobarGenPkg ];
+      inherit haskellPackages;
+      packages = [
+        "foobar"
+        "foobar-gen"
+      ];
     };
 
-    ## E2E tests of coverage for external packages.
+    ## E2E tests of coverage for external packages that we know test eachother.
     safe-coloured-text = pkgs.dekking.makeCoverageReport {
       name = "safe-coloured-text-report";
-      packages = (builtins.attrValues pkgs.haskellPackages.safeColouredTextPackages);
+      packages = builtins.map (p: p.pname) (builtins.attrValues haskellPackages.safeColouredTextPackages);
     };
   };
 in
