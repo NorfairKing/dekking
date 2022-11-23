@@ -32,7 +32,6 @@ library
       Dekking.Plugin
       Dekking.Report
       Dekking.SourceAdapter
-      Dekking.ValueLevelAdapter
   other-modules:
       Paths_dekking
   hs-source-dirs:
@@ -45,6 +44,7 @@ library
     , base >=4.7 && <5
     , bytestring
     , containers
+    , dekking-value
     , filelock
     , ghc
     , mtl
@@ -86,6 +86,7 @@ test-suite dekking-test
       base >=4.7 && <5
     , containers
     , dekking
+    , dekking-value
     , path
     , path-io
     , sydtest

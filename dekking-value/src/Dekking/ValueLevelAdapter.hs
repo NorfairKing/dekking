@@ -14,6 +14,7 @@ coverageFileName = "coverage.dat"
 coverageLockFileName :: FilePath
 coverageLockFileName = "coverage.lock"
 
+-- TODO try using hlock
 withCoverageHandle :: (Handle -> IO a) -> IO a
 withCoverageHandle func =
   withFileLock coverageLockFileName Exclusive $ \_ ->

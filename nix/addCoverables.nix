@@ -34,10 +34,11 @@ in
     # source-to-source transformation adds an import of
     # Dekking.ValueLevelAdapter that would not resolve otherwise, without the
     # build-depends in the to-cover haskell package's cabal file.
-    "--ghc-option=-package${pluginPackage.name}"
+    "--ghc-option=-package=dekking-value"
   ];
   buildDepends = (old.buildDepends or [ ]) ++ [
     haskellPackages.dekking
+    haskellPackages.dekking-value
   ];
   # --include='*/': Include all directories
   # --include='*.hs': Include Haskell source files

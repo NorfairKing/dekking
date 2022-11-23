@@ -26,6 +26,7 @@ library:
   - autodocodec
   - bytestring
   - containers
+  - dekking-value
   - filelock
   - ghc
   - mtl
@@ -47,7 +48,6 @@ executables:
     dependencies:
     - dekking
 
-
 tests:
   dekking-test:
     main: Spec.hs
@@ -60,6 +60,7 @@ tests:
     dependencies:
     - containers
     - dekking
+    - dekking-value
     - path
     - path-io
     - sydtest
