@@ -57,12 +57,15 @@ instance HasCodec CoverageReport where
 
 computeModuleCoverageReport :: ModuleCoverables -> Set TopLevelBinding -> ModuleCoverageReport
 computeModuleCoverageReport ModuleCoverables {..} topLevelCoverage =
-  ModuleCoverageReport
-    { moduleCoverageReportTopLevelBindings = computeCoverage moduleCoverablesTopLevelBindings topLevelCoverage
-    }
+  let coverage = computeCoverage moduleCoverablesTopLevelBindings topLevelCoverage
+   in ModuleCoverageReport
+        { moduleCoverageReportAnnotatedSource = produceAnnotatedSource moduleCoverablesSource coverage,
+          moduleCoverageReportTopLevelBindings = coverage
+        }
 
 data ModuleCoverageReport = ModuleCoverageReport
-  { moduleCoverageReportTopLevelBindings :: Coverage TopLevelBinding
+  { moduleCoverageReportAnnotatedSource :: AnnotatedSource,
+    moduleCoverageReportTopLevelBindings :: Coverage TopLevelBinding
   }
   deriving (Show, Eq)
   deriving (FromJSON, ToJSON) via (Autodocodec ModuleCoverageReport)
@@ -71,7 +74,8 @@ instance HasCodec ModuleCoverageReport where
   codec =
     object "ModuleCoverageReport" $
       ModuleCoverageReport
-        <$> requiredField "top-level-bindings" "top level bindings" .= moduleCoverageReportTopLevelBindings
+        <$> requiredField "annotated-source" "annotated source" .= moduleCoverageReportAnnotatedSource
+        <*> requiredField "top-level-bindings" "top level bindings" .= moduleCoverageReportTopLevelBindings
 
 data Coverage a = Coverage
   { coverageCovered :: Set (Coverable a),
@@ -93,11 +97,60 @@ computeCoverage coverables covereds =
       coverageUncovered = S.filter (not . (`S.member` covereds) . coverableValue) coverables
     }
 
+newtype AnnotatedSource = AnnotatedSource {unAnnotatedSource :: [[(String, Covered)]]}
+  deriving (Show, Eq)
+
+instance HasCodec AnnotatedSource where
+  codec =
+    dimapCodec AnnotatedSource unAnnotatedSource $
+      listCodec
+        ( listCodec
+            ( object "Annotated" $
+                (,)
+                  <$> requiredField "source" "source" .= fst
+                  <*> requiredField "annotation" "annotation" .= snd
+            )
+        )
+
 data Covered = Covered | Uncovered | Uncoverable
-  deriving (Show, Eq, Generic)
+  deriving (Show, Read, Eq, Ord, Bounded, Enum)
 
-newtype AnnotatedSource = AnnotatedSource {unAnnotatedSource :: [(String, Covered)]}
-  deriving (Show, Eq, Generic)
+instance HasCodec Covered where
+  codec = shownBoundedEnumCodec
 
-produceAnnotatedSource :: Coverage TopLevelBinding -> [(String, Covered)]
-produceAnnotatedSource = undefined
+produceAnnotatedSource :: String -> Coverage TopLevelBinding -> AnnotatedSource
+produceAnnotatedSource source coverage =
+  let ls = lines source
+   in AnnotatedSource $
+        flip map (zip [1 ..] ls) $ \(lineNum, line) ->
+          case M.lookup lineNum (produceIntervals coverage) of
+            Nothing -> [(line, Uncoverable)]
+            Just lineCoverage -> go 0 line (S.toAscList lineCoverage)
+  where
+    go :: Word -> String -> [((Word, Word), Covered)] -> [(String, Covered)]
+    go _ [] _ = []
+    go _ rest [] = [(rest, Uncoverable)]
+    go ix source (((start, end), c) : rest) =
+      let (before, afterStart) = splitAt (fromIntegral (start - ix - 1)) source
+          (middle, after) = splitAt (fromIntegral (end - start)) afterStart
+       in (before, Uncoverable) : (middle, c) : go end after rest
+
+produceIntervals :: Coverage a -> Map Word (Set ((Word, Word), Covered))
+produceIntervals Coverage {..} = go Covered coverageCovered $ go Uncovered coverageUncovered M.empty
+  where
+    go :: Covered -> Set (Coverable a) -> Map Word (Set ((Word, Word), Covered)) -> Map Word (Set ((Word, Word), Covered))
+
+    go c s m =
+      S.foldl
+        ( \m Coverable {..} ->
+            case coverableLocation of
+              Nothing -> m
+              Just Location {..} ->
+                M.insertWith
+                  S.union
+                  locationLine
+                  (S.singleton ((locationColumnStart, locationColumnEnd), c))
+                  m
+        )
+        m
+        s

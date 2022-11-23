@@ -1,4 +1,128 @@
 {
+    "annotated-source": [
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "{-# OPTIONS_GHC -fplugin=Dekking -w #-}"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": ""
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "module Examples.TopLevel where"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": ""
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "covered :: IO ()"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": ""
+            },
+            {
+                "annotation": "Covered",
+                "source": "covered"
+            },
+            {
+                "annotation": "Uncoverable",
+                "source": " = pure ()"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": ""
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "coveredWithArg :: Int -> IO ()"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": ""
+            },
+            {
+                "annotation": "Covered",
+                "source": "coveredWithArg"
+            },
+            {
+                "annotation": "Uncoverable",
+                "source": " _ = pure ()"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": ""
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "uncovered :: IO ()"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": ""
+            },
+            {
+                "annotation": "Uncovered",
+                "source": "uncovered"
+            },
+            {
+                "annotation": "Uncoverable",
+                "source": " = pure ()"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": ""
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "uncoveredWithArg :: Int -> IO ()"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": ""
+            },
+            {
+                "annotation": "Uncovered",
+                "source": "uncoveredWithArg"
+            },
+            {
+                "annotation": "Uncoverable",
+                "source": " _ = pure ()"
+            }
+        ]
+    ],
     "top-level-bindings": {
         "covered": [
             {

@@ -1,5 +1,51 @@
 {
     "Examples.Multi.A": {
+        "annotated-source": [
+            [
+                {
+                    "annotation": "Uncoverable",
+                    "source": "{-# OPTIONS_GHC -fplugin=Dekking -w #-}"
+                }
+            ],
+            [
+                {
+                    "annotation": "Uncoverable",
+                    "source": ""
+                }
+            ],
+            [
+                {
+                    "annotation": "Uncoverable",
+                    "source": "module Examples.Multi.A where"
+                }
+            ],
+            [
+                {
+                    "annotation": "Uncoverable",
+                    "source": ""
+                }
+            ],
+            [
+                {
+                    "annotation": "Uncoverable",
+                    "source": "five :: Int"
+                }
+            ],
+            [
+                {
+                    "annotation": "Uncoverable",
+                    "source": ""
+                },
+                {
+                    "annotation": "Covered",
+                    "source": "five"
+                },
+                {
+                    "annotation": "Uncoverable",
+                    "source": " = 5"
+                }
+            ]
+        ],
         "top-level-bindings": {
             "covered": [
                 {
@@ -15,6 +61,52 @@
         }
     },
     "Examples.Multi.B": {
+        "annotated-source": [
+            [
+                {
+                    "annotation": "Uncoverable",
+                    "source": "{-# OPTIONS_GHC -fplugin=Dekking -w #-}"
+                }
+            ],
+            [
+                {
+                    "annotation": "Uncoverable",
+                    "source": ""
+                }
+            ],
+            [
+                {
+                    "annotation": "Uncoverable",
+                    "source": "module Examples.Multi.B where"
+                }
+            ],
+            [
+                {
+                    "annotation": "Uncoverable",
+                    "source": ""
+                }
+            ],
+            [
+                {
+                    "annotation": "Uncoverable",
+                    "source": "six :: Int"
+                }
+            ],
+            [
+                {
+                    "annotation": "Uncoverable",
+                    "source": ""
+                },
+                {
+                    "annotation": "Uncovered",
+                    "source": "six"
+                },
+                {
+                    "annotation": "Uncoverable",
+                    "source": " = 6"
+                }
+            ]
+        ],
         "top-level-bindings": {
             "covered": [],
             "uncovered": [
