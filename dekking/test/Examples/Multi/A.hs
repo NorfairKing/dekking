@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -fplugin=Dekking -w #-}
+{-# OPTIONS_GHC -fplugin=Dekking -w -ddump-parsed -ddump-rn #-}
 
 module Examples.Multi.A where
 

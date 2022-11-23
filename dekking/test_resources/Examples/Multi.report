@@ -4,7 +4,7 @@
             [
                 {
                     "annotation": "Uncoverable",
-                    "source": "{-# OPTIONS_GHC -fplugin=Dekking -w #-}"
+                    "source": "{-# OPTIONS_GHC -fplugin=Dekking -w -ddump-parsed -ddump-rn #-}"
                 }
             ],
             [
@@ -65,7 +65,7 @@
             [
                 {
                     "annotation": "Uncoverable",
-                    "source": "{-# OPTIONS_GHC -fplugin=Dekking -w #-}"
+                    "source": "{-# OPTIONS_GHC -fplugin=Dekking -w -ddump-parsed -ddump-rn #-}"
                 }
             ],
             [

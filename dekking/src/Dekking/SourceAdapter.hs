@@ -47,7 +47,20 @@ adaptLocatedTopLevelDecl mModuleName lDecl = do
 adaptTopLevelDecl :: Maybe GHC.ModuleName -> HsDecl GhcPs -> AdaptM [HsDecl GhcPs]
 adaptTopLevelDecl mModuleName = \case
   ValD x bind -> fmap (ValD x) <$> adaptBind mModuleName bind
+  SigD x sig -> (: []) . SigD x <$> adaptSig sig
   d -> pure [d]
+
+adaptSig :: Sig GhcPs -> AdaptM (Sig GhcPs)
+adaptSig = \case
+  TypeSig x ls typ -> do
+    let nameStrings = map (rdrNameToString . unLoc) ls
+    liftIO $ putStrLn $ "Duplicating type-signatures for: " ++ show nameStrings
+    ls' <- fmap concat $
+      forM ls $ \l -> do
+        l' <- noLoc <$> adaptTopLevelName (unLoc l)
+        pure [l, l']
+    pure (TypeSig x ls' typ)
+  sig -> pure sig
 
 adaptTopLevelName :: RdrName -> AdaptM RdrName
 adaptTopLevelName = \case

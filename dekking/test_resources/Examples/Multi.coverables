@@ -1,7 +1,7 @@
 {
     "Examples.Multi.A": {
         "module-name": "Examples.Multi.A",
-        "source": "{-# OPTIONS_GHC -fplugin=Dekking -w #-}\n\nmodule Examples.Multi.A where\n\nfive :: Int\nfive = 5\n",
+        "source": "{-# OPTIONS_GHC -fplugin=Dekking -w -ddump-parsed -ddump-rn #-}\n\nmodule Examples.Multi.A where\n\nfive :: Int\nfive = 5\n",
         "top-level-bindings": [
             {
                 "location": {
@@ -15,7 +15,7 @@
     },
     "Examples.Multi.B": {
         "module-name": "Examples.Multi.B",
-        "source": "{-# OPTIONS_GHC -fplugin=Dekking -w #-}\n\nmodule Examples.Multi.B where\n\nsix :: Int\nsix = 6\n",
+        "source": "{-# OPTIONS_GHC -fplugin=Dekking -w -ddump-parsed -ddump-rn #-}\n\nmodule Examples.Multi.B where\n\nsix :: Int\nsix = 6\n",
         "top-level-bindings": [
             {
                 "location": {
