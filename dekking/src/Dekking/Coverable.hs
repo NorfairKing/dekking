@@ -91,7 +91,15 @@ readModuleCoverablesFile :: Path Abs File -> IO ModuleCoverables
 readModuleCoverablesFile p = do
   errOrRes <- eitherDecodeFileStrict (fromAbsFile p)
   case errOrRes of
-    Left err -> fail err
+    Left err ->
+      fail $
+        unlines
+          [ unwords
+              [ "Failed to parse coverables file:",
+                fromAbsFile p
+              ],
+            err
+          ]
     Right result -> pure result
 
 writeModuleCoverablesFile :: Path Abs File -> ModuleCoverables -> IO ()

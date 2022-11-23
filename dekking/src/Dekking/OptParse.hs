@@ -56,7 +56,7 @@ parseFlags = OptParse.info parser modifier
         <$> many
           ( strOption
               ( mconcat
-                  [ long "coverable",
+                  [ long "coverables",
                     help "A directory with coverables",
                     metavar "DIRECTORY",
                     completer $ bashCompleter "directory"

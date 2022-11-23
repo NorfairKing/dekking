@@ -32,6 +32,8 @@ library:
   - path
   - path-io
   - pretty-show
+  - safe-coloured-text
+  - text
 
 executables:
   dekking:

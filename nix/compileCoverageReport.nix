@@ -4,7 +4,7 @@
 , extraScript ? ""
 }:
 let
-  coverablesOption = package: "--coverable ${package.coverables}";
+  coverablesOption = package: "--coverables ${package.coverables}";
   coverablesOptions = lib.concatStringsSep " " (builtins.map coverablesOption packages);
   coverageOption = package: "--coverage ${package.coverage}";
   coverageOptions = lib.concatStringsSep " " (builtins.map coverageOption packages);

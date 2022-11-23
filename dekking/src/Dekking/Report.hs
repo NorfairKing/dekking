@@ -5,17 +5,17 @@
 module Dekking.Report (reportMain, computeCoverageReport, computeModuleCoverageReport) where
 
 import Autodocodec
-import Control.Arrow (left)
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
+import qualified Data.Text as T
 import Dekking.Coverable
 import Dekking.Coverage
 import Dekking.OptParse
-import Path
+import Text.Colour
 import Text.Show.Pretty
 
 reportMain :: IO ()
@@ -27,7 +27,24 @@ reportMain = do
 
   pPrint coverables
   pPrint coverage
-  pPrint (computeCoverageReport coverables coverage)
+  let coverageReport = computeCoverageReport coverables coverage
+  pPrint coverageReport
+  putChunksUtf8With With24BitColours (concatMap (\cs -> cs ++ ["\n"]) (colouredCoverageReport coverageReport))
+
+colouredCoverageReport :: CoverageReport -> [[Chunk]]
+colouredCoverageReport CoverageReport {..} =
+  flip concatMap (M.toList coverageReportModules) $ \(moduleName, ModuleCoverageReport {..}) ->
+    concat
+      [ [[fore blue $ chunk (T.pack moduleName)], []],
+        flip map (unAnnotatedSource moduleCoverageReportAnnotatedSource) $ \ls ->
+          flip map ls $ \(s, c) ->
+            let withCovered = case c of
+                  Uncoverable -> id
+                  Uncovered -> fore red
+                  Covered -> fore green
+             in withCovered $ chunk (T.pack s),
+        [[], []]
+      ]
 
 computeCoverageReport :: Coverables -> Set (Maybe ModuleName, TopLevelBinding) -> CoverageReport
 computeCoverageReport Coverables {..} topLevelCoverage =
@@ -130,8 +147,8 @@ produceAnnotatedSource source coverage =
     go :: Word -> String -> [((Word, Word), Covered)] -> [(String, Covered)]
     go _ [] _ = []
     go _ rest [] = [(rest, Uncoverable)]
-    go ix source (((start, end), c) : rest) =
-      let (before, afterStart) = splitAt (fromIntegral (start - ix - 1)) source
+    go ix s (((start, end), c) : rest) =
+      let (before, afterStart) = splitAt (fromIntegral (start - ix - 1)) s
           (middle, after) = splitAt (fromIntegral (end - start)) afterStart
        in (before, Uncoverable) : (middle, c) : go end after rest
 
@@ -142,15 +159,15 @@ produceIntervals Coverage {..} = go Covered coverageCovered $ go Uncovered cover
 
     go c s m =
       S.foldl
-        ( \m Coverable {..} ->
+        ( \acc Coverable {..} ->
             case coverableLocation of
-              Nothing -> m
+              Nothing -> acc
               Just Location {..} ->
                 M.insertWith
                   S.union
                   locationLine
                   (S.singleton ((locationColumnStart, locationColumnEnd), c))
-                  m
+                  acc
         )
         m
         s

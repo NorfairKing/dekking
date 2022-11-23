@@ -1,6 +1,7 @@
 { mkDerivation, aeson, aeson-pretty, autodocodec, base, bytestring
 , containers, ghc, lib, mtl, optparse-applicative, path, path-io
-, pretty-show, sydtest, sydtest-aeson, sydtest-discover
+, pretty-show, safe-coloured-text, sydtest, sydtest-aeson
+, sydtest-discover, text
 }:
 mkDerivation {
   pname = "dekking";
@@ -10,7 +11,8 @@ mkDerivation {
   isExecutable = true;
   libraryHaskellDepends = [
     aeson aeson-pretty autodocodec base bytestring containers ghc mtl
-    optparse-applicative path path-io pretty-show
+    optparse-applicative path path-io pretty-show safe-coloured-text
+    text
   ];
   executableHaskellDepends = [ base ];
   testHaskellDepends = [
