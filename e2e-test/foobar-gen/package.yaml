@@ -1,13 +1,16 @@
-name: example
+name: foobar-gen
 
 dependencies:
 - base >= 4.7 && < 5
+- foobar
 
 library:
   source-dirs: src
+  dependencies:
+  - genvalidity
 
 tests:
-  example-test:
+  foobar-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -15,4 +18,6 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - example
+    - foobar-gen
+    - genvalidity-sydtest
+    - sydtest

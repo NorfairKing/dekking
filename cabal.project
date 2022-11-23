@@ -1,2 +1,4 @@
-packages: */*.cabal
+packages:
+  */*.cabal
+  e2e-test/*/*.cabal
 test-show-details: direct
