@@ -40,11 +40,18 @@ let
     foobar-gen-with-coverables = foobarGenPkgWithCoverables;
     ## Coverage report compilation for both raw together
     foobar-report = pkgs.dekking.makeCoverageReport {
-      name = "foobar-made-coverage-report";
+      name = "foobar-coverage-report";
       inherit haskellPackages;
       packages = [
         "foobar"
         "foobar-gen"
+      ];
+    };
+    safe-coloured-text-report = pkgs.dekking.makeCoverageReport {
+      name = "safe-coloured-text-coverage-report";
+      packages = [
+        "safe-coloured-text"
+        "safe-coloured-text-gen"
       ];
     };
   };
