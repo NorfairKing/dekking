@@ -60,7 +60,7 @@
       };
       devShells.${system}.default = pkgs.haskellPackages.shellFor {
         name = "bevel-shell";
-        packages = p: [ p.dekking ];
+        packages = p: builtins.attrValues p.dekkingPackages;
         withHoogle = true;
         doBenchmark = true;
         buildInputs = (with pkgs; [

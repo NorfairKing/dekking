@@ -1,0 +1,47 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.7.
+--
+-- see: https://github.com/sol/hpack
+
+name:           dekking-plugin
+version:        0.0.0.0
+homepage:       https://github.com/NorfairKing/dekking#readme
+bug-reports:    https://github.com/NorfairKing/dekking/issues
+author:         Tom Sydney Kerckhove
+maintainer:     Tom Sydney Kerckhove
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/NorfairKing/dekking
+
+library
+  exposed-modules:
+      Dekking
+      Dekking.Coverable
+      Dekking.Plugin
+      Dekking.SourceAdapter
+  other-modules:
+      Paths_dekking_plugin
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      aeson
+    , aeson-pretty
+    , autodocodec
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , dekking-value
+    , filelock
+    , ghc
+    , mtl
+    , optparse-applicative
+    , path
+    , path-io
+    , pretty-show
+    , safe-coloured-text
+    , text
+  default-language: Haskell2010

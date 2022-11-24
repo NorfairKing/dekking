@@ -1,4 +1,4 @@
-{ lib, stdenv, dekking }:
+{ lib, stdenv, dekking-report }:
 { name ? "coverage-report"
 , packages ? [ ]
 , extraScript ? ""
@@ -12,14 +12,14 @@ in
 stdenv.mkDerivation {
   inherit name;
   srcs = [ ];
-  buildInputs = [ dekking ];
+  buildInputs = [ dekking-report ];
   buildCommand = ''
 
     ${extraScript}
 
     # Make coverage report
     set -x
-    dekking ${coverablesOptions} ${coverageOptions} > $out
+    dekking-report ${coverablesOptions} ${coverageOptions} > $out
     set +x
   '';
 }

@@ -1,4 +1,4 @@
-name: dekking
+name: dekking-report
 version: 0.0.0.0
 github: "NorfairKing/dekking"
 author: "Tom Sydney Kerckhove"
@@ -27,6 +27,7 @@ library:
   - bytestring
   - containers
   - dekking-value
+  - dekking-plugin
   - filelock
   - ghc
   - mtl
@@ -38,7 +39,7 @@ library:
   - text
 
 executables:
-  dekking:
+  dekking-report:
     main: Main.hs
     source-dirs: app
     ghc-options:
@@ -46,7 +47,7 @@ executables:
     - -rtsopts
     - -optP-Wno-nonportable-include-path # For macos
     dependencies:
-    - dekking
+    - dekking-report
 
 tests:
   dekking-test:
@@ -59,7 +60,7 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - containers
-    - dekking
+    - dekking-report
     - dekking-value
     - path
     - path-io
