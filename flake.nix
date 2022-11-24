@@ -42,7 +42,7 @@
     {
       overlays.${system} = import ./nix/overlay.nix;
       packages.${system}.default = pkgs.dekking;
-      checks.${system} = {
+      checks.${system} = pkgs.haskellPackages.dekkingPackages // {
         release = self.packages.${system}.default;
         shell = self.devShells.${system}.default;
         e2e-test = import ./e2e-test { inherit pkgs; };

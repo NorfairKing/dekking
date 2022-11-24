@@ -14,7 +14,9 @@ library:
   source-dirs: src
   ghc-options:
   - -fplugin=Dekking
+  # Turn of warnings because the plugin produces code that causes warnings.
   - -w
+  # Show what's happening.
   - -ddump-parsed 
   - -ddump-rn
   dependencies:
