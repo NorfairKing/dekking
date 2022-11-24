@@ -4,18 +4,6 @@
             [
                 {
                     "annotation": "Uncoverable",
-                    "source": "{-# OPTIONS_GHC -fplugin=Dekking -w -ddump-parsed -ddump-rn #-}"
-                }
-            ],
-            [
-                {
-                    "annotation": "Uncoverable",
-                    "source": ""
-                }
-            ],
-            [
-                {
-                    "annotation": "Uncoverable",
                     "source": "module Examples.Multi.A where"
                 }
             ],
@@ -51,7 +39,7 @@
                 {
                     "location": {
                         "end": 5,
-                        "line": 6,
+                        "line": 4,
                         "start": 1
                     },
                     "value": "five"
@@ -62,18 +50,6 @@
     },
     "Examples.Multi.B": {
         "annotated-source": [
-            [
-                {
-                    "annotation": "Uncoverable",
-                    "source": "{-# OPTIONS_GHC -fplugin=Dekking -w -ddump-parsed -ddump-rn #-}"
-                }
-            ],
-            [
-                {
-                    "annotation": "Uncoverable",
-                    "source": ""
-                }
-            ],
             [
                 {
                     "annotation": "Uncoverable",
@@ -113,7 +89,7 @@
                 {
                     "location": {
                         "end": 4,
-                        "line": 6,
+                        "line": 4,
                         "start": 1
                     },
                     "value": "six"

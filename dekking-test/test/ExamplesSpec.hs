@@ -18,7 +18,7 @@ spec = sequential $ do
     it "Makes the same coverables for TopLevel.hs" $
       goldenStringFile
         "test_resources/Examples/TopLevel.hs.coverables"
-        (readFile "test/Examples/TopLevel.hs.coverables")
+        (readFile "src/Examples/TopLevel.hs.coverables")
     it "outputs some coverage information" $ do
       let don't _ = pure ()
       coverageFile <- resolveFile' "coverage.dat"
@@ -40,7 +40,7 @@ spec = sequential $ do
 
   describe "Multi" $ do
     it "Makes the same coverables for the Multi modules" $ do
-      dir <- resolveDir' "test/Examples/Multi" :: IO (Path Abs Dir)
+      dir <- resolveDir' "src/Examples/Multi" :: IO (Path Abs Dir)
       pure $
         goldenJSONValueFile
           "test_resources/Examples/Multi.coverables"
@@ -53,7 +53,7 @@ spec = sequential $ do
       don't $ six `shouldBe` 6
       pure $ goldenStringFile "test_resources/Examples/Multi.coverage" (readFile (fromAbsFile coverageFile))
     it "makes a coverage report" $ do
-      dir <- resolveDir' "test/Examples/Multi" :: IO (Path Abs Dir)
+      dir <- resolveDir' "src/Examples/Multi" :: IO (Path Abs Dir)
       coverables <- readCoverablesFiles (S.singleton dir)
       coverageFile <- resolveFile' "test_resources/Examples/Multi.coverage"
       coverage <- readCoverageFile coverageFile

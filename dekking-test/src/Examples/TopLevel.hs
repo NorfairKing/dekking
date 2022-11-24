@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -fplugin=Dekking -w -ddump-parsed -ddump-rn #-}
-
 module Examples.TopLevel where
 
 covered :: IO ()

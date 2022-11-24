@@ -11,13 +11,6 @@ bug-reports:    https://github.com/NorfairKing/dekking/issues
 author:         Tom Sydney Kerckhove
 maintainer:     Tom Sydney Kerckhove
 build-type:     Simple
-extra-source-files:
-    test_resources/Examples/Multi.coverables
-    test_resources/Examples/Multi.coverage
-    test_resources/Examples/Multi.report
-    test_resources/Examples/TopLevel.hs.coverables
-    test_resources/Examples/TopLevel.hs.coverage
-    test_resources/Examples/TopLevel.hs.report
 
 source-repository head
   type: git
@@ -65,29 +58,4 @@ executable dekking-report
   build-depends:
       base >=4.7 && <5
     , dekking-report
-  default-language: Haskell2010
-
-test-suite dekking-test
-  type: exitcode-stdio-1.0
-  main-is: Spec.hs
-  other-modules:
-      Examples.Multi.A
-      Examples.Multi.B
-      Examples.TopLevel
-      ExamplesSpec
-      Paths_dekking_report
-  hs-source-dirs:
-      test
-  ghc-options: -Wall -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
-  build-tool-depends:
-      sydtest-discover:sydtest-discover
-  build-depends:
-      base >=4.7 && <5
-    , containers
-    , dekking-report
-    , dekking-value
-    , path
-    , path-io
-    , sydtest
-    , sydtest-aeson
   default-language: Haskell2010

@@ -28,6 +28,7 @@ with final.haskell.lib;
           dekkingPackages = {
             dekking-plugin = buildStrictly (self.callPackage ../dekking-plugin { });
             dekking-report = buildStrictly (self.callPackage ../dekking-report { });
+            dekking-test = buildStrictly (self.callPackage ../dekking-test { });
             dekking-value = buildStrictly (self.callPackage ../dekking-value { });
           };
         in

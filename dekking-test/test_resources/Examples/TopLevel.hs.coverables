@@ -1,11 +1,11 @@
 {
     "module-name": "Examples.TopLevel",
-    "source": "{-# OPTIONS_GHC -fplugin=Dekking -w -ddump-parsed -ddump-rn #-}\n\nmodule Examples.TopLevel where\n\ncovered :: IO ()\ncovered = pure ()\n\ncoveredWithArg :: Int -> IO ()\ncoveredWithArg _ = pure ()\n\nuncovered :: IO ()\nuncovered = pure ()\n\nuncoveredWithArg :: Int -> IO ()\nuncoveredWithArg _ = pure ()\n",
+    "source": "module Examples.TopLevel where\n\ncovered :: IO ()\ncovered = pure ()\n\ncoveredWithArg :: Int -> IO ()\ncoveredWithArg _ = pure ()\n\nuncovered :: IO ()\nuncovered = pure ()\n\nuncoveredWithArg :: Int -> IO ()\nuncoveredWithArg _ = pure ()\n",
     "top-level-bindings": [
         {
             "location": {
                 "end": 8,
-                "line": 6,
+                "line": 4,
                 "start": 1
             },
             "value": "covered"
@@ -13,7 +13,7 @@
         {
             "location": {
                 "end": 15,
-                "line": 9,
+                "line": 7,
                 "start": 1
             },
             "value": "coveredWithArg"
@@ -21,7 +21,7 @@
         {
             "location": {
                 "end": 10,
-                "line": 12,
+                "line": 10,
                 "start": 1
             },
             "value": "uncovered"
@@ -29,7 +29,7 @@
         {
             "location": {
                 "end": 17,
-                "line": 15,
+                "line": 13,
                 "start": 1
             },
             "value": "uncoveredWithArg"

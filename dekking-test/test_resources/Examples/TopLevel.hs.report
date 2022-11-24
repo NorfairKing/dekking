@@ -3,18 +3,6 @@
         [
             {
                 "annotation": "Uncoverable",
-                "source": "{-# OPTIONS_GHC -fplugin=Dekking -w -ddump-parsed -ddump-rn #-}"
-            }
-        ],
-        [
-            {
-                "annotation": "Uncoverable",
-                "source": ""
-            }
-        ],
-        [
-            {
-                "annotation": "Uncoverable",
                 "source": "module Examples.TopLevel where"
             }
         ],
@@ -128,7 +116,7 @@
             {
                 "location": {
                     "end": 8,
-                    "line": 6,
+                    "line": 4,
                     "start": 1
                 },
                 "value": "covered"
@@ -136,7 +124,7 @@
             {
                 "location": {
                     "end": 15,
-                    "line": 9,
+                    "line": 7,
                     "start": 1
                 },
                 "value": "coveredWithArg"
@@ -146,7 +134,7 @@
             {
                 "location": {
                     "end": 10,
-                    "line": 12,
+                    "line": 10,
                     "start": 1
                 },
                 "value": "uncovered"
@@ -154,7 +142,7 @@
             {
                 "location": {
                     "end": 17,
-                    "line": 15,
+                    "line": 13,
                     "start": 1
                 },
                 "value": "uncoveredWithArg"
