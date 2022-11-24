@@ -14,6 +14,7 @@ ghc-options:
 - -Wmissing-home-modules
 - -Wpartial-fields
 - -Wredundant-constraints
+- -Wunused-packages
 
 library:
   source-dirs: src
@@ -23,14 +24,8 @@ library:
   - autodocodec
   - bytestring
   - containers
-  - dekking-value
-  - filelock
   - ghc
   - mtl
-  - optparse-applicative
   - path
   - path-io
-  - pretty-show
-  - safe-coloured-text
-  - text
 

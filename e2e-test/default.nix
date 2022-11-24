@@ -47,13 +47,6 @@ let
         "foobar-gen"
       ];
     };
-    safe-coloured-text-report = pkgs.dekking.makeCoverageReport {
-      name = "safe-coloured-text-coverage-report";
-      packages = [
-        "safe-coloured-text"
-        "safe-coloured-text-gen"
-      ];
-    };
   };
 in
 (pkgs.linkFarm "e2e-tests" (builtins.attrValues (builtins.mapAttrs

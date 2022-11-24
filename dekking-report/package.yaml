@@ -20,15 +20,18 @@ ghc-options:
 
 library:
   source-dirs: src
+  ghc-options:
+  # This must be put here and not lower because the tests use the plugin and
+  # ghc detects that dekking-value is unused despite an import being generated
+  # by the plugin.
+  - -Wunused-packages
   dependencies:
   - aeson
   - aeson-pretty
   - autodocodec
   - bytestring
   - containers
-  - dekking-value
   - dekking-plugin
-  - filelock
   - ghc
   - mtl
   - optparse-applicative
