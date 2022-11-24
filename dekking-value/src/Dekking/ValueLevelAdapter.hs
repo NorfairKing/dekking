@@ -1,25 +1,22 @@
 -- | Module of adapters for values
 --
 -- Keep this module as small as possible, because it will be imported to adapt
--- values.
+-- values. Any dependency of this module cannot be code-covered.
 module Dekking.ValueLevelAdapter (coverageFileName, adaptValue) where
 
-import System.FileLock
+import Control.Exception
+import GHC.IO.Handle.Lock (LockMode (ExclusiveLock), hLock, hUnlock)
 import System.IO
 import System.IO.Unsafe
 
 coverageFileName :: FilePath
 coverageFileName = "coverage.dat"
 
-coverageLockFileName :: FilePath
-coverageLockFileName = "coverage.lock"
-
--- TODO try using hlock
 withCoverageHandle :: (Handle -> IO a) -> IO a
 withCoverageHandle func =
-  withFileLock coverageLockFileName Exclusive $ \_ ->
-    withFile coverageFileName AppendMode $ \h -> do
-      hSetBuffering h NoBuffering
+  withFile coverageFileName AppendMode $ \h ->
+    bracket_ (hLock h ExclusiveLock) (hUnlock h) $ do
+      hSetBuffering h LineBuffering
       func h
 
 {-# NOINLINE adaptValue #-}

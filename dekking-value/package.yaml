@@ -3,6 +3,8 @@ version: 0.0.0.0
 github: "NorfairKing/dekking"
 author: "Tom Sydney Kerckhove"
 
+# This package must have no dependencies, because then we can't run a
+# code-coverage report for that dependency.
 dependencies:
 - base >= 4.7 && < 5
 
@@ -17,6 +19,4 @@ ghc-options:
 
 library:
   source-dirs: src
-  dependencies:
-  - filelock
 
