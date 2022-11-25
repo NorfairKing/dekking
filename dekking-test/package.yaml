@@ -55,6 +55,7 @@ tests:
     - -Wunused-packages
     dependencies:
     - containers
+    - dekking-plugin
     - dekking-report
     - dekking-test
     - path

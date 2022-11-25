@@ -20,8 +20,9 @@ getSettings :: IO Settings
 getSettings = getFlags >>= combineToSettings
 
 data Settings = Settings
-  { settingCoverablesDirs :: Set (Path Abs Dir),
-    settingCoverageFiles :: Set (Path Abs File)
+  { settingCoverablesDirs :: !(Set (Path Abs Dir)),
+    settingCoverageFiles :: !(Set (Path Abs File)),
+    settingOutputDir :: !(Path Abs Dir)
   }
   deriving (Show, Eq, Generic)
 
@@ -29,6 +30,7 @@ combineToSettings :: Flags -> IO Settings
 combineToSettings Flags {..} = do
   settingCoverablesDirs <- S.fromList <$> mapM resolveDir' flagCoverablesDirs
   settingCoverageFiles <- S.fromList <$> mapM resolveFile' flagCoverageFiles
+  settingOutputDir <- maybe getCurrentDir resolveDir' flagOutputDir
   pure Settings {..}
 
 getFlags :: IO Flags
@@ -43,7 +45,8 @@ prefs_ =
 
 data Flags = Flags
   { flagCoverablesDirs :: ![FilePath],
-    flagCoverageFiles :: ![FilePath]
+    flagCoverageFiles :: ![FilePath],
+    flagOutputDir :: !(Maybe FilePath)
   }
   deriving (Show, Eq, Generic)
 
@@ -70,6 +73,16 @@ parseFlags = OptParse.info parser modifier
                     help "A coverage file",
                     metavar "FILE",
                     completer $ bashCompleter "file"
+                  ]
+              )
+          )
+        <*> optional
+          ( strOption
+              ( mconcat
+                  [ long "output",
+                    help "Output directory",
+                    metavar "DIRECTORY",
+                    completer $ bashCompleter "directory"
                   ]
               )
           )

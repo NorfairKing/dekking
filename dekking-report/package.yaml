@@ -6,6 +6,8 @@ author: "Tom Sydney Kerckhove"
 dependencies:
 - base >= 4.7 && < 5
 
+extra-source-files:
+- templates/**/*
 
 ghc-options:
 - -Wall
@@ -25,18 +27,17 @@ library:
   - -Wunused-packages
   dependencies:
   - aeson
-  - aeson-pretty
   - autodocodec
+  - blaze-html
   - bytestring
   - containers
   - dekking-plugin
-  - ghc
-  - mtl
   - optparse-applicative
   - path
   - path-io
   - pretty-show
   - safe-coloured-text
+  - shakespeare
   - text
 
 executables:

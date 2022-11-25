@@ -1,11 +1,15 @@
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Dekking.Report (reportMain, computeCoverageReport, computeModuleCoverageReport) where
 
 import Autodocodec
 import Data.Aeson (FromJSON, ToJSON)
+import qualified Data.ByteString as SB
+import qualified Data.ByteString.Lazy as LB
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe
@@ -15,8 +19,12 @@ import qualified Data.Text as T
 import Dekking.Coverable
 import Dekking.Coverage
 import Dekking.OptParse
+import Path
+import Path.IO
+import Text.Blaze.Html.Renderer.Utf8 as Blaze
 import Text.Colour
-import Text.Show.Pretty
+import Text.Hamlet
+import Text.Show.Pretty (pPrint)
 
 reportMain :: IO ()
 reportMain = do
@@ -30,6 +38,22 @@ reportMain = do
   let coverageReport = computeCoverageReport coverables coverage
   pPrint coverageReport
   putChunksUtf8With With24BitColours (concatMap (\cs -> cs ++ ["\n"]) (colouredCoverageReport coverageReport))
+  ensureDir settingOutputDir
+  reportFile <- resolveFile settingOutputDir "report.html"
+  SB.writeFile (fromAbsFile reportFile) $ LB.toStrict $ Blaze.renderHtml $ htmlCoverageReport coverageReport
+
+htmlCoverageReport :: CoverageReport -> Html
+htmlCoverageReport CoverageReport {..} = foldMap (uncurry htmlModuleCoverageReport) (M.toList coverageReportModules)
+
+htmlModuleCoverageReport :: ModuleName -> ModuleCoverageReport -> Html
+htmlModuleCoverageReport moduleName ModuleCoverageReport {..} =
+  $(hamletFile "templates/module.hamlet") (error "unused so far")
+
+coveredColour :: Covered -> Maybe String
+coveredColour = \case
+  Covered -> Just "#00aa00"
+  Uncovered -> Just "yellow"
+  Uncoverable -> Nothing
 
 colouredCoverageReport :: CoverageReport -> [[Chunk]]
 colouredCoverageReport CoverageReport {..} =

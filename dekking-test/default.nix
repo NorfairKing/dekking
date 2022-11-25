@@ -14,7 +14,8 @@ mkDerivation {
     path-io pretty-show safe-coloured-text text
   ];
   testHaskellDepends = [
-    base containers dekking-report path path-io sydtest sydtest-aeson
+    base containers dekking-plugin dekking-report path path-io sydtest
+    sydtest-aeson
   ];
   testToolDepends = [ sydtest-discover ];
   homepage = "https://github.com/NorfairKing/dekking#readme";

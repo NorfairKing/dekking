@@ -50,7 +50,6 @@ let
     # External packages' code coverage reports
     yesod-report = pkgs.dekking.makeCoverageReport {
       name = "yesod-coverage-report";
-      inherit haskellPackages;
       packages = [
         "yesod"
         # "yesod-auth" # Simplified subsumption

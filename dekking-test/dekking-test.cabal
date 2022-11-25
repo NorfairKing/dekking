@@ -66,6 +66,7 @@ test-suite dekking-test
   build-depends:
       base >=4.7 && <5
     , containers
+    , dekking-plugin
     , dekking-report
     , dekking-test
     , path

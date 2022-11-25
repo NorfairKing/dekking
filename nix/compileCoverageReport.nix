@@ -19,7 +19,7 @@ stdenv.mkDerivation {
 
     # Make coverage report
     set -x
-    dekking-report ${coverablesOptions} ${coverageOptions} > $out
+    dekking-report ${coverablesOptions} ${coverageOptions} --output $out
     set +x
   '';
 }

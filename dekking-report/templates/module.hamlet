@@ -1,0 +1,13 @@
+<h1>
+  <code>
+    #{moduleName}
+
+$forall lineStrings <- unAnnotatedSource moduleCoverageReportAnnotatedSource
+  $forall (code, covered) <- lineStrings
+    $maybe colour <- coveredColour covered
+      <code style="background-color: #{colour};">
+        #{code}
+    $nothing
+      <code>
+        #{code}
+  <br>
