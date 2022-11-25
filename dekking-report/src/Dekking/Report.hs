@@ -22,6 +22,7 @@ import Path
 import Path.IO
 import Text.Blaze.Html.Renderer.Utf8 as Blaze
 import Text.Hamlet
+import Text.Printf
 import Text.Show.Pretty (pPrint)
 
 reportMain :: IO ()
@@ -44,7 +45,10 @@ htmlCoverageReport CoverageReport {..} = foldMap (uncurry htmlModuleCoverageRepo
 
 htmlModuleCoverageReport :: ModuleName -> ModuleCoverageReport -> Html
 htmlModuleCoverageReport moduleName ModuleCoverageReport {..} =
-  $(hamletFile "templates/module.hamlet") (error "unused so far")
+  let annotatedLines = zip [(1 :: Word) ..] (unAnnotatedSource moduleCoverageReportAnnotatedSource)
+      fmtLineNum :: Word -> String
+      fmtLineNum = printf ("%" <> show (floor (logBase 10 (fromIntegral (length annotatedLines) :: Float)) + 1 :: Int) <> "d")
+   in $(hamletFile "templates/module.hamlet") (error "unused so far")
 
 coveredColour :: Covered -> Maybe String
 coveredColour = \case
