@@ -13,6 +13,7 @@ maintainer:     Tom Sydney Kerckhove
 build-type:     Simple
 extra-source-files:
     templates/module.hamlet
+    templates/style.lucius
 
 source-repository head
   type: git
@@ -42,6 +43,7 @@ library
     , path-io
     , pretty-show
     , shakespeare
+    , text
   default-language: Haskell2010
 
 executable dekking-report

@@ -1,0 +1,3 @@
+.linenum {
+  display: inline;
+}

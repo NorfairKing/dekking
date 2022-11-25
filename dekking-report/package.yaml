@@ -37,6 +37,7 @@ library:
   - path-io
   - pretty-show
   - shakespeare
+  - text
 
 executables:
   dekking-report:

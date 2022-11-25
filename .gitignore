@@ -1,3 +1,4 @@
 *.coverables
 coverage.dat
 *.html
+*.css

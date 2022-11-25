@@ -15,6 +15,9 @@ import qualified Data.Map as M
 import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
+import Data.Text (Text)
+import qualified Data.Text.Encoding as TE
+import qualified Data.Text.Lazy as LT
 import Dekking.Coverable
 import Dekking.Coverage
 import Dekking.OptParse
@@ -22,6 +25,7 @@ import Path
 import Path.IO
 import Text.Blaze.Html.Renderer.Utf8 as Blaze
 import Text.Hamlet
+import Text.Lucius
 import Text.Printf
 import Text.Show.Pretty (pPrint)
 
@@ -38,10 +42,15 @@ reportMain = do
   pPrint coverageReport
   ensureDir settingOutputDir
   reportFile <- resolveFile settingOutputDir "report.html"
+  styleFile <- resolveFile settingOutputDir "style.css"
   SB.writeFile (fromAbsFile reportFile) $ LB.toStrict $ Blaze.renderHtml $ htmlCoverageReport coverageReport
+  SB.writeFile (fromAbsFile styleFile) $ TE.encodeUtf8 coverageReportCss
 
 htmlCoverageReport :: CoverageReport -> Html
 htmlCoverageReport CoverageReport {..} = foldMap (uncurry htmlModuleCoverageReport) (M.toList coverageReportModules)
+
+coverageReportCss :: Text
+coverageReportCss = LT.toStrict $ renderCss $ $(luciusFile "templates/style.lucius") (error "unused so far")
 
 htmlModuleCoverageReport :: ModuleName -> ModuleCoverageReport -> Html
 htmlModuleCoverageReport moduleName ModuleCoverageReport {..} =
