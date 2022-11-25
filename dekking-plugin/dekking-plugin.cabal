@@ -39,4 +39,5 @@ library
     , path
     , path-io
     , text
+    , uniplate
   default-language: Haskell2010

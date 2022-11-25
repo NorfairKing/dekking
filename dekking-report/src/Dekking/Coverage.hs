@@ -5,17 +5,21 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Dekking.Coverable
 import Path
+import Text.Read
 
-readCoverageFiles :: Set (Path Abs File) -> IO (Set (Maybe PackageName, Maybe ModuleName, TopLevelBinding))
+readCoverageFiles :: Set (Path Abs File) -> IO (Set (PackageName, ModuleName, Location))
 readCoverageFiles = foldMap (\f -> print f >> readCoverageFile f)
 
-readCoverageFile :: Path Abs File -> IO (Set (Maybe PackageName, Maybe ModuleName, TopLevelBinding))
+readCoverageFile :: Path Abs File -> IO (Set (PackageName, ModuleName, Location))
 readCoverageFile p = S.fromList . mapMaybe parseIdentifier . lines <$> readFile (fromAbsFile p)
 
-parseIdentifier :: String -> Maybe (Maybe PackageName, Maybe ModuleName, TopLevelBinding)
+parseIdentifier :: String -> Maybe (PackageName, ModuleName, Location)
 parseIdentifier s =
   case words s of
     [] -> Nothing
-    [x, y, z] ->
-      Just (Just x, Just y, TopLevelBinding {topLevelBindingIdentifier = z})
+    [x, y, ls, ss, es] -> do
+      l <- readMaybe ls
+      s <- readMaybe ss
+      e <- readMaybe es
+      Just (x, y, Location {locationLine = l, locationColumnStart = s, locationColumnEnd = e})
     _ -> Nothing

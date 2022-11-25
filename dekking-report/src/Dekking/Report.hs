@@ -95,7 +95,7 @@ coveredColour = \case
   Uncovered -> Just "yellow"
   Uncoverable -> Nothing
 
-computeCoverageReport :: Coverables -> Set (Maybe PackageName, Maybe ModuleName, TopLevelBinding) -> CoverageReport
+computeCoverageReport :: Coverables -> Set (PackageName, ModuleName, Location) -> CoverageReport
 computeCoverageReport Coverables {..} topLevelCoverage =
   CoverageReport $
     M.mapWithKey
@@ -106,7 +106,7 @@ computeCoverageReport Coverables {..} topLevelCoverage =
                       S.fromList
                         . mapMaybe
                           ( \(pn, mm, tlb) ->
-                              if pn == Just packageName && mm == Just moduleName
+                              if pn == packageName && mm == moduleName
                                 then Just tlb
                                 else Nothing
                           )
@@ -125,9 +125,9 @@ newtype CoverageReport = CoverageReport {coverageReportModules :: Map PackageNam
 instance HasCodec CoverageReport where
   codec = dimapCodec CoverageReport coverageReportModules codec
 
-computeModuleCoverageReport :: ModuleCoverables -> Set TopLevelBinding -> ModuleCoverageReport
-computeModuleCoverageReport ModuleCoverables {..} topLevelCoverage =
-  let coverage = computeCoverage moduleCoverablesTopLevelBindings topLevelCoverage
+computeModuleCoverageReport :: ModuleCoverables -> Set Location -> ModuleCoverageReport
+computeModuleCoverageReport ModuleCoverables {..} covereds =
+  let coverage = computeCoverage moduleCoverablesTopLevelBindings covereds
    in ModuleCoverageReport
         { moduleCoverageReportAnnotatedSource = produceAnnotatedSource moduleCoverablesSource coverage,
           moduleCoverageReportTopLevelBindings = coverage
@@ -160,11 +160,11 @@ instance (Ord a, HasCodec a) => HasCodec (Coverage a) where
         <$> requiredField "covered" "covered values" .= coverageCovered
         <*> requiredField "uncovered" "uncovered values" .= coverageUncovered
 
-computeCoverage :: Ord a => Set (Coverable a) -> Set a -> Coverage a
+computeCoverage :: Set (Coverable a) -> Set Location -> Coverage a
 computeCoverage coverables covereds =
   Coverage
-    { coverageCovered = S.filter ((`S.member` covereds) . coverableValue) coverables,
-      coverageUncovered = S.filter (not . (`S.member` covereds) . coverableValue) coverables
+    { coverageCovered = S.filter ((`S.member` covereds) . coverableLocation) coverables,
+      coverageUncovered = S.filter (not . (`S.member` covereds) . coverableLocation) coverables
     }
 
 data CoverageSummary = CoverageSummary
@@ -243,10 +243,8 @@ produceIntervals Coverage {..} = go Covered coverageCovered $ go Uncovered cover
     go c s m =
       S.foldl
         ( \acc Coverable {..} ->
-            case coverableLocation of
-              Nothing -> acc
-              Just Location {..} ->
-                M.insertWith
+            let Location {..} = coverableLocation
+             in M.insertWith
                   S.union
                   locationLine
                   (S.singleton ((locationColumnStart, locationColumnEnd), c))

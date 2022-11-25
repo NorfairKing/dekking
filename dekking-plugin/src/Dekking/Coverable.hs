@@ -1,5 +1,6 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Dekking.Coverable where
 
@@ -54,8 +55,8 @@ instance HasCodec ModuleCoverables where
         <*> optionalFieldWithOmittedDefault "top-level-bindings" mempty "Top level bindings" .= moduleCoverablesTopLevelBindings
 
 data Coverable a = Coverable
-  { coverableValue :: a,
-    coverableLocation :: Maybe Location
+  { coverableValue :: !a,
+    coverableLocation :: !Location
   }
   deriving stock (Show, Eq, Ord)
 
@@ -64,7 +65,7 @@ instance HasCodec a => HasCodec (Coverable a) where
     object "Coverable" $
       Coverable
         <$> requiredField "value" "the value to be covered" .= coverableValue
-        <*> optionalField "location" "the location of the value to be covered" .= coverableLocation
+        <*> requiredField "location" "the location of the value to be covered" .= coverableLocation
 
 data Location = Location
   { locationLine :: Word,
@@ -80,6 +81,9 @@ instance HasCodec Location where
         <$> requiredField "line" "the line number" .= locationLine
         <*> requiredField "start" "the start column" .= locationColumnStart
         <*> requiredField "end" "the end column" .= locationColumnEnd
+
+locationString :: Location -> String
+locationString Location {..} = unwords [show locationLine, show locationColumnStart, show locationColumnEnd]
 
 newtype TopLevelBinding = TopLevelBinding {topLevelBindingIdentifier :: String}
   deriving stock (Show, Eq, Ord)
