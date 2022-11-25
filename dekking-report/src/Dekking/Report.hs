@@ -48,6 +48,7 @@ htmlModuleCoverageReport moduleName ModuleCoverageReport {..} =
   let annotatedLines = zip [(1 :: Word) ..] (unAnnotatedSource moduleCoverageReportAnnotatedSource)
       fmtLineNum :: Word -> String
       fmtLineNum = printf ("%" <> show (floor (logBase 10 (fromIntegral (length annotatedLines) :: Float)) + 1 :: Int) <> "d")
+      CoverageSummary {..} = computeCoverageSummary moduleCoverageReportTopLevelBindings
    in $(hamletFile "templates/module.hamlet") (error "unused so far")
 
 coveredColour :: Covered -> Maybe String
@@ -123,6 +124,20 @@ computeCoverage coverables covereds =
     { coverageCovered = S.filter ((`S.member` covereds) . coverableValue) coverables,
       coverageUncovered = S.filter (not . (`S.member` covereds) . coverableValue) coverables
     }
+
+data CoverageSummary = CoverageSummary
+  { coverageSummaryTotal :: !Word,
+    coverageSummaryCovered :: !Word,
+    coverageSummaryUncovered :: !Word
+  }
+  deriving (Show, Eq, Ord)
+
+computeCoverageSummary :: Coverage a -> CoverageSummary
+computeCoverageSummary Coverage {..} =
+  let coverageSummaryCovered = fromIntegral $ S.size coverageCovered
+      coverageSummaryUncovered = fromIntegral $ S.size coverageUncovered
+      coverageSummaryTotal = coverageSummaryCovered + coverageSummaryUncovered
+   in CoverageSummary {..}
 
 newtype AnnotatedSource = AnnotatedSource {unAnnotatedSource :: [[(String, Covered)]]}
   deriving (Show, Eq)

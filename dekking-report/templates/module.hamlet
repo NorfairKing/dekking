@@ -2,6 +2,25 @@
   <code>
     #{moduleName}
 
+<h2>
+  Summary
+
+<h3>
+  Top-level bindings
+
+<p>
+  Total: #{coverageSummaryTotal}
+<p>
+  Covered: #{coverageSummaryCovered}
+<p>
+  Uncovered: #{coverageSummaryUncovered}
+
+<progress value=#{coverageSummaryCovered} max=#{coverageSummaryTotal}>%</progress>
+
+
+<h2>
+  Code
+
 $forall (lineNum, lineStrings) <- annotatedLines
   <pre style="display: inline;">
     #{fmtLineNum lineNum}: 
