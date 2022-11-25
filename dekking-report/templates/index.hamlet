@@ -1,6 +1,6 @@
 <html>
   <head>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href=@{StyleFile}>
   <body>
     <h1>
       Overview
@@ -21,8 +21,9 @@
               <code>
                 #{packageName}
             <td>
-              <code>
-                #{moduleName}
+              <a href=@{ModuleFile packageName moduleName}>
+                <code>
+                  #{moduleName}
             <td>
               <progress value=#{coverageSummaryCovered summary} max=#{coverageSummaryTotal summary}>%</progress>
       <tfoot>
@@ -32,5 +33,3 @@
           <td>
           <td>
             <progress value=#{coverageSummaryCovered totalSummary} max=#{coverageSummaryTotal totalSummary}>%</progress>
-
-    #{mconcat perModules}

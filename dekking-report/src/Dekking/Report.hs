@@ -8,6 +8,7 @@ module Dekking.Report (reportMain, computeCoverageReport, computeModuleCoverageR
 
 import Autodocodec
 import Control.Arrow (second)
+import Control.Monad
 import Data.Aeson (FromJSON, ToJSON)
 import qualified Data.ByteString as SB
 import qualified Data.ByteString.Lazy as LB
@@ -42,21 +43,43 @@ reportMain = do
   let coverageReport = computeCoverageReport coverables coverage
   pPrint coverageReport
   ensureDir settingOutputDir
-  reportFile <- resolveFile settingOutputDir "report.html"
-  styleFile <- resolveFile settingOutputDir "style.css"
+  reportFile <- resolveFile settingOutputDir (renderReportFile IndexFile)
+  styleFile <- resolveFile settingOutputDir (renderReportFile StyleFile)
   SB.writeFile (fromAbsFile reportFile) $ LB.toStrict $ Blaze.renderHtml $ htmlCoverageReport coverageReport
   SB.writeFile (fromAbsFile styleFile) $ TE.encodeUtf8 coverageReportCss
+  forM_ (concatMap (\(pn, mn) -> (,) pn <$> M.toList mn) (M.toList (coverageReportModules coverageReport))) $ \(pn, (mn, mc)) -> do
+    modulePath <- resolveFile settingOutputDir (renderReportFile (ModuleFile pn mn))
+    print modulePath
+    ensureDir (parent modulePath)
+    SB.writeFile (fromAbsFile modulePath) $
+      LB.toStrict $ Blaze.renderHtml $ htmlModuleCoverageReport pn mn mc
+
+data ReportFile
+  = IndexFile
+  | StyleFile
+  | ModuleFile PackageName ModuleName
+
+renderReportFile :: ReportFile -> FilePath
+renderReportFile = \case
+  IndexFile -> "index.html"
+  StyleFile -> "style.css"
+  ModuleFile pn mn -> moduleFileName pn mn
+
+moduleFileName :: PackageName -> ModuleName -> FilePath
+moduleFileName pn mn = pn <> mn <> ".html"
+
+reportUrlRender :: ReportFile -> [Text] -> String
+reportUrlRender rf _ = renderReportFile rf
 
 htmlCoverageReport :: CoverageReport -> Html
 htmlCoverageReport CoverageReport {..} =
   let unwrapped = concatMap (\(pn, ms) -> (,) pn <$> M.toList ms) (M.toList coverageReportModules)
       summaries = map (second (second (computeCoverageSummary . moduleCoverageReportTopLevelBindings))) unwrapped
       totalSummary = foldMap (snd . snd) summaries
-      perModules = map (\(pn, (mn, mcr)) -> htmlModuleCoverageReport pn mn mcr) unwrapped
-   in $(hamletFile "templates/index.hamlet") (error "unused so far")
+   in $(hamletFile "templates/index.hamlet") reportUrlRender
 
 coverageReportCss :: Text
-coverageReportCss = LT.toStrict $ renderCss $ $(luciusFile "templates/style.lucius") (error "unused so far")
+coverageReportCss = LT.toStrict $ renderCss $ $(luciusFile "templates/style.lucius") reportUrlRender
 
 htmlModuleCoverageReport :: PackageName -> ModuleName -> ModuleCoverageReport -> Html
 htmlModuleCoverageReport packageName moduleName ModuleCoverageReport {..} =
@@ -64,7 +87,7 @@ htmlModuleCoverageReport packageName moduleName ModuleCoverageReport {..} =
       fmtLineNum :: Word -> String
       fmtLineNum = printf ("%" <> show (floor (logBase 10 (fromIntegral (length annotatedLines) :: Float)) + 1 :: Int) <> "d")
       summary = computeCoverageSummary moduleCoverageReportTopLevelBindings
-   in $(hamletFile "templates/module.hamlet") (error "unused so far")
+   in $(hamletFile "templates/module.hamlet") reportUrlRender
 
 coveredColour :: Covered -> Maybe String
 coveredColour = \case
