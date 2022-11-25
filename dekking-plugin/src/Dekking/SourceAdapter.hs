@@ -99,18 +99,6 @@ adaptBind moduule = \case
                   }
             UnhelpfulSpan _ -> Nothing
         }
-    let applyAdapter :: HsExpr GhcPs -> HsExpr GhcPs
-        applyAdapter e =
-          HsApp
-            NoExtField
-            ( noLoc
-                ( HsApp
-                    NoExtField
-                    (noLoc (HsVar NoExtField (noLoc (Qual adapterModuleName (mkVarOcc "adaptValue")))))
-                    (noLoc (HsLit NoExtField (HsString NoSourceText (mkFastString strToLog))))
-                )
-            )
-            (noLoc e)
     adaptedName <- noLoc <$> adaptTopLevelName (unLoc originalName)
     let adaptedMatches =
           MG
@@ -135,7 +123,7 @@ adaptBind moduule = \case
                                         ( GRHS
                                             NoExtField
                                             []
-                                            (noLoc (applyAdapter (HsVar NoExtField adaptedName)))
+                                            (noLoc (adaptExpr strToLog (HsVar NoExtField adaptedName)))
                                         )
                                     ],
                                   grhssLocalBinds = noLoc (EmptyLocalBinds NoExtField)
@@ -161,6 +149,19 @@ adaptBind moduule = \case
           originalTicks
       ]
   b -> pure [b]
+
+adaptExpr :: String -> HsExpr GhcPs -> HsExpr GhcPs
+adaptExpr strToLog e =
+  HsApp
+    NoExtField
+    ( noLoc
+        ( HsApp
+            NoExtField
+            (noLoc (HsVar NoExtField (noLoc (Qual adapterModuleName (mkVarOcc "adaptValue")))))
+            (noLoc (HsLit NoExtField (HsString NoSourceText (mkFastString strToLog))))
+        )
+    )
+    (noLoc e)
 
 rdrNameToString :: GHC.Unit -> RdrName -> String
 rdrNameToString unit n =
