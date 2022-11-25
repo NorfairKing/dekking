@@ -1,5 +1,6 @@
 {
     "module-name": "Examples.TopLevel",
+    "package-name": "0.0.0.0-test-dekking",
     "source": "module Examples.TopLevel where\n\ncovered :: IO ()\ncovered = pure ()\n\ncoveredWithArg :: Int -> IO ()\ncoveredWithArg _ = pure ()\n\nuncovered :: IO ()\nuncovered = pure ()\n\nuncoveredWithArg :: Int -> IO ()\nuncoveredWithArg _ = pure ()\n",
     "top-level-bindings": [
         {

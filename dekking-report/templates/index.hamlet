@@ -1,0 +1,36 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="style.css">
+  <body>
+    <h1>
+      Overview
+
+    <table>
+      <thead>
+        <tr>
+          <th>
+            Package
+          <th>
+            Module
+          <th>
+            Top-level bindings
+      <tbody>
+        $forall (packageName, (moduleName, summary)) <- summaries
+          <tr>
+            <td>
+              <code>
+                #{packageName}
+            <td>
+              <code>
+                #{moduleName}
+            <td>
+              <progress value=#{coverageSummaryCovered summary} max=#{coverageSummaryTotal summary}>%</progress>
+      <tfoot>
+        <tr>
+          <td>
+            Total
+          <td>
+          <td>
+            <progress value=#{coverageSummaryCovered totalSummary} max=#{coverageSummaryTotal totalSummary}>%</progress>
+
+    #{mconcat perModules}

@@ -17,7 +17,7 @@ import qualified Data.Set as S
 import Path
 import Path.IO
 
-newtype Coverables = Coverables {coverablesModules :: Map ModuleName ModuleCoverables}
+newtype Coverables = Coverables {coverablesModules :: Map PackageName (Map ModuleName ModuleCoverables)}
   deriving stock (Show, Eq)
   deriving (FromJSON, ToJSON) via (Autodocodec Coverables)
 
@@ -36,7 +36,8 @@ instance HasCodec Coverables where
   codec = dimapCodec Coverables coverablesModules codec
 
 data ModuleCoverables = ModuleCoverables
-  { moduleCoverablesModuleName :: ModuleName,
+  { moduleCoverablesPackageName :: PackageName,
+    moduleCoverablesModuleName :: ModuleName,
     moduleCoverablesSource :: String,
     moduleCoverablesTopLevelBindings :: Set (Coverable TopLevelBinding)
   }
@@ -47,7 +48,8 @@ instance HasCodec ModuleCoverables where
   codec =
     object "ModuleCoverables" $
       ModuleCoverables
-        <$> requiredField "module-name" "Module name" .= moduleCoverablesModuleName
+        <$> requiredField "package-name" "Package name" .= moduleCoverablesPackageName
+        <*> requiredField "module-name" "Module name" .= moduleCoverablesModuleName
         <*> requiredField "source" "source code" .= moduleCoverablesSource
         <*> optionalFieldWithOmittedDefault "top-level-bindings" mempty "Top level bindings" .= moduleCoverablesTopLevelBindings
 
@@ -85,6 +87,8 @@ newtype TopLevelBinding = TopLevelBinding {topLevelBindingIdentifier :: String}
 instance HasCodec TopLevelBinding where
   codec = dimapCodec TopLevelBinding topLevelBindingIdentifier codec
 
+type PackageName = String
+
 type ModuleName = String
 
 readModuleCoverablesFile :: Path Abs File -> IO ModuleCoverables
@@ -113,10 +117,10 @@ readCoverablesFiles dirs = do
       (maybe False (isSuffixOf coverablesExtension) . fileExtension)
       . concat
       <$> mapM (fmap snd . listDirRecur) (S.toList dirs)
-  fmap (Coverables . M.fromList) $
+  fmap (Coverables . M.unionsWith M.union) $
     forM coverablesFiles $ \coverablesFile -> do
       coverables <- readModuleCoverablesFile coverablesFile
-      pure (moduleCoverablesModuleName coverables, coverables)
+      pure $ M.singleton (moduleCoverablesPackageName coverables) (M.singleton (moduleCoverablesModuleName coverables) coverables)
 
 coverablesExtension :: String
 coverablesExtension = ".coverables"

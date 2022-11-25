@@ -1,34 +1,21 @@
-{-# LANGUAGE LambdaCase #-}
-
 module Dekking.Coverage where
 
-import Data.List
 import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
 import Dekking.Coverable
 import Path
 
-readCoverageFiles :: Set (Path Abs File) -> IO (Set (Maybe ModuleName, TopLevelBinding))
+readCoverageFiles :: Set (Path Abs File) -> IO (Set (Maybe PackageName, Maybe ModuleName, TopLevelBinding))
 readCoverageFiles = foldMap (\f -> print f >> readCoverageFile f)
 
-readCoverageFile :: Path Abs File -> IO (Set (Maybe ModuleName, TopLevelBinding))
+readCoverageFile :: Path Abs File -> IO (Set (Maybe PackageName, Maybe ModuleName, TopLevelBinding))
 readCoverageFile p = S.fromList . mapMaybe parseIdentifier . lines <$> readFile (fromAbsFile p)
 
-parseIdentifier :: String -> Maybe (Maybe ModuleName, TopLevelBinding)
+parseIdentifier :: String -> Maybe (Maybe PackageName, Maybe ModuleName, TopLevelBinding)
 parseIdentifier s =
-  case reverse
-    ( words
-        ( map
-            ( \case
-                '.' -> ' '
-                c -> c
-            )
-            s
-        )
-    ) of
+  case words s of
     [] -> Nothing
-    [x] ->
-      Just (Nothing, TopLevelBinding {topLevelBindingIdentifier = x})
-    (x : rest) ->
-      Just (Just $ intercalate "." (reverse rest), TopLevelBinding {topLevelBindingIdentifier = x})
+    [x, y, z] ->
+      Just (Just x, Just y, TopLevelBinding {topLevelBindingIdentifier = z})
+    _ -> Nothing

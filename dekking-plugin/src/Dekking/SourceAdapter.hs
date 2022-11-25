@@ -2,16 +2,17 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Dekking.SourceAdapter (adaptLocatedHsModule) where
+module Dekking.SourceAdapter (adaptLocatedHsModule, unitToString) where
 
 import Control.Monad.Reader
 import Control.Monad.Writer.Strict
 import Data.Set (Set)
 import qualified Data.Set as S
+import qualified Data.Text as T
 import Dekking.Coverable
 import GHC hiding (moduleName)
 import GHC.Driver.Types as GHC
-import GHC.Plugins as GHC hiding (moduleName)
+import GHC.Plugins as GHC
 
 addCoverableTopLevelBinding :: Coverable TopLevelBinding -> AdaptM ()
 addCoverableTopLevelBinding a = tell (S.singleton a)
@@ -24,18 +25,18 @@ adapterImport = noLoc (simpleImportDecl adapterModuleName)
 adapterModuleName :: GHC.ModuleName
 adapterModuleName = mkModuleName "Dekking.ValueLevelAdapter"
 
-adaptLocatedHsModule :: GHC.ModuleName -> Located HsModule -> AdaptM (Located HsModule)
-adaptLocatedHsModule moduleName = adaptLocated (adaptHsModule moduleName)
+adaptLocatedHsModule :: GHC.Module -> Located HsModule -> AdaptM (Located HsModule)
+adaptLocatedHsModule moduule = liftL (adaptHsModule moduule)
 
-adaptHsModule :: GHC.ModuleName -> HsModule -> AdaptM HsModule
-adaptHsModule moduleName m = do
-  liftIO $ putStrLn $ "Adapting module: " ++ moduleNameString moduleName
-  decls' <- concat <$> mapM (adaptLocatedTopLevelDecl moduleName) (hsmodDecls m)
+adaptHsModule :: GHC.Module -> HsModule -> AdaptM HsModule
+adaptHsModule moduule m = do
+  liftIO $ putStrLn $ "Adapting module: " ++ moduleNameString (moduleName moduule)
+  decls' <- concat <$> mapM (adaptLocatedTopLevelDecl moduule) (hsmodDecls m)
   pure (m {hsmodDecls = decls', hsmodImports = adapterImport : hsmodImports m})
 
-adaptLocatedTopLevelDecl :: GHC.ModuleName -> Located (HsDecl GhcPs) -> AdaptM [Located (HsDecl GhcPs)]
-adaptLocatedTopLevelDecl moduleName lDecl = do
-  lDecls' <- adaptTopLevelDecl moduleName (unLoc lDecl)
+adaptLocatedTopLevelDecl :: GHC.Module -> Located (HsDecl GhcPs) -> AdaptM [Located (HsDecl GhcPs)]
+adaptLocatedTopLevelDecl moduule lDecl = do
+  lDecls' <- adaptTopLevelDecl moduule (unLoc lDecl)
   case lDecls' of
     [] -> error "must not happen, otherwise we're deleting decls."
     [x] -> pure [L (getLoc lDecl) x] -- Nothing was adapted
@@ -43,16 +44,16 @@ adaptLocatedTopLevelDecl moduleName lDecl = do
       pure [L (getLoc lDecl) decl, noLoc modifiedDecl]
     _ -> error "must not happen either, otherwise we're making too many extra decls"
 
-adaptTopLevelDecl :: GHC.ModuleName -> HsDecl GhcPs -> AdaptM [HsDecl GhcPs]
-adaptTopLevelDecl moduleName = \case
-  ValD x bind -> fmap (ValD x) <$> adaptBind moduleName bind
-  SigD x sig -> (: []) . SigD x <$> adaptSig sig
+adaptTopLevelDecl :: GHC.Module -> HsDecl GhcPs -> AdaptM [HsDecl GhcPs]
+adaptTopLevelDecl moduule = \case
+  ValD x bind -> fmap (ValD x) <$> adaptBind moduule bind
+  SigD x sig -> (: []) . SigD x <$> adaptSig moduule sig
   d -> pure [d]
 
-adaptSig :: Sig GhcPs -> AdaptM (Sig GhcPs)
-adaptSig = \case
+adaptSig :: GHC.Module -> Sig GhcPs -> AdaptM (Sig GhcPs)
+adaptSig moduule = \case
   TypeSig x ls typ -> do
-    let nameStrings = map (rdrNameToString . unLoc) ls
+    let nameStrings = map (rdrNameToString (moduleUnit moduule) . unLoc) ls
     liftIO $ putStrLn $ "Duplicating type-signatures for: " ++ show nameStrings
     ls' <- fmap concat $
       forM ls $ \l -> do
@@ -77,13 +78,13 @@ adaptTopLevelOccName on = do
 adaptTopLevelExactName :: Name -> AdaptM Name
 adaptTopLevelExactName = undefined
 
-adaptBind :: GHC.ModuleName -> HsBind GhcPs -> AdaptM [HsBind GhcPs]
-adaptBind moduleName = \case
+adaptBind :: GHC.Module -> HsBind GhcPs -> AdaptM [HsBind GhcPs]
+adaptBind moduule = \case
   FunBind x originalName originalMatches originalTicks -> do
-    let nameString = rdrNameToString (unLoc originalName)
+    let on = rdrNameOcc (unLoc originalName)
+        nameString = occNameString on
     liftIO $ putStrLn $ "Adapting bind: " ++ nameString
-    adaptedName <- noLoc <$> adaptTopLevelName (unLoc originalName)
-    let strToLog = rdrNameToString (mkRdrQual moduleName (rdrNameOcc (unLoc originalName)))
+    let strToLog = rdrNameToString (moduleUnit moduule) (mkRdrQual (moduleName moduule) on)
     let
     addCoverableTopLevelBinding
       Coverable
@@ -110,7 +111,7 @@ adaptBind moduleName = \case
                 )
             )
             (noLoc e)
-
+    adaptedName <- noLoc <$> adaptTopLevelName (unLoc originalName)
     let adaptedMatches =
           MG
             { mg_ext = NoExtField,
@@ -161,11 +162,17 @@ adaptBind moduleName = \case
       ]
   b -> pure [b]
 
-rdrNameToString :: RdrName -> String
-rdrNameToString = \case
-  Unqual on -> occNameString on
-  Qual mn on -> moduleNameString mn ++ "." ++ occNameString on
-  _ -> "unknown"
+rdrNameToString :: GHC.Unit -> RdrName -> String
+rdrNameToString unit n =
+  unwords $
+    concat
+      [ [unitToString unit],
+        case n of
+          Unqual on -> ["unknown", occNameString on]
+          Qual mn on -> [moduleNameString mn, occNameString on]
+          _ -> ["unknown", "unknown"]
+      ]
 
-adaptLocated :: Monad m => (a -> m b) -> Located a -> m (Located b)
-adaptLocated = liftL
+-- We drop the hash because it differs in a cabal build versus a nix build.
+unitToString :: GHC.Unit -> String
+unitToString = T.unpack . T.intercalate "-" . drop 1 . reverse . T.splitOn "-" . T.pack . unitString

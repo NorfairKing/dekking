@@ -7,6 +7,7 @@
 module Dekking.Report (reportMain, computeCoverageReport, computeModuleCoverageReport) where
 
 import Autodocodec
+import Control.Arrow (second)
 import Data.Aeson (FromJSON, ToJSON)
 import qualified Data.ByteString as SB
 import qualified Data.ByteString.Lazy as LB
@@ -47,17 +48,22 @@ reportMain = do
   SB.writeFile (fromAbsFile styleFile) $ TE.encodeUtf8 coverageReportCss
 
 htmlCoverageReport :: CoverageReport -> Html
-htmlCoverageReport CoverageReport {..} = foldMap (uncurry htmlModuleCoverageReport) (M.toList coverageReportModules)
+htmlCoverageReport CoverageReport {..} =
+  let unwrapped = concatMap (\(pn, ms) -> (,) pn <$> M.toList ms) (M.toList coverageReportModules)
+      summaries = map (second (second (computeCoverageSummary . moduleCoverageReportTopLevelBindings))) unwrapped
+      totalSummary = foldMap (snd . snd) summaries
+      perModules = map (\(pn, (mn, mcr)) -> htmlModuleCoverageReport pn mn mcr) unwrapped
+   in $(hamletFile "templates/index.hamlet") (error "unused so far")
 
 coverageReportCss :: Text
 coverageReportCss = LT.toStrict $ renderCss $ $(luciusFile "templates/style.lucius") (error "unused so far")
 
-htmlModuleCoverageReport :: ModuleName -> ModuleCoverageReport -> Html
-htmlModuleCoverageReport moduleName ModuleCoverageReport {..} =
+htmlModuleCoverageReport :: PackageName -> ModuleName -> ModuleCoverageReport -> Html
+htmlModuleCoverageReport packageName moduleName ModuleCoverageReport {..} =
   let annotatedLines = zip [(1 :: Word) ..] (unAnnotatedSource moduleCoverageReportAnnotatedSource)
       fmtLineNum :: Word -> String
       fmtLineNum = printf ("%" <> show (floor (logBase 10 (fromIntegral (length annotatedLines) :: Float)) + 1 :: Int) <> "d")
-      CoverageSummary {..} = computeCoverageSummary moduleCoverageReportTopLevelBindings
+      summary = computeCoverageSummary moduleCoverageReportTopLevelBindings
    in $(hamletFile "templates/module.hamlet") (error "unused so far")
 
 coveredColour :: Covered -> Maybe String
@@ -66,26 +72,30 @@ coveredColour = \case
   Uncovered -> Just "yellow"
   Uncoverable -> Nothing
 
-computeCoverageReport :: Coverables -> Set (Maybe ModuleName, TopLevelBinding) -> CoverageReport
+computeCoverageReport :: Coverables -> Set (Maybe PackageName, Maybe ModuleName, TopLevelBinding) -> CoverageReport
 computeCoverageReport Coverables {..} topLevelCoverage =
   CoverageReport $
     M.mapWithKey
-      ( \moduleName moduleCoverables ->
-          let relevantCoverage =
-                S.fromList
-                  . mapMaybe
-                    ( \(mm, tlb) ->
-                        if mm == Just moduleName
-                          then Just tlb
-                          else Nothing
-                    )
-                  . S.toList
-                  $ topLevelCoverage
-           in computeModuleCoverageReport moduleCoverables relevantCoverage
+      ( \packageName modules ->
+          M.mapWithKey
+            ( \moduleName moduleCoverables ->
+                let relevantCoverage =
+                      S.fromList
+                        . mapMaybe
+                          ( \(pn, mm, tlb) ->
+                              if pn == Just packageName && mm == Just moduleName
+                                then Just tlb
+                                else Nothing
+                          )
+                        . S.toList
+                        $ topLevelCoverage
+                 in computeModuleCoverageReport moduleCoverables relevantCoverage
+            )
+            modules
       )
       coverablesModules
 
-newtype CoverageReport = CoverageReport {coverageReportModules :: Map ModuleName ModuleCoverageReport}
+newtype CoverageReport = CoverageReport {coverageReportModules :: Map PackageName (Map ModuleName ModuleCoverageReport)}
   deriving (Show, Eq)
   deriving (FromJSON, ToJSON) via (Autodocodec CoverageReport)
 
@@ -135,18 +145,34 @@ computeCoverage coverables covereds =
     }
 
 data CoverageSummary = CoverageSummary
-  { coverageSummaryTotal :: !Word,
-    coverageSummaryCovered :: !Word,
-    coverageSummaryUncovered :: !Word
+  { coverageSummaryUncovered :: !Word,
+    coverageSummaryCovered :: !Word
   }
   deriving (Show, Eq, Ord)
 
 computeCoverageSummary :: Coverage a -> CoverageSummary
 computeCoverageSummary Coverage {..} =
-  let coverageSummaryCovered = fromIntegral $ S.size coverageCovered
-      coverageSummaryUncovered = fromIntegral $ S.size coverageUncovered
-      coverageSummaryTotal = coverageSummaryCovered + coverageSummaryUncovered
+  let coverageSummaryUncovered = fromIntegral $ S.size coverageUncovered
+      coverageSummaryCovered = fromIntegral $ S.size coverageCovered
    in CoverageSummary {..}
+
+coverageSummaryTotal :: CoverageSummary -> Word
+coverageSummaryTotal CoverageSummary {..} = coverageSummaryUncovered + coverageSummaryCovered
+
+instance Semigroup CoverageSummary where
+  (<>) c1 c2 =
+    CoverageSummary
+      { coverageSummaryUncovered = coverageSummaryUncovered c1 + coverageSummaryUncovered c2,
+        coverageSummaryCovered = coverageSummaryCovered c1 + coverageSummaryCovered c2
+      }
+
+instance Monoid CoverageSummary where
+  mempty =
+    CoverageSummary
+      { coverageSummaryUncovered = 0,
+        coverageSummaryCovered = 0
+      }
+  mappend = (<>)
 
 newtype AnnotatedSource = AnnotatedSource {unAnnotatedSource :: [[(String, Covered)]]}
   deriving (Show, Eq)

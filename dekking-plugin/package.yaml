@@ -28,3 +28,4 @@ library:
   - mtl
   - path
   - path-io
+  - text

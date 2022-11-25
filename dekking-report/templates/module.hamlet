@@ -1,38 +1,36 @@
-<html>
-  <head>
-    <link rel="stylesheet" href="style.css">
-  <body>
-    <h1>
+<h1>
+  <code>
+    #{packageName}
+  <code>
+    #{moduleName}
+
+<h2>
+  Summary
+
+<h3>
+  Top-level bindings
+
+<p>
+  Total: #{coverageSummaryTotal summary}
+<p>
+  Covered: #{coverageSummaryCovered summary}
+<p>
+  Uncovered: #{coverageSummaryUncovered summary}
+
+<progress value=#{coverageSummaryCovered summary} max=#{coverageSummaryTotal summary}>%</progress>
+
+
+<h2>
+  Code
+
+$forall (lineNum, lineStrings) <- annotatedLines
+  <pre .linenum>
+    #{fmtLineNum lineNum}: 
+  $forall (code, covered) <- lineStrings
+    $maybe colour <- coveredColour covered
+      <code style="background-color: #{colour};">
+        #{code}
+    $nothing
       <code>
-        #{moduleName}
-
-    <h2>
-      Summary
-
-    <h3>
-      Top-level bindings
-
-    <p>
-      Total: #{coverageSummaryTotal}
-    <p>
-      Covered: #{coverageSummaryCovered}
-    <p>
-      Uncovered: #{coverageSummaryUncovered}
-
-    <progress value=#{coverageSummaryCovered} max=#{coverageSummaryTotal}>%</progress>
-
-
-    <h2>
-      Code
-
-    $forall (lineNum, lineStrings) <- annotatedLines
-      <pre .linenum>
-        #{fmtLineNum lineNum}: 
-      $forall (code, covered) <- lineStrings
-        $maybe colour <- coveredColour covered
-          <code style="background-color: #{colour};">
-            #{code}
-        $nothing
-          <code>
-            #{code}
-      <br>
+        #{code}
+  <br>

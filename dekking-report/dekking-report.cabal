@@ -12,6 +12,7 @@ author:         Tom Sydney Kerckhove
 maintainer:     Tom Sydney Kerckhove
 build-type:     Simple
 extra-source-files:
+    templates/index.hamlet
     templates/module.hamlet
     templates/style.lucius
 

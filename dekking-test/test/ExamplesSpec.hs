@@ -36,7 +36,7 @@ spec = sequential $ do
       pure $
         pureGoldenJSONValueFile
           "test_resources/Examples/TopLevel.hs.report"
-          (computeModuleCoverageReport coverables (S.map snd coverage))
+          (computeModuleCoverageReport coverables (S.map (\(_, _, x) -> x) coverage))
 
   describe "Multi" $ do
     it "Makes the same coverables for the Multi modules" $ do

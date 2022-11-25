@@ -17,12 +17,13 @@ plugin = defaultPlugin {parsedResultAction = adaptParseResult}
 adaptParseResult :: [CommandLineOption] -> ModSummary -> HsParsedModule -> Hsc HsParsedModule
 adaptParseResult _ ms pr = do
   liftIO $ putStrLn "Activating the coverage logger plugin"
-  let mn = moduleName (ms_mod ms)
+  let m = ms_mod ms
+  let mn = moduleName m
   if "Paths_" `isPrefixOf` moduleNameString mn
     then pure pr
     else do
       -- Transform the source
-      (lm', bindings) <- runWriterT (adaptLocatedHsModule mn (hpm_module pr))
+      (lm', bindings) <- runWriterT (adaptLocatedHsModule m (hpm_module pr))
       forM_ (ml_hs_file (ms_location ms)) $ \sourceFile ->
         -- Output the coverables
         liftIO $ do
@@ -38,7 +39,8 @@ adaptParseResult _ ms pr = do
               ]
           writeModuleCoverablesFile coverablesFile $
             ModuleCoverables
-              { moduleCoverablesModuleName = moduleNameString mn,
+              { moduleCoverablesPackageName = unitToString (moduleUnit m),
+                moduleCoverablesModuleName = moduleNameString mn,
                 moduleCoverablesSource = sourceCode,
                 moduleCoverablesTopLevelBindings = bindings
               }
