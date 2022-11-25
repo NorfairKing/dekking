@@ -15,14 +15,12 @@ import qualified Data.Map as M
 import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
-import qualified Data.Text as T
 import Dekking.Coverable
 import Dekking.Coverage
 import Dekking.OptParse
 import Path
 import Path.IO
 import Text.Blaze.Html.Renderer.Utf8 as Blaze
-import Text.Colour
 import Text.Hamlet
 import Text.Show.Pretty (pPrint)
 
@@ -37,7 +35,6 @@ reportMain = do
   pPrint coverage
   let coverageReport = computeCoverageReport coverables coverage
   pPrint coverageReport
-  putChunksUtf8With With24BitColours (concatMap (\cs -> cs ++ ["\n"]) (colouredCoverageReport coverageReport))
   ensureDir settingOutputDir
   reportFile <- resolveFile settingOutputDir "report.html"
   SB.writeFile (fromAbsFile reportFile) $ LB.toStrict $ Blaze.renderHtml $ htmlCoverageReport coverageReport
@@ -54,21 +51,6 @@ coveredColour = \case
   Covered -> Just "#00aa00"
   Uncovered -> Just "yellow"
   Uncoverable -> Nothing
-
-colouredCoverageReport :: CoverageReport -> [[Chunk]]
-colouredCoverageReport CoverageReport {..} =
-  flip concatMap (M.toList coverageReportModules) $ \(moduleName, ModuleCoverageReport {..}) ->
-    concat
-      [ [[fore blue $ chunk (T.pack moduleName)], []],
-        flip map (unAnnotatedSource moduleCoverageReportAnnotatedSource) $ \ls ->
-          flip map ls $ \(s, c) ->
-            let withCovered = case c of
-                  Uncoverable -> id
-                  Uncovered -> fore red
-                  Covered -> fore green
-             in withCovered $ chunk (T.pack s),
-        [[], []]
-      ]
 
 computeCoverageReport :: Coverables -> Set (Maybe ModuleName, TopLevelBinding) -> CoverageReport
 computeCoverageReport Coverables {..} topLevelCoverage =

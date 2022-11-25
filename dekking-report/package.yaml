@@ -36,9 +36,7 @@ library:
   - path
   - path-io
   - pretty-show
-  - safe-coloured-text
   - shakespeare
-  - text
 
 executables:
   dekking-report:
