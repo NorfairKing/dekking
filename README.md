@@ -25,7 +25,67 @@ The relevant programs are:
 
 ### Source-to-source transformation
 
-TODO: Write out how this works
+The source-to-source transformation works as follows;
+
+#### Top-level bindings
+
+For top-level bindings, for example one like this:
+
+``` haskell
+foobar :: IO ()
+foobar = pure ()
+```
+
+A duplicate is created, with the same type signature, and the following implementation:
+
+``` haskell
+foobar :: IO ()
+foobar = markAsCovered "foobar" foobarUnlikelyToCollideForCoverageXYZPoopyHead
+
+foobarUnlikelyToCollideForCoverageXYZPoopyHead :: IO ()
+foobarUnlikelyToCollideForCoverageXYZPoopyHead = pure ()
+```
+
+Here, the `markAsCovered "foobar"` is actually `adaptValue "PackageName Model 2
+1 6"`, where `2` is the line number, `1` is the starting column, and `6` is the
+ending column of the `foobar` identifier.
+
+We cannot use the same trick as we do for expressions (see below), because
+top-level bindings can have multiple patterns and/or guards.
+
+#### Expressions
+
+For expressions, we replace every expression `e` by `markAsCovered "e" e`.
+Again, we actually use `adaptValue` with information about where `e` actually
+is, but to give an idea of what this looks like, we would transform this
+expression:
+
+```
+((a + b) * c)
+```
+
+into this expression (`f = markExpression`):
+
+```
+((f a) + (f b)) * (f c)
+```
+
+### The value adapter
+
+The `adaptValue` function mentioned above is implemented in the very small `dekking-value` package, in the `Dekking.ValueLevelAdapter` module.
+
+It looks something like this:
+
+``` haskell
+{-# NOINLINE adaptValue #-}
+adaptValue :: String -> (forall a. a -> a)
+adaptValue logStr = unsafePerformIO $ do
+  hPutStrLn coverageHandle logStr
+  hFlush coverageHandle
+  pure id
+```
+
+This function uses the _problem_ of `unsafePerformIO`, namely that the IO is only executed once, as a way to make sure that each expression is only marked as covered once.
 
 ### Coverables
 

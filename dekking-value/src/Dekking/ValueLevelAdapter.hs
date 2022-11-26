@@ -38,7 +38,6 @@ coverageHandle = unsafePerformIO $ do
 adaptValue :: String -> (forall a. a -> a)
 adaptValue logStr = unsafePerformIO $ do
   hPutStrLn coverageHandle logStr
-  hFlush coverageHandle
   pure id
 
 -- TODO try out 'unsafeDupablePerformIO' and consider whether I

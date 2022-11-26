@@ -3,7 +3,7 @@
     <link rel="stylesheet" href=@{StyleFile}>
   <body>
     <h1>
-      Overview
+      Coverage report
 
     <table>
       <thead>
