@@ -12,6 +12,7 @@ library
   exposed-modules:
       OverloadedStrings
       Paren
+      Record
       TopLevel
   other-modules:
       Paths_syntax

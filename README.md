@@ -47,7 +47,7 @@ foobarUnlikelyToCollideForCoverageXYZPoopyHead :: IO ()
 foobarUnlikelyToCollideForCoverageXYZPoopyHead = pure ()
 ```
 
-Here, the `markAsCovered "foobar"` is actually `adaptValue "PackageName Model 2
+Here, the `markAsCovered "foobar"` is actually `adaptValue "PackageName Module 2
 1 6"`, where `2` is the line number, `1` is the starting column, and `6` is the
 ending column of the `foobar` identifier.
 

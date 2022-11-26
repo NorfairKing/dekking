@@ -1,5 +1,6 @@
 import qualified OverloadedStrings
 import qualified Paren
+import qualified Record
 import qualified TopLevel
 
 main :: IO ()
@@ -15,3 +16,5 @@ main = do
   Paren.main
 
   OverloadedStrings.main
+
+  Record.main
