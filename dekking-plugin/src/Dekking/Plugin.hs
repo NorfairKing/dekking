@@ -23,7 +23,7 @@ adaptParseResult _ ms pr = do
     then pure pr
     else do
       -- Transform the source
-      (lm', coverables) <- runWriterT (adaptLocatedHsModule m (hpm_module pr))
+      (lm', coverables) <- runReaderT (runWriterT (adaptLocatedHsModule (hpm_module pr))) m
       forM_ (ml_hs_file (ms_location ms)) $ \sourceFile ->
         -- Output the coverables
         liftIO $ do

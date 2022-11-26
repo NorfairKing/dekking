@@ -20,7 +20,7 @@ addCoverableTopLevelBinding e = tell (mempty {moduleCoverablesTopLevelBindings =
 addExpression :: Coverable Expression -> AdaptM ()
 addExpression e = tell (mempty {moduleCoverablesExpressions = S.singleton e})
 
-type AdaptM = WriterT ModuleCoverables Hsc
+type AdaptM = WriterT ModuleCoverables (ReaderT GHC.Module Hsc)
 
 adapterImport :: LImportDecl GhcPs
 adapterImport = noLoc (simpleImportDecl adapterModuleName)
@@ -28,73 +28,73 @@ adapterImport = noLoc (simpleImportDecl adapterModuleName)
 adapterModuleName :: GHC.ModuleName
 adapterModuleName = mkModuleName "Dekking.ValueLevelAdapter"
 
-adaptLocatedHsModule :: GHC.Module -> Located HsModule -> AdaptM (Located HsModule)
-adaptLocatedHsModule moduule = liftL (adaptHsModule moduule)
+adaptLocatedHsModule :: Located HsModule -> AdaptM (Located HsModule)
+adaptLocatedHsModule = liftL adaptHsModule
 
-adaptHsModule :: GHC.Module -> HsModule -> AdaptM HsModule
-adaptHsModule moduule m = do
+adaptHsModule :: HsModule -> AdaptM HsModule
+adaptHsModule m = do
+  moduule <- ask
   liftIO $ putStrLn $ "Adapting module: " ++ moduleNameString (moduleName moduule)
-  decls' <- concat <$> mapM (adaptLocatedTopLevelDecl moduule) (hsmodDecls m)
+  decls' <- concat <$> mapM adaptLocatedTopLevelDecl (hsmodDecls m)
   pure (m {hsmodDecls = decls', hsmodImports = adapterImport : hsmodImports m})
 
-adaptLocatedTopLevelDecl :: GHC.Module -> Located (HsDecl GhcPs) -> AdaptM [Located (HsDecl GhcPs)]
-adaptLocatedTopLevelDecl moduule lDecl = do
-  lDecls' <- adaptTopLevelDecl moduule (unLoc lDecl)
+adaptLocatedTopLevelDecl :: Located (HsDecl GhcPs) -> AdaptM [Located (HsDecl GhcPs)]
+adaptLocatedTopLevelDecl lDecl = do
+  lDecls' <- adaptTopLevelDecl (unLoc lDecl)
   case lDecls' of
     [] -> error "must not happen, otherwise we're deleting decls."
     [x] -> do
-      x' <- adaptDecl moduule x
+      x' <- adaptDecl x
       pure [L (getLoc lDecl) x'] -- Nothing was adapted at the top level
     [decl, modifiedDecl] -> do
-      modifiedDecl' <- adaptDecl moduule modifiedDecl
+      modifiedDecl' <- adaptDecl modifiedDecl
       pure [L (getLoc lDecl) decl, noLoc modifiedDecl']
     _ -> error "must not happen either, otherwise we're making too many extra decls"
 
-adaptDecl :: GHC.Module -> HsDecl GhcPs -> AdaptM (HsDecl GhcPs)
-adaptDecl moduule = \case
-  ValD x bind -> ValD x <$> adaptBind moduule bind
+adaptDecl :: HsDecl GhcPs -> AdaptM (HsDecl GhcPs)
+adaptDecl = \case
+  ValD x bind -> ValD x <$> adaptBind bind
   -- TODO
   d -> pure d
 
-adaptBind :: GHC.Module -> HsBind GhcPs -> AdaptM (HsBind GhcPs)
-adaptBind moduule = \case
-  FunBind x name matchGroup ticks -> FunBind x name <$> adaptMatchGroup moduule matchGroup <*> pure ticks
+adaptBind :: HsBind GhcPs -> AdaptM (HsBind GhcPs)
+adaptBind = \case
+  FunBind x name matchGroup ticks -> FunBind x name <$> adaptMatchGroup matchGroup <*> pure ticks
   -- TODO
   b -> pure b
 
-adaptMatchGroup :: GHC.Module -> MatchGroup GhcPs (LHsExpr GhcPs) -> AdaptM (MatchGroup GhcPs (LHsExpr GhcPs))
-adaptMatchGroup moduule = \case
-  MG x as origin -> MG x <$> liftL (mapM (adaptLMatch moduule)) as <*> pure origin
+adaptMatchGroup :: MatchGroup GhcPs (LHsExpr GhcPs) -> AdaptM (MatchGroup GhcPs (LHsExpr GhcPs))
+adaptMatchGroup = \case
+  MG x as origin -> MG x <$> liftL (mapM adaptLMatch) as <*> pure origin
 
-adaptLMatch :: GHC.Module -> LMatch GhcPs (LHsExpr GhcPs) -> AdaptM (LMatch GhcPs (LHsExpr GhcPs))
-adaptLMatch moduule = liftL (adaptMatch moduule)
+adaptLMatch :: LMatch GhcPs (LHsExpr GhcPs) -> AdaptM (LMatch GhcPs (LHsExpr GhcPs))
+adaptLMatch = liftL adaptMatch
 
-adaptMatch :: GHC.Module -> Match GhcPs (LHsExpr GhcPs) -> AdaptM (Match GhcPs (LHsExpr GhcPs))
-adaptMatch moduule = \case
-  Match x ctx pats body -> Match x ctx pats <$> adaptGRHSs moduule body
+adaptMatch :: Match GhcPs (LHsExpr GhcPs) -> AdaptM (Match GhcPs (LHsExpr GhcPs))
+adaptMatch = \case
+  Match x ctx pats body -> Match x ctx pats <$> adaptGRHSs body
 
-adaptGRHSs :: GHC.Module -> GRHSs GhcPs (LHsExpr GhcPs) -> AdaptM (GRHSs GhcPs (LHsExpr GhcPs))
-adaptGRHSs moduule = \case
-  GRHSs x rhs localBinds -> GRHSs x <$> mapM (adaptLGRHS moduule) rhs <*> adaptLocalBinds moduule localBinds
+adaptGRHSs :: GRHSs GhcPs (LHsExpr GhcPs) -> AdaptM (GRHSs GhcPs (LHsExpr GhcPs))
+adaptGRHSs = \case
+  GRHSs x rhs localBinds -> GRHSs x <$> mapM adaptLGRHS rhs <*> adaptLocalBinds localBinds
 
 adaptLGRHS ::
-  GHC.Module ->
   LGRHS GhcPs (LHsExpr GhcPs) ->
   AdaptM (LGRHS GhcPs (LHsExpr GhcPs))
-adaptLGRHS moduule = liftL (adaptGRHS moduule)
+adaptLGRHS = liftL adaptGRHS
 
-adaptGRHS :: GHC.Module -> GRHS GhcPs (LHsExpr GhcPs) -> AdaptM (GRHS GhcPs (LHsExpr GhcPs))
-adaptGRHS moduule = \case
-  GRHS x guards body -> GRHS x guards <$> adaptLExpr moduule body
+adaptGRHS :: GRHS GhcPs (LHsExpr GhcPs) -> AdaptM (GRHS GhcPs (LHsExpr GhcPs))
+adaptGRHS = \case
+  GRHS x guards body -> GRHS x guards <$> adaptLExpr body
 
-adaptLocalBinds :: GHC.Module -> LHsLocalBinds GhcPs -> AdaptM (LHsLocalBinds GhcPs)
-adaptLocalBinds _ = pure -- moduule = \case
+adaptLocalBinds :: LHsLocalBinds GhcPs -> AdaptM (LHsLocalBinds GhcPs)
+adaptLocalBinds = pure -- moduule = \case
 --   -- TODO
 --   HsValBinds x ->
 --   lbs -> pure lbs
 
-adaptLExpr :: GHC.Module -> LHsExpr GhcPs -> AdaptM (LHsExpr GhcPs)
-adaptLExpr moduule = transformM $ \le@(L sp e) -> do
+adaptLExpr :: LHsExpr GhcPs -> AdaptM (LHsExpr GhcPs)
+adaptLExpr = transformM $ \le@(L sp e) -> do
   if null (children le) -- is a child itself
     then case spanLocation sp of
       Just loc -> do
@@ -103,19 +103,21 @@ adaptLExpr moduule = transformM $ \le@(L sp e) -> do
             { coverableValue = Expression {expressionIdentifier = Nothing},
               coverableLocation = loc
             }
-        pure $ L sp $ applyAdapterExpr moduule loc e
+        e' <- applyAdapterExpr loc e
+        pure $ L sp e'
       Nothing -> pure le
     else pure le
 
-adaptTopLevelDecl :: GHC.Module -> HsDecl GhcPs -> AdaptM [HsDecl GhcPs]
-adaptTopLevelDecl moduule = \case
-  ValD x bind -> fmap (ValD x) <$> adaptTopLevelBind moduule bind
-  SigD x sig -> (: []) . SigD x <$> duplicateTopLevelSig moduule sig
+adaptTopLevelDecl :: HsDecl GhcPs -> AdaptM [HsDecl GhcPs]
+adaptTopLevelDecl = \case
+  ValD x bind -> fmap (ValD x) <$> adaptTopLevelBind bind
+  SigD x sig -> (: []) . SigD x <$> duplicateTopLevelSig sig
   d -> pure [d]
 
-duplicateTopLevelSig :: GHC.Module -> Sig GhcPs -> AdaptM (Sig GhcPs)
-duplicateTopLevelSig moduule = \case
+duplicateTopLevelSig :: Sig GhcPs -> AdaptM (Sig GhcPs)
+duplicateTopLevelSig = \case
   TypeSig x ls typ -> do
+    moduule <- ask
     let nameStrings = map (rdrNameToString (moduleUnit moduule) . unLoc) ls
     liftIO $ putStrLn $ "Duplicating type-signatures for: " ++ show nameStrings
     ls' <- fmap concat $
@@ -141,8 +143,8 @@ adaptTopLevelOccName on = do
 adaptTopLevelExactName :: Name -> AdaptM Name
 adaptTopLevelExactName = undefined
 
-adaptTopLevelBind :: GHC.Module -> HsBind GhcPs -> AdaptM [HsBind GhcPs]
-adaptTopLevelBind moduule = \case
+adaptTopLevelBind :: HsBind GhcPs -> AdaptM [HsBind GhcPs]
+adaptTopLevelBind = \case
   FunBind x originalName originalMatches originalTicks -> do
     let on = rdrNameOcc (unLoc originalName)
         nameString = occNameString on
@@ -157,6 +159,7 @@ adaptTopLevelBind moduule = \case
               coverableLocation = loc
             }
         adaptedName <- noLoc <$> adaptTopLevelName (unLoc originalName)
+        expr' <- applyAdapterExpr loc (HsVar NoExtField adaptedName)
         let adaptedMatches =
               MG
                 { mg_ext = NoExtField,
@@ -180,7 +183,7 @@ adaptTopLevelBind moduule = \case
                                             ( GRHS
                                                 NoExtField
                                                 []
-                                                (noLoc (applyAdapterExpr moduule loc (HsVar NoExtField adaptedName)))
+                                                (noLoc expr')
                                             )
                                         ],
                                       grhssLocalBinds = noLoc (EmptyLocalBinds NoExtField)
@@ -207,19 +210,21 @@ adaptTopLevelBind moduule = \case
           ]
   b -> pure [b]
 
-applyAdapterExpr :: GHC.Module -> Location -> HsExpr GhcPs -> HsExpr GhcPs
-applyAdapterExpr moduule loc e =
+applyAdapterExpr :: Location -> HsExpr GhcPs -> AdaptM (HsExpr GhcPs)
+applyAdapterExpr loc e = do
+  moduule <- ask
   let strToLog = mkStringToLog moduule loc
-   in HsApp
-        NoExtField
-        ( noLoc
-            ( HsApp
-                NoExtField
-                (noLoc (HsVar NoExtField (noLoc (Qual adapterModuleName (mkVarOcc "adaptValue")))))
-                (noLoc (HsLit NoExtField (HsString NoSourceText (mkFastString strToLog))))
-            )
-        )
-        (noLoc e)
+  pure $
+    HsApp
+      NoExtField
+      ( noLoc
+          ( HsApp
+              NoExtField
+              (noLoc (HsVar NoExtField (noLoc (Qual adapterModuleName (mkVarOcc "adaptValue")))))
+              (noLoc (HsLit NoExtField (HsString NoSourceText (mkFastString strToLog))))
+          )
+      )
+      (noLoc e)
 
 spanLocation :: SrcSpan -> Maybe Location
 spanLocation sp = case sp of
