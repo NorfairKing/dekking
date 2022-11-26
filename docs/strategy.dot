@@ -1,0 +1,55 @@
+digraph dekking {
+  subgraph cluster_sources {
+    ahs [ label = "A.hs" ];
+    bhs [ label = "B.hs" ];
+    label = "Original sources";
+  };
+  subgraph cluster_coverables {
+    acs [ label = "A.hs.coverables" ];
+    bcs [ label = "B.hs.coverables" ];
+    label = "Coverables";
+  }
+  subgraph cluster_modified {
+    aphs [ label = "A'.hs" ];
+    bphs [ label = "B'.hs" ];
+    label = "Modified sources";
+  }
+
+  plugin [ label = "dekking-plugin", shape = "rectangle" ];
+  ghc [ label = "ghc", shape = "rectangle" ];
+
+  coverage [ label = "coverage.dat" ];
+  dekking_report [ label = "dekking-report", shape = "rectangle" ];
+  executable [ label = "executable", shape = "rectangle"];
+
+  subgraph cluster_report {
+    subgraph cluster_report_html {
+      report_html [ label = "index.html" ];
+      report_a_html [ label = "A.html" ];
+      report_b_html [ label = "B.html" ];
+      label = "Human Readable Report";
+    }
+    report_json [ label = "report.json" ];
+  }
+
+  ahs -> plugin;
+  plugin -> aphs;
+  plugin -> acs;
+
+  aphs -> ghc;
+  bphs -> ghc;
+
+  ghc -> executable;
+  executable -> coverage
+
+  coverage -> dekking_report;
+  acs -> dekking_report;
+  bcs -> dekking_report;
+
+  dekking_report -> report_html;
+  dekking_report -> report_a_html;
+  dekking_report -> report_b_html;
+  dekking_report -> report_json;
+
+
+}

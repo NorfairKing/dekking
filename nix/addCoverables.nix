@@ -48,9 +48,7 @@ in
     mkdir -p $coverables
     ${rsync}/bin/rsync -am \
       --include='*/' \
-      --include='*.hs' \
       --include='*.hs.coverables' \
-      --include='*.lhs' \
       --include='*.lhs.coverables' \
       --exclude='*' \
       . $coverables
