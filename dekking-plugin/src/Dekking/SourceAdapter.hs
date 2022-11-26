@@ -136,7 +136,7 @@ adaptLExpr (L sp e) = fmap (L sp) $ do
     HsRecFld x afo -> pure $ HsRecFld x afo
     HsOverLabel x mid fs -> pure $ HsOverLabel x mid fs
     HsIPVar x iv -> pure $ HsIPVar x iv
-    HsOverLit x ol -> HsOverLit x <$> adaptOverLit ol
+    HsOverLit _ _ -> applyAdapter Nothing
     HsLit _ _ -> applyAdapter Nothing
     HsLam x mg -> HsLam x <$> adaptMatchGroup mg
     HsApp x left right -> HsApp x <$> adaptLExpr left <*> adaptLExpr right
@@ -173,12 +173,21 @@ adaptLExpr (L sp e) = fmap (L sp) $ do
     HsIf x condE ifE elseE -> HsIf x <$> adaptLExpr condE <*> adaptLExpr ifE <*> adaptLExpr elseE
     HsLet x lbs body -> HsLet x <$> adaptLocalBinds lbs <*> adaptLExpr body
     HsDo x ctx stmts -> HsDo x ctx <$> liftL (mapM adaptExprLStmt) stmts
+    RecordCon x name binds -> RecordCon x name <$> adaptRecordBinds binds
+    RecordUpd x left updates -> RecordUpd x <$> adaptLExpr left <*> mapM (liftL adaptRecordField) updates
     -- TODO
     _ -> pure e
 
-adaptOverLit :: HsOverLit GhcPs -> AdaptM (HsOverLit GhcPs)
-adaptOverLit = \case
-  OverLit x v e -> OverLit x v <$> (unLoc <$> adaptLExpr (noLoc e))
+adaptRecordBinds :: HsRecordBinds GhcPs -> AdaptM (HsRecordBinds GhcPs)
+adaptRecordBinds = \case
+  HsRecFields fields md -> HsRecFields <$> mapM (liftL adaptHsRecField') fields <*> pure md
+
+adaptRecordField :: HsRecUpdField GhcPs -> AdaptM (HsRecUpdField GhcPs)
+adaptRecordField = adaptHsRecField'
+
+adaptHsRecField' :: HsRecField' id (LHsExpr GhcPs) -> AdaptM (HsRecField' id (LHsExpr GhcPs))
+adaptHsRecField' = \case
+  HsRecField i e b -> HsRecField i <$> adaptLExpr e <*> pure b
 
 adaptExprLStmt ::
   ExprLStmt GhcPs ->
