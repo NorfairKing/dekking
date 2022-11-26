@@ -1,5 +1,5 @@
 { mkDerivation, aeson, aeson-pretty, autodocodec, base, bytestring
-, containers, ghc, lib, mtl, path, path-io, text, uniplate
+, containers, ghc, lib, mtl, path, path-io, text
 }:
 mkDerivation {
   pname = "dekking-plugin";
@@ -7,7 +7,7 @@ mkDerivation {
   src = ./.;
   libraryHaskellDepends = [
     aeson aeson-pretty autodocodec base bytestring containers ghc mtl
-    path path-io text uniplate
+    path path-io text
   ];
   homepage = "https://github.com/NorfairKing/dekking#readme";
   license = "unknown";

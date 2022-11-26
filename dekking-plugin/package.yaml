@@ -29,4 +29,3 @@ library:
   - path
   - path-io
   - text
-  - uniplate

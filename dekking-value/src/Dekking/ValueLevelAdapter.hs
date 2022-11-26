@@ -24,6 +24,15 @@ withCoverageHandle func =
     hSetBuffering h LineBuffering
     func h
 
+-- | The value-level adapter function
+--
+-- The plan is to replace every instance of
+--
+-- e :: t
+--
+-- by
+--
+-- adaptValue "some string that identifies e" e :: t
 {-# NOINLINE adaptValue #-}
 adaptValue :: String -> (forall a. a -> a)
 adaptValue logStr = unsafePerformIO $

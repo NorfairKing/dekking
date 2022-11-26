@@ -6,7 +6,6 @@ module Dekking.SourceAdapter (adaptLocatedHsModule, unitToString) where
 
 import Control.Monad.Reader
 import Control.Monad.Writer.Strict
-import Data.Generics.Uniplate.Data (transformM)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Dekking.Coverable
@@ -94,7 +93,7 @@ adaptLocalBinds = pure -- moduule = \case
 --   lbs -> pure lbs
 
 adaptLExpr :: LHsExpr GhcPs -> AdaptM (LHsExpr GhcPs)
-adaptLExpr = transformM $ \le@(L sp e) -> do
+adaptLExpr (L sp e) = fmap (L sp) $ do
   let applyAdapter mName = case spanLocation sp of
         Just loc -> do
           addExpression
@@ -102,36 +101,58 @@ adaptLExpr = transformM $ \le@(L sp e) -> do
               { coverableValue = Expression {expressionIdentifier = mName},
                 coverableLocation = loc
               }
-          e' <- applyAdapterExpr loc e
-          pure $ L sp e'
-        Nothing -> pure le
+          applyAdapterExpr loc e
+        Nothing -> pure e
+
+  -- We cannot use uniplate's method of transforming the code, because it would
+  -- replace the middle part of infix operations by an expression that contains
+  -- multiple pieces, and GHC (correctly) assumes that that is not possible.
+  -- So we have to use the manual traversal.
   case e of
     HsVar _ (L _ rdr) -> applyAdapter $ Just $ occNameString $ rdrNameOcc rdr
-    HsOverLit _ _ -> applyAdapter Nothing
-    HsLit _ _ -> applyAdapter Nothing
-    -- OpApp x left middle right -> pure $ L sp $ OpApp x (noLoc (HsPar NoExtField left)) (noLoc (HsPar NoExtField middle)) (noLoc (HsPar NoExtField right))
-    -- OpApp x left middle right -> pure $ L sp $ HsPar NoExtField $ noLoc $ OpApp x left middle right
-    -- We manually transform
-    --
-    -- "a + b"
-    -- into
-    -- "((+) a) b"
-    --
-    -- and
-    --
-    -- 5 `exp` 6
-    -- into
-    -- (exp 5) 6
-    -- OpApp x left middle right ->
-    --   pure $
-    --     L sp $
-    --       HsPar NoExtField $
-    --         noLoc $
-    --           HsApp
-    --             x
-    --             (noLoc (HsPar NoExtField (noLoc (HsApp NoExtField middle left))))
-    --             right
-    _ -> pure le
+    HsUnboundVar x on -> pure $ HsUnboundVar x on
+    HsConLikeOut x cl -> pure $ HsConLikeOut x cl
+    HsApp x left right -> HsApp x <$> adaptLExpr left <*> adaptLExpr right
+    HsPar x le -> HsPar x <$> adaptLExpr le
+    HsDo x ctx stmts -> HsDo x ctx <$> liftL (mapM adaptExprLStmt) stmts
+    OpApp x left middle right ->
+      OpApp x
+        <$> adaptLExpr left
+        -- We cannot transform the middle part of an infix operator expression
+        -- because then it would consist of more than one part.
+        -- This would break GHC's assumption that infix operator expressions
+        -- only consist of one part, and would cause transformations of an
+        -- expression like
+        -- print $ succ $ 5
+        -- which is
+        -- print $ (succ $ 5)
+        -- to result in this expression:
+        -- ((f ($))
+        --  ((f (($))
+        --   (f print)
+        --   (f succ)))
+        --  (f 5))
+        -- instead of this expression:
+        -- ((f ($))
+        --  (f print)
+        --  ((f ($))
+        --   (f succ)
+        --   (f 5)))
+        -- , which fails to parse
+        <*> pure middle
+        <*> adaptLExpr right
+    -- TODO
+    _ -> pure e
+
+adaptExprLStmt ::
+  ExprLStmt GhcPs ->
+  AdaptM (ExprLStmt GhcPs)
+adaptExprLStmt = liftL $ \case
+  LastStmt x e mb se -> LastStmt x <$> adaptLExpr e <*> pure mb <*> pure se
+  BindStmt x p e -> BindStmt x p <$> adaptLExpr e
+  BodyStmt x e se1 se2 -> BodyStmt x <$> adaptLExpr e <*> pure se1 <*> pure se2
+  LetStmt x lbs -> LetStmt x <$> adaptLocalBinds lbs
+  s -> pure s -- TODO
 
 adaptTopLevelDecl :: HsDecl GhcPs -> AdaptM [HsDecl GhcPs]
 adaptTopLevelDecl = \case

@@ -1,0 +1,236 @@
+{
+    "example-0.0.0": {
+        "Lib": {
+            "annotated-source": [
+                [
+                    {
+                        "annotation": "Uncoverable",
+                        "source": "module Lib"
+                    }
+                ],
+                [
+                    {
+                        "annotation": "Uncoverable",
+                        "source": "  ( covered,"
+                    }
+                ],
+                [
+                    {
+                        "annotation": "Uncoverable",
+                        "source": "  )"
+                    }
+                ],
+                [
+                    {
+                        "annotation": "Uncoverable",
+                        "source": "where"
+                    }
+                ],
+                [
+                    {
+                        "annotation": "Uncoverable",
+                        "source": ""
+                    }
+                ],
+                [
+                    {
+                        "annotation": "Uncoverable",
+                        "source": "covered :: IO ()"
+                    }
+                ],
+                [
+                    {
+                        "annotation": "Uncoverable",
+                        "source": ""
+                    },
+                    {
+                        "annotation": "Covered",
+                        "source": "covered"
+                    },
+                    {
+                        "annotation": "Uncoverable",
+                        "source": " = "
+                    },
+                    {
+                        "annotation": "Covered",
+                        "source": "pure"
+                    },
+                    {
+                        "annotation": "Uncoverable",
+                        "source": " "
+                    },
+                    {
+                        "annotation": "Uncovered",
+                        "source": "()"
+                    }
+                ],
+                [
+                    {
+                        "annotation": "Uncoverable",
+                        "source": ""
+                    }
+                ],
+                [
+                    {
+                        "annotation": "Uncoverable",
+                        "source": "uncovered :: IO ()"
+                    }
+                ],
+                [
+                    {
+                        "annotation": "Uncoverable",
+                        "source": ""
+                    },
+                    {
+                        "annotation": "Uncovered",
+                        "source": "uncovered"
+                    },
+                    {
+                        "annotation": "Uncoverable",
+                        "source": " = "
+                    },
+                    {
+                        "annotation": "Uncovered",
+                        "source": "pure"
+                    },
+                    {
+                        "annotation": "Uncoverable",
+                        "source": " "
+                    },
+                    {
+                        "annotation": "Uncovered",
+                        "source": "()"
+                    }
+                ]
+            ],
+            "expressions": {
+                "covered": [
+                    {
+                        "location": {
+                            "end": 15,
+                            "line": 7,
+                            "start": 11
+                        },
+                        "value": "pure"
+                    }
+                ],
+                "uncovered": [
+                    {
+                        "location": {
+                            "end": 18,
+                            "line": 7,
+                            "start": 16
+                        },
+                        "value": "()"
+                    },
+                    {
+                        "location": {
+                            "end": 20,
+                            "line": 10,
+                            "start": 18
+                        },
+                        "value": "()"
+                    },
+                    {
+                        "location": {
+                            "end": 17,
+                            "line": 10,
+                            "start": 13
+                        },
+                        "value": "pure"
+                    }
+                ]
+            },
+            "top-level-bindings": {
+                "covered": [
+                    {
+                        "location": {
+                            "end": 8,
+                            "line": 7,
+                            "start": 1
+                        },
+                        "value": "covered"
+                    }
+                ],
+                "uncovered": [
+                    {
+                        "location": {
+                            "end": 10,
+                            "line": 10,
+                            "start": 1
+                        },
+                        "value": "uncovered"
+                    }
+                ]
+            }
+        }
+    },
+    "main": {
+        "Main": {
+            "annotated-source": [
+                [
+                    {
+                        "annotation": "Uncoverable",
+                        "source": "import Lib"
+                    }
+                ],
+                [
+                    {
+                        "annotation": "Uncoverable",
+                        "source": ""
+                    }
+                ],
+                [
+                    {
+                        "annotation": "Uncoverable",
+                        "source": "main :: IO ()"
+                    }
+                ],
+                [
+                    {
+                        "annotation": "Uncoverable",
+                        "source": ""
+                    },
+                    {
+                        "annotation": "Covered",
+                        "source": "main"
+                    },
+                    {
+                        "annotation": "Uncoverable",
+                        "source": " = "
+                    },
+                    {
+                        "annotation": "Covered",
+                        "source": "covered"
+                    }
+                ]
+            ],
+            "expressions": {
+                "covered": [
+                    {
+                        "location": {
+                            "end": 15,
+                            "line": 4,
+                            "start": 8
+                        },
+                        "value": "covered"
+                    }
+                ],
+                "uncovered": []
+            },
+            "top-level-bindings": {
+                "covered": [
+                    {
+                        "location": {
+                            "end": 5,
+                            "line": 4,
+                            "start": 1
+                        },
+                        "value": "main"
+                    }
+                ],
+                "uncovered": []
+            }
+        }
+    }
+}
