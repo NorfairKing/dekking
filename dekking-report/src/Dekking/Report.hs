@@ -10,6 +10,7 @@ import Autodocodec
 import Control.Arrow (second)
 import Control.Monad
 import Data.Aeson (FromJSON, ToJSON)
+import Data.Aeson.Encode.Pretty (encodePretty)
 import qualified Data.ByteString as SB
 import qualified Data.ByteString.Lazy as LB
 import Data.Map (Map)
@@ -43,9 +44,11 @@ reportMain = do
   let coverageReport = computeCoverageReport coverables coverage
   pPrint coverageReport
   ensureDir settingOutputDir
+  jsonFile <- resolveFile settingOutputDir (renderReportFile JSONFile)
+  SB.writeFile (fromAbsFile jsonFile) (LB.toStrict (encodePretty coverageReport))
   reportFile <- resolveFile settingOutputDir (renderReportFile IndexFile)
-  styleFile <- resolveFile settingOutputDir (renderReportFile StyleFile)
   SB.writeFile (fromAbsFile reportFile) $ LB.toStrict $ Blaze.renderHtml $ htmlCoverageReport coverageReport
+  styleFile <- resolveFile settingOutputDir (renderReportFile StyleFile)
   SB.writeFile (fromAbsFile styleFile) $ TE.encodeUtf8 coverageReportCss
   forM_ (concatMap (\(pn, mn) -> (,) pn <$> M.toList mn) (M.toList (coverageReportModules coverageReport))) $ \(pn, (mn, mc)) -> do
     modulePath <- resolveFile settingOutputDir (renderReportFile (ModuleFile pn mn))
@@ -55,12 +58,14 @@ reportMain = do
       LB.toStrict $ Blaze.renderHtml $ htmlModuleCoverageReport pn mn mc
 
 data ReportFile
-  = IndexFile
+  = JSONFile
+  | IndexFile
   | StyleFile
   | ModuleFile PackageName ModuleName
 
 renderReportFile :: ReportFile -> FilePath
 renderReportFile = \case
+  JSONFile -> "report.json"
   IndexFile -> "index.html"
   StyleFile -> "style.css"
   ModuleFile pn mn -> moduleFileName pn mn

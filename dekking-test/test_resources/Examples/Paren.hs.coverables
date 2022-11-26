@@ -1,0 +1,123 @@
+{
+    "coverables": {
+        "expressions": [
+            {
+                "location": {
+                    "end": 13,
+                    "line": 9,
+                    "start": 10
+                },
+                "value": "+"
+            },
+            {
+                "location": {
+                    "end": 18,
+                    "line": 9,
+                    "start": 15
+                },
+                "value": "+"
+            },
+            {
+                "location": {
+                    "end": 13,
+                    "line": 12,
+                    "start": 12
+                },
+                "value": "+"
+            },
+            {
+                "location": {
+                    "end": 17,
+                    "line": 12,
+                    "start": 16
+                },
+                "value": "+"
+            },
+            {
+                "location": {
+                    "end": 12,
+                    "line": 17,
+                    "start": 9
+                },
+                "value": "+"
+            },
+            {
+                "location": {
+                    "end": 15,
+                    "line": 15,
+                    "start": 12
+                },
+                "value": "+++"
+            },
+            {
+                "location": {
+                    "end": 21,
+                    "line": 15,
+                    "start": 18
+                },
+                "value": "+++"
+            },
+            {
+                "location": {
+                    "end": 23,
+                    "line": 6,
+                    "start": 21
+                },
+                "value": "<>"
+            },
+            {
+                "location": {
+                    "end": 8,
+                    "line": 9,
+                    "start": 3
+                },
+                "value": "print"
+            },
+            {
+                "location": {
+                    "end": 8,
+                    "line": 12,
+                    "start": 3
+                },
+                "value": "print"
+            },
+            {
+                "location": {
+                    "end": 8,
+                    "line": 15,
+                    "start": 3
+                },
+                "value": "print"
+            },
+            {
+                "location": {
+                    "end": 11,
+                    "line": 6,
+                    "start": 3
+                },
+                "value": "putStrLn"
+            }
+        ],
+        "top-level-bindings": [
+            {
+                "location": {
+                    "end": 6,
+                    "line": 17,
+                    "start": 1
+                },
+                "value": "+++"
+            },
+            {
+                "location": {
+                    "end": 5,
+                    "line": 4,
+                    "start": 1
+                },
+                "value": "main"
+            }
+        ]
+    },
+    "module-name": "Examples.Paren",
+    "package-name": "dekking-test-0.0.0.0",
+    "source": "module Examples.Paren where\n\nmain :: IO ()\nmain = do\n  -- Parentheses are respected\n  putStrLn (\"Hello\" <> \"world\")\n\n  -- Currying works correctly\n  print ((+) ((+) 5 6) 7)\n\n  -- Operators are respected\n  print (7 + 8 + 9)\n\n  -- Custom operators are respected\n  print (3 +++ 4 +++ 5)\n\n(+++) = (+)\n"
+}

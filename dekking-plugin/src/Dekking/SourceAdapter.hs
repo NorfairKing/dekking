@@ -6,7 +6,7 @@ module Dekking.SourceAdapter (adaptLocatedHsModule, unitToString) where
 
 import Control.Monad.Reader
 import Control.Monad.Writer.Strict
-import Data.Generics.Uniplate.Data (children, transformM)
+import Data.Generics.Uniplate.Data (transformM)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Dekking.Coverable
@@ -95,18 +95,22 @@ adaptLocalBinds = pure -- moduule = \case
 
 adaptLExpr :: LHsExpr GhcPs -> AdaptM (LHsExpr GhcPs)
 adaptLExpr = transformM $ \le@(L sp e) -> do
-  if null (children le) -- is a child itself
-    then case spanLocation sp of
-      Just loc -> do
-        addExpression
-          Coverable
-            { coverableValue = Expression {expressionIdentifier = Nothing},
-              coverableLocation = loc
-            }
-        e' <- applyAdapterExpr loc e
-        pure $ L sp e'
-      Nothing -> pure le
-    else pure le
+  case e of
+    HsVar _ (L _ rdr) ->
+      case spanLocation sp of
+        Just loc -> do
+          addExpression
+            Coverable
+              { coverableValue =
+                  Expression
+                    { expressionIdentifier = Just $ occNameString $ rdrNameOcc rdr
+                    },
+                coverableLocation = loc
+              }
+          e' <- applyAdapterExpr loc e
+          pure $ L sp e'
+        Nothing -> pure le
+    _ -> pure le
 
 adaptTopLevelDecl :: HsDecl GhcPs -> AdaptM [HsDecl GhcPs]
 adaptTopLevelDecl = \case

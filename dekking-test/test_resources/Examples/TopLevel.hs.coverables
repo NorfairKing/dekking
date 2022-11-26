@@ -3,27 +3,11 @@
         "expressions": [
             {
                 "location": {
-                    "end": 15,
-                    "line": 4,
-                    "start": 11
-                },
-                "value": null
-            },
-            {
-                "location": {
                     "end": 18,
                     "line": 4,
                     "start": 16
                 },
-                "value": null
-            },
-            {
-                "location": {
-                    "end": 24,
-                    "line": 7,
-                    "start": 20
-                },
-                "value": null
+                "value": "()"
             },
             {
                 "location": {
@@ -31,15 +15,7 @@
                     "line": 7,
                     "start": 25
                 },
-                "value": null
-            },
-            {
-                "location": {
-                    "end": 17,
-                    "line": 10,
-                    "start": 13
-                },
-                "value": null
+                "value": "()"
             },
             {
                 "location": {
@@ -47,15 +23,7 @@
                     "line": 10,
                     "start": 18
                 },
-                "value": null
-            },
-            {
-                "location": {
-                    "end": 26,
-                    "line": 13,
-                    "start": 22
-                },
-                "value": null
+                "value": "()"
             },
             {
                 "location": {
@@ -63,7 +31,39 @@
                     "line": 13,
                     "start": 27
                 },
-                "value": null
+                "value": "()"
+            },
+            {
+                "location": {
+                    "end": 15,
+                    "line": 4,
+                    "start": 11
+                },
+                "value": "pure"
+            },
+            {
+                "location": {
+                    "end": 24,
+                    "line": 7,
+                    "start": 20
+                },
+                "value": "pure"
+            },
+            {
+                "location": {
+                    "end": 17,
+                    "line": 10,
+                    "start": 13
+                },
+                "value": "pure"
+            },
+            {
+                "location": {
+                    "end": 26,
+                    "line": 13,
+                    "start": 22
+                },
+                "value": "pure"
             }
         ],
         "top-level-bindings": [

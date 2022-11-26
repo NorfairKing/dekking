@@ -33,6 +33,7 @@ library
   ghc-options: -Wall -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wunused-packages
   build-depends:
       aeson
+    , aeson-pretty
     , autodocodec
     , base >=4.7 && <5
     , blaze-html

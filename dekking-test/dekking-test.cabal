@@ -15,6 +15,9 @@ extra-source-files:
     test_resources/Examples/Multi.coverables
     test_resources/Examples/Multi.coverage
     test_resources/Examples/Multi.report
+    test_resources/Examples/Paren.hs.coverables
+    test_resources/Examples/Paren.hs.coverage
+    test_resources/Examples/Paren.hs.report
     test_resources/Examples/TopLevel.hs.coverables
     test_resources/Examples/TopLevel.hs.coverage
     test_resources/Examples/TopLevel.hs.report
@@ -27,6 +30,7 @@ library
   exposed-modules:
       Examples.Multi.A
       Examples.Multi.B
+      Examples.Paren
       Examples.TopLevel
   other-modules:
       Paths_dekking_test

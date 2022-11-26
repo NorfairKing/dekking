@@ -31,29 +31,12 @@
                     },
                     {
                         "annotation": "Uncoverable",
-                        "source": " ="
-                    },
-                    {
-                        "annotation": "Covered",
-                        "source": " "
-                    },
-                    {
-                        "annotation": "Uncoverable",
-                        "source": "5"
+                        "source": " = 5"
                     }
                 ]
             ],
             "expressions": {
-                "covered": [
-                    {
-                        "location": {
-                            "end": 9,
-                            "line": 4,
-                            "start": 8
-                        },
-                        "value": null
-                    }
-                ],
+                "covered": [],
                 "uncovered": []
             },
             "top-level-bindings": {
@@ -101,30 +84,13 @@
                     },
                     {
                         "annotation": "Uncoverable",
-                        "source": " ="
-                    },
-                    {
-                        "annotation": "Uncovered",
-                        "source": " "
-                    },
-                    {
-                        "annotation": "Uncoverable",
-                        "source": "6"
+                        "source": " = 6"
                     }
                 ]
             ],
             "expressions": {
                 "covered": [],
-                "uncovered": [
-                    {
-                        "location": {
-                            "end": 8,
-                            "line": 4,
-                            "start": 7
-                        },
-                        "value": null
-                    }
-                ]
+                "uncovered": []
             },
             "top-level-bindings": {
                 "covered": [],
