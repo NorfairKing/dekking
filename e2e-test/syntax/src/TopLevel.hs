@@ -1,4 +1,4 @@
-module Examples.TopLevel where
+module TopLevel where
 
 covered :: IO ()
 covered = pure ()

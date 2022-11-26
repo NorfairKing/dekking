@@ -9,7 +9,7 @@ pkg:
   # doCheck turned off.
   # It would then not have a check phase and therefore not run 'postCheck' and
   # fail to produce the 'coverage' output.
-  postInstall = (old.postCheck or "") + ''
+  postInstall = (old.postInstall or "") + ''
     if [[ -f coverage.dat ]]
     then
       cp coverage.dat $coverage

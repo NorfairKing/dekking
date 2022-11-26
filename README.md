@@ -23,6 +23,10 @@ The relevant programs are:
    and produces a machine-readable `report.json` file, as well as human
    readable HTML files which can be viewed in a browser.
 
+### Source-to-source transformation
+
+TODO: Write out how this works
+
 ### Coverables
 
 Coverables are split up into categories:

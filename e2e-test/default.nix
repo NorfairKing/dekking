@@ -7,12 +7,14 @@ let
         example = self.callPackage ./example { };
         foobar = self.callPackage ./foobar { };
         foobar-gen = self.callPackage ./foobar-gen { };
+        syntax = self.callPackage ./syntax { };
       }
     );
   });
   examplePkgWithCoverables = pkgs.dekking.addCoverablesAndCoverage haskellPackages.example;
   foobarPkgWithCoverables = pkgs.dekking.addCoverablesAndCoverage haskellPackages.foobar;
   foobarGenPkgWithCoverables = pkgs.dekking.addCoverablesAndCoverage haskellPackages.foobar-gen;
+  syntaxPkgWithCoverables = pkgs.dekking.addCoverablesAndCoverage haskellPackages.syntax;
   tests = {
     # Single example package
     ## The example package can 'just' build
@@ -30,6 +32,24 @@ let
       inherit haskellPackages;
       packages = [ "example" ];
     };
+    # We can make a single-package coverage report for the example package
+    example-with-report = pkgs.dekking.addCoverageReport haskellPackages.example;
+
+    # Syntax package, to cover as much haskell syntax as possible
+    ## The syntax package can 'just' build
+    syntax = haskellPackages.syntax;
+    ## We can add coverables to the syntax package and it can still be built
+    syntax-with-coverables = syntaxPkgWithCoverables;
+    ## We can make a coverage report for the syntax package
+    syntax-report = pkgs.dekking.makeCoverageReport {
+      name = "syntax-coverage-report";
+      inherit haskellPackages;
+      packages = [ "syntax" ];
+    };
+    ## We can add a coverage report for the syntax package
+    syntax-with-report = pkgs.dekking.addCoverageReport haskellPackages.syntax;
+
+
 
     # Multi-package example
     ## Raw packages

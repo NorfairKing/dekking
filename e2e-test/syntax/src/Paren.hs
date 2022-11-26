@@ -1,5 +1,5 @@
 {-# HLINT ignore #-}
-module Examples.Paren where
+module Paren where
 
 main :: IO ()
 main = do

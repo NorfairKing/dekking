@@ -23,6 +23,7 @@ progress[value] {
           appearance: none;
 
   accent-color: #{coveredColour};
+  background-color: #{uncoveredColour};
 
   width: 250px;
   height: 20px;

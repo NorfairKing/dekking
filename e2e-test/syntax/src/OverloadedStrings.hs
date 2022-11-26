@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Examples.OverloadedStrings where
+module OverloadedStrings where
 
 import Data.Text (Text)
 

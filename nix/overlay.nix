@@ -8,13 +8,17 @@ with final.haskell.lib;
       addCoverables = final.callPackage ./addCoverables.nix { };
       addCoverage = final.callPackage ./addCoverage.nix { };
       addCoverablesAndCoverage = pkg: addCoverage (addCoverables pkg);
+      addCoverageReport = final.callPackage ./addCoverageReport.nix {
+        inherit dekking-report;
+        inherit addCoverables addCoverage compileCoverageReport;
+      };
       compileCoverageReport = final.callPackage ./compileCoverageReport.nix {
         inherit dekking-report;
       };
     in
     dekking-report.overrideAttrs (old: {
       passthru = (old.passthru or { }) // {
-        inherit addCoverables addCoverage addCoverablesAndCoverage compileCoverageReport;
+        inherit addCoverables addCoverage addCoverablesAndCoverage addCoverageReport compileCoverageReport;
         makeCoverageReport = final.callPackage ./makeCoverageReport.nix {
           inherit addCoverablesAndCoverage compileCoverageReport;
         };
@@ -28,7 +32,6 @@ with final.haskell.lib;
           dekkingPackages = {
             dekking-plugin = buildStrictly (self.callPackage ../dekking-plugin { });
             dekking-report = buildStrictly (self.callPackage ../dekking-report { });
-            dekking-test = self.callPackage ../dekking-test { };
             dekking-value = buildStrictly (self.callPackage ../dekking-value { });
           };
         in
