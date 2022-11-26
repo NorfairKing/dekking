@@ -93,9 +93,12 @@ htmlModuleCoverageReport packageName moduleName ModuleCoverageReport {..} =
 
 coveredColour :: Covered -> Maybe String
 coveredColour = \case
-  Covered -> Just "#00aa00"
+  Covered -> Just coveredCoveredColour
   Uncovered -> Just "yellow"
   Uncoverable -> Nothing
+
+coveredCoveredColour :: String
+coveredCoveredColour = "#33cc33"
 
 computeCoverageReport :: Coverables -> Set (PackageName, ModuleName, Location) -> CoverageReport
 computeCoverageReport Coverables {..} coverage =
@@ -249,13 +252,13 @@ produceAnnotatedSource source coverage =
         flip map (zip [1 ..] ls) $ \(lineNum, line) ->
           case M.lookup lineNum (produceIntervals coverage) of
             Nothing -> [(line, Uncoverable)]
-            Just lineCoverage -> go 0 line (S.toAscList lineCoverage)
+            Just lineCoverage -> go 1 line (S.toAscList lineCoverage)
   where
     go :: Word -> String -> [((Word, Word), Covered)] -> [(String, Covered)]
     go _ [] _ = []
     go _ rest [] = [(rest, Uncoverable)]
     go ix s (((start, end), c) : rest) =
-      let (before, afterStart) = splitAt (fromIntegral (start - ix - 1)) s
+      let (before, afterStart) = splitAt (fromIntegral (start - ix)) s
           (middle, after) = splitAt (fromIntegral (end - start)) afterStart
        in (before, Uncoverable) : (middle, c) : go end after rest
 

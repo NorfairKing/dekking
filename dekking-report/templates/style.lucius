@@ -7,15 +7,15 @@ progress[value] {
      -moz-appearance: none;
           appearance: none;
 
-  accent-color: green;
+  accent-color: #{coveredCoveredColour};
 
   width: 250px;
   height: 20px;
 }
 ::-webkit-progress-value {
-  background-color: green;
+  background-color: #{coveredCoveredColour};
 }
 
 ::-moz-progress-bar {
-  background-color: green;
+  background-color: #{coveredCoveredColour};
 }
