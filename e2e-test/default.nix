@@ -68,14 +68,13 @@ let
       ];
     };
     # External packages' code coverage reports
-    # Fails because of the lock on coverage.dat
-    # fuzzy-time-report = pkgs.dekking.makeCoverageReport {
-    #   name = "fuzzy-time-coverage-report";
-    #   packages = [
-    #     "fuzzy-time"
-    #     "fuzzy-time-gen"
-    #   ];
-    # };
+    fuzzy-time-report = pkgs.dekking.makeCoverageReport {
+      name = "fuzzy-time-coverage-report";
+      packages = [
+        "fuzzy-time"
+        "fuzzy-time-gen"
+      ];
+    };
     # Something doesn't work with lenses yet
     # cursor-report = pkgs.dekking.makeCoverageReport {
     #   name = "cursor-coverage-report";

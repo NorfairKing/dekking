@@ -18,11 +18,12 @@ import System.IO.Unsafe
 coverageFileName :: FilePath
 coverageFileName = "coverage.dat"
 
-withCoverageHandle :: (Handle -> IO a) -> IO a
-withCoverageHandle func =
-  withFile coverageFileName AppendMode $ \h -> do
-    hSetBuffering h LineBuffering
-    func h
+{-# NOINLINE coverageHandle #-}
+coverageHandle :: Handle
+coverageHandle = unsafePerformIO $ do
+  h <- openFile coverageFileName AppendMode
+  hSetBuffering h LineBuffering
+  pure h
 
 -- | The value-level adapter function
 --
@@ -35,11 +36,10 @@ withCoverageHandle func =
 -- adaptValue "some string that identifies e" e :: t
 {-# NOINLINE adaptValue #-}
 adaptValue :: String -> (forall a. a -> a)
-adaptValue logStr = unsafePerformIO $
-  withCoverageHandle $ \coverageHandle -> do
-    hPutStrLn coverageHandle logStr
-    hFlush coverageHandle
-    pure id
+adaptValue logStr = unsafePerformIO $ do
+  hPutStrLn coverageHandle logStr
+  hFlush coverageHandle
+  pure id
 
 -- TODO try out 'unsafeDupablePerformIO' and consider whether I
 -- need 'unsafeInterleaveIO'

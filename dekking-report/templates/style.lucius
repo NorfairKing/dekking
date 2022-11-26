@@ -10,6 +10,7 @@ table td:nth-child(1) {
 }
 
 .#{coveredClass} {
+  color: white;
   background-color: #{coveredColour};
 }
 .#{uncoveredClass} {

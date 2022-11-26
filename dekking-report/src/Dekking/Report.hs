@@ -106,7 +106,7 @@ uncoveredClass :: String
 uncoveredClass = "uncovered"
 
 coveredColour :: String
-coveredColour = "#33cc33"
+coveredColour = "#00aa00"
 
 uncoveredColour :: String
 uncoveredColour = "yellow"
