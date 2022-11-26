@@ -48,6 +48,14 @@ let
       ];
     };
     # External packages' code coverage reports
+    fuzzy-time-report = pkgs.dekking.makeCoverageReport {
+      name = "fuzzy-time-coverage-report";
+      packages = [
+        "fuzzy-time"
+        "fuzzy-time-gen"
+      ];
+    };
+    # Something doesn't work with lenses yet
     # cursor-report = pkgs.dekking.makeCoverageReport {
     #   name = "cursor-coverage-report";
     #   packages = [
@@ -55,6 +63,7 @@ let
     #     "cursor-gen"
     #   ];
     # };
+    # It's not clear what is broken here yet.
     # yesod-report = pkgs.dekking.makeCoverageReport {
     #   name = "yesod-coverage-report";
     #   packages = [

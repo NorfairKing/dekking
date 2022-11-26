@@ -1,21 +1,36 @@
-.linenum {
-  display: inline;
+code {
+  display: flex;
 }
+span {
+  white-space: pre;
+}
+table td:nth-child(1) {
+  text-align: end;
+  padding-right: 10px;
+}
+
+.#{coveredClass} {
+  background-color: #{coveredColour};
+}
+.#{uncoveredClass} {
+  background-color: #{uncoveredColour};
+}
+
 progress[value] {
   /* Reset the default appearance */
   -webkit-appearance: none;
      -moz-appearance: none;
           appearance: none;
 
-  accent-color: #{coveredCoveredColour};
+  accent-color: #{coveredColour};
 
   width: 250px;
   height: 20px;
 }
 ::-webkit-progress-value {
-  background-color: #{coveredCoveredColour};
+  background-color: #{coveredColour};
 }
 
 ::-moz-progress-bar {
-  background-color: #{coveredCoveredColour};
+  background-color: #{coveredColour};
 }

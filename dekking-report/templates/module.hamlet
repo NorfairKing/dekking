@@ -37,14 +37,20 @@
     <h2>
       Code
 
-    $forall (lineNum, lineStrings) <- annotatedLines
-      <pre .linenum>
-        #{fmtLineNum lineNum}:
-      $forall (code, covered) <- lineStrings
-        $maybe colour <- coveredColour covered
-          <code style="background-color: #{colour};">
-            #{code}
-        $nothing
-          <code>
-            #{code}
-      <br>
+    <div .code>
+      <table>
+        <tbody>
+          $forall (lineNum, lineStrings) <- annotatedLines
+            <tr>
+              <td>
+                <code>
+                  #{lineNum}:
+              <td>
+                <code>
+                  $forall (code, covered) <- lineStrings
+                    $maybe clazz <- coveredCaseClass covered
+                      <span class=#{clazz}>
+                        #{code}
+                    $nothing
+                      <span>
+                        #{code}

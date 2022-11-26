@@ -29,7 +29,6 @@ import Path.IO
 import Text.Blaze.Html.Renderer.Utf8 as Blaze
 import Text.Hamlet
 import Text.Lucius
-import Text.Printf
 import Text.Show.Pretty (pPrint)
 
 reportMain :: IO ()
@@ -90,20 +89,27 @@ coverageReportCss = LT.toStrict $ renderCss $ $(luciusFile "templates/style.luci
 htmlModuleCoverageReport :: PackageName -> ModuleName -> ModuleCoverageReport -> Html
 htmlModuleCoverageReport packageName moduleName ModuleCoverageReport {..} =
   let annotatedLines = zip [(1 :: Word) ..] (unAnnotatedSource moduleCoverageReportAnnotatedSource)
-      fmtLineNum :: Word -> String
-      fmtLineNum = printf ("%" <> show (floor (logBase 10 (fromIntegral (length annotatedLines) :: Float)) + 1 :: Int) <> "d")
       topLevelSummary = computeCoverageSummary moduleCoverageReportTopLevelBindings
       expressionSummary = computeCoverageSummary moduleCoverageReportExpressions
    in $(hamletFile "templates/module.hamlet") reportUrlRender
 
-coveredColour :: Covered -> Maybe String
-coveredColour = \case
-  Covered -> Just coveredCoveredColour
-  Uncovered -> Just "yellow"
+coveredCaseClass :: Covered -> Maybe String
+coveredCaseClass = \case
+  Covered -> Just coveredClass
+  Uncovered -> Just uncoveredClass
   Uncoverable -> Nothing
 
-coveredCoveredColour :: String
-coveredCoveredColour = "#33cc33"
+coveredClass :: String
+coveredClass = "covered"
+
+uncoveredClass :: String
+uncoveredClass = "uncovered"
+
+coveredColour :: String
+coveredColour = "#33cc33"
+
+uncoveredColour :: String
+uncoveredColour = "yellow"
 
 computeCoverageReport :: Coverables -> Set (PackageName, ModuleName, Location) -> CoverageReport
 computeCoverageReport Coverables {..} coverage =
