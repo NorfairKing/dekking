@@ -18,7 +18,9 @@ import qualified Data.Set as S
 import Path
 import Path.IO
 
-newtype Coverables = Coverables {coverablesModules :: Map PackageName (Map ModuleName ModuleCoverables)}
+newtype Coverables = Coverables
+  { coverablesModules :: Map PackageName (Map ModuleName ModuleCoverables)
+  }
   deriving stock (Show, Eq)
   deriving (FromJSON, ToJSON) via (Autodocodec Coverables)
 
@@ -40,7 +42,8 @@ data ModuleCoverables = ModuleCoverables
   { moduleCoverablesPackageName :: PackageName,
     moduleCoverablesModuleName :: ModuleName,
     moduleCoverablesSource :: String,
-    moduleCoverablesTopLevelBindings :: Set (Coverable TopLevelBinding)
+    moduleCoverablesTopLevelBindings :: Set (Coverable TopLevelBinding),
+    moduleCoverablesExpressions :: Set (Coverable Expression)
   }
   deriving stock (Show, Eq)
   deriving (FromJSON, ToJSON) via (Autodocodec ModuleCoverables)
@@ -53,6 +56,7 @@ instance HasCodec ModuleCoverables where
         <*> requiredField "module-name" "Module name" .= moduleCoverablesModuleName
         <*> requiredField "source" "source code" .= moduleCoverablesSource
         <*> optionalFieldWithOmittedDefault "top-level-bindings" mempty "Top level bindings" .= moduleCoverablesTopLevelBindings
+        <*> optionalFieldWithOmittedDefault "expressions" mempty "Expressions" .= moduleCoverablesExpressions
 
 data Coverable a = Coverable
   { coverableValue :: !a,
@@ -90,6 +94,12 @@ newtype TopLevelBinding = TopLevelBinding {topLevelBindingIdentifier :: String}
 
 instance HasCodec TopLevelBinding where
   codec = dimapCodec TopLevelBinding topLevelBindingIdentifier codec
+
+newtype Expression = Expression {expressionIdentifier :: Maybe String}
+  deriving stock (Show, Eq, Ord)
+
+instance HasCodec Expression where
+  codec = dimapCodec Expression expressionIdentifier codec
 
 type PackageName = String
 
