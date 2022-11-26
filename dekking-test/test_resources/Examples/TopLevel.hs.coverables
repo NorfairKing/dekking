@@ -1,5 +1,71 @@
 {
     "coverables": {
+        "expressions": [
+            {
+                "location": {
+                    "end": 15,
+                    "line": 4,
+                    "start": 11
+                },
+                "value": null
+            },
+            {
+                "location": {
+                    "end": 18,
+                    "line": 4,
+                    "start": 16
+                },
+                "value": null
+            },
+            {
+                "location": {
+                    "end": 24,
+                    "line": 7,
+                    "start": 20
+                },
+                "value": null
+            },
+            {
+                "location": {
+                    "end": 27,
+                    "line": 7,
+                    "start": 25
+                },
+                "value": null
+            },
+            {
+                "location": {
+                    "end": 17,
+                    "line": 10,
+                    "start": 13
+                },
+                "value": null
+            },
+            {
+                "location": {
+                    "end": 20,
+                    "line": 10,
+                    "start": 18
+                },
+                "value": null
+            },
+            {
+                "location": {
+                    "end": 26,
+                    "line": 13,
+                    "start": 22
+                },
+                "value": null
+            },
+            {
+                "location": {
+                    "end": 29,
+                    "line": 13,
+                    "start": 27
+                },
+                "value": null
+            }
+        ],
         "top-level-bindings": [
             {
                 "location": {
@@ -36,6 +102,6 @@
         ]
     },
     "module-name": "Examples.TopLevel",
-    "package-name": "0.0.0.0-test-dekking",
+    "package-name": "dekking-test-0.0.0.0",
     "source": "module Examples.TopLevel where\n\ncovered :: IO ()\ncovered = pure ()\n\ncoveredWithArg :: Int -> IO ()\ncoveredWithArg _ = pure ()\n\nuncovered :: IO ()\nuncovered = pure ()\n\nuncoveredWithArg :: Int -> IO ()\nuncoveredWithArg _ = pure ()\n"
 }

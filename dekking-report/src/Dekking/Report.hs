@@ -74,8 +74,9 @@ reportUrlRender rf _ = renderReportFile rf
 htmlCoverageReport :: CoverageReport -> Html
 htmlCoverageReport CoverageReport {..} =
   let unwrapped = concatMap (\(pn, ms) -> (,) pn <$> M.toList ms) (M.toList coverageReportModules)
-      summaries = map (second (second (computeCoverageSummary . moduleCoverageReportTopLevelBindings))) unwrapped
-      totalSummary = foldMap (snd . snd) summaries
+      summaries = map (second (second (\ModuleCoverageReport {..} -> (computeCoverageSummary moduleCoverageReportTopLevelBindings, computeCoverageSummary moduleCoverageReportExpressions)))) unwrapped
+      totalTopLevelSummary = foldMap (fst . snd . snd) summaries
+      totalExpressionSummary = foldMap (snd . snd . snd) summaries
    in $(hamletFile "templates/index.hamlet") reportUrlRender
 
 coverageReportCss :: Text
@@ -86,7 +87,8 @@ htmlModuleCoverageReport packageName moduleName ModuleCoverageReport {..} =
   let annotatedLines = zip [(1 :: Word) ..] (unAnnotatedSource moduleCoverageReportAnnotatedSource)
       fmtLineNum :: Word -> String
       fmtLineNum = printf ("%" <> show (floor (logBase 10 (fromIntegral (length annotatedLines) :: Float)) + 1 :: Int) <> "d")
-      summary = computeCoverageSummary moduleCoverageReportTopLevelBindings
+      topLevelSummary = computeCoverageSummary moduleCoverageReportTopLevelBindings
+      expressionSummary = computeCoverageSummary moduleCoverageReportExpressions
    in $(hamletFile "templates/module.hamlet") reportUrlRender
 
 coveredColour :: Covered -> Maybe String
@@ -96,7 +98,7 @@ coveredColour = \case
   Uncoverable -> Nothing
 
 computeCoverageReport :: Coverables -> Set (PackageName, ModuleName, Location) -> CoverageReport
-computeCoverageReport Coverables {..} topLevelCoverage =
+computeCoverageReport Coverables {..} coverage =
   CoverageReport $
     M.mapWithKey
       ( \packageName modules ->
@@ -111,7 +113,7 @@ computeCoverageReport Coverables {..} topLevelCoverage =
                                 else Nothing
                           )
                         . S.toList
-                        $ topLevelCoverage
+                        $ coverage
                  in computeModuleCoverageReport sourceCode moduleCoverables relevantCoverage
             )
             modules
@@ -127,15 +129,19 @@ instance HasCodec CoverageReport where
 
 computeModuleCoverageReport :: String -> ModuleCoverables -> Set Location -> ModuleCoverageReport
 computeModuleCoverageReport sourceCode ModuleCoverables {..} covereds =
-  let coverage = computeCoverage moduleCoverablesTopLevelBindings covereds
+  let topLevelCoverage = computeCoverage moduleCoverablesTopLevelBindings covereds
+      expressionCoverage = computeCoverage moduleCoverablesExpressions covereds
+      totalCoverage = eraseCoverage topLevelCoverage <> eraseCoverage expressionCoverage
    in ModuleCoverageReport
-        { moduleCoverageReportAnnotatedSource = produceAnnotatedSource sourceCode coverage,
-          moduleCoverageReportTopLevelBindings = coverage
+        { moduleCoverageReportAnnotatedSource = produceAnnotatedSource sourceCode totalCoverage,
+          moduleCoverageReportTopLevelBindings = topLevelCoverage,
+          moduleCoverageReportExpressions = expressionCoverage
         }
 
 data ModuleCoverageReport = ModuleCoverageReport
   { moduleCoverageReportAnnotatedSource :: AnnotatedSource,
-    moduleCoverageReportTopLevelBindings :: Coverage TopLevelBinding
+    moduleCoverageReportTopLevelBindings :: Coverage TopLevelBinding,
+    moduleCoverageReportExpressions :: Coverage Expression
   }
   deriving (Show, Eq)
   deriving (FromJSON, ToJSON) via (Autodocodec ModuleCoverageReport)
@@ -146,12 +152,30 @@ instance HasCodec ModuleCoverageReport where
       ModuleCoverageReport
         <$> requiredField "annotated-source" "annotated source" .= moduleCoverageReportAnnotatedSource
         <*> requiredField "top-level-bindings" "top level bindings" .= moduleCoverageReportTopLevelBindings
+        <*> requiredField "expressions" "expressions" .= moduleCoverageReportExpressions
 
 data Coverage a = Coverage
   { coverageCovered :: Set (Coverable a),
     coverageUncovered :: Set (Coverable a)
   }
   deriving (Show, Eq, Ord)
+
+eraseCoverage :: Coverage a -> Coverage ()
+eraseCoverage c =
+  Coverage
+    { coverageCovered = S.map eraseCoverable (coverageCovered c),
+      coverageUncovered = S.map eraseCoverable (coverageUncovered c)
+    }
+
+eraseCoverable :: Coverable a -> Coverable ()
+eraseCoverable c = c {coverableValue = ()}
+
+instance Ord a => Semigroup (Coverage a) where
+  (<>) c1 c2 =
+    Coverage
+      { coverageCovered = coverageCovered c1 <> coverageCovered c2,
+        coverageUncovered = coverageUncovered c1 <> coverageUncovered c2
+      }
 
 instance (Ord a, HasCodec a) => HasCodec (Coverage a) where
   codec =
@@ -218,7 +242,7 @@ data Covered = Covered | Uncovered | Uncoverable
 instance HasCodec Covered where
   codec = shownBoundedEnumCodec
 
-produceAnnotatedSource :: String -> Coverage TopLevelBinding -> AnnotatedSource
+produceAnnotatedSource :: String -> Coverage () -> AnnotatedSource
 produceAnnotatedSource source coverage =
   let ls = lines source
    in AnnotatedSource $

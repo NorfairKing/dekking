@@ -14,8 +14,8 @@ readCoverageFile :: Path Abs File -> IO (Set (PackageName, ModuleName, Location)
 readCoverageFile p = S.fromList . mapMaybe parseIdentifier . lines <$> readFile (fromAbsFile p)
 
 parseIdentifier :: String -> Maybe (PackageName, ModuleName, Location)
-parseIdentifier s =
-  case words s of
+parseIdentifier str =
+  case words str of
     [] -> Nothing
     [x, y, ls, ss, es] -> do
       l <- readMaybe ls

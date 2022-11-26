@@ -1,7 +1,17 @@
 {
-    "0.0.0.0-test-dekking": {
+    "dekking-test-0.0.0.0": {
         "Examples.Multi.A": {
             "coverables": {
+                "expressions": [
+                    {
+                        "location": {
+                            "end": 9,
+                            "line": 4,
+                            "start": 8
+                        },
+                        "value": null
+                    }
+                ],
                 "top-level-bindings": [
                     {
                         "location": {
@@ -17,6 +27,16 @@
         },
         "Examples.Multi.B": {
             "coverables": {
+                "expressions": [
+                    {
+                        "location": {
+                            "end": 8,
+                            "line": 4,
+                            "start": 7
+                        },
+                        "value": null
+                    }
+                ],
                 "top-level-bindings": [
                     {
                         "location": {

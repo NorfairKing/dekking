@@ -1,5 +1,5 @@
 {
-    "0.0.0.0-test-dekking": {
+    "dekking-test-0.0.0.0": {
         "Examples.Multi.A": {
             "annotated-source": [
                 [
@@ -31,10 +31,31 @@
                     },
                     {
                         "annotation": "Uncoverable",
-                        "source": " = 5"
+                        "source": " ="
+                    },
+                    {
+                        "annotation": "Covered",
+                        "source": " "
+                    },
+                    {
+                        "annotation": "Uncoverable",
+                        "source": "5"
                     }
                 ]
             ],
+            "expressions": {
+                "covered": [
+                    {
+                        "location": {
+                            "end": 9,
+                            "line": 4,
+                            "start": 8
+                        },
+                        "value": null
+                    }
+                ],
+                "uncovered": []
+            },
             "top-level-bindings": {
                 "covered": [
                     {
@@ -80,10 +101,31 @@
                     },
                     {
                         "annotation": "Uncoverable",
-                        "source": " = 6"
+                        "source": " ="
+                    },
+                    {
+                        "annotation": "Uncovered",
+                        "source": " "
+                    },
+                    {
+                        "annotation": "Uncoverable",
+                        "source": "6"
                     }
                 ]
             ],
+            "expressions": {
+                "covered": [],
+                "uncovered": [
+                    {
+                        "location": {
+                            "end": 8,
+                            "line": 4,
+                            "start": 7
+                        },
+                        "value": null
+                    }
+                ]
+            },
             "top-level-bindings": {
                 "covered": [],
                 "uncovered": [

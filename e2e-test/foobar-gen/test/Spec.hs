@@ -1,5 +1,3 @@
-{-# LANGUAGE TypeApplications #-}
-
 import Foobar
 import Foobar.Gen ()
 import Test.Syd
@@ -13,4 +11,7 @@ main = sydTest $ do
         { exampleString = "hi",
           exampleInt = 42
         }
-  genValidSpec @Example
+
+-- TODO: type applications
+-- {-# LANGUAGE TypeApplications #-}
+-- genValidSpec @Example

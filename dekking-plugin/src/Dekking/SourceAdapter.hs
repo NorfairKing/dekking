@@ -6,9 +6,7 @@ module Dekking.SourceAdapter (adaptLocatedHsModule, unitToString) where
 
 import Control.Monad.Reader
 import Control.Monad.Writer.Strict
-import Data.Data (Data, Typeable)
 import Data.Generics.Uniplate.Data (children, transformM)
-import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Dekking.Coverable
@@ -17,7 +15,10 @@ import GHC.Driver.Types as GHC
 import GHC.Plugins as GHC
 
 addCoverableTopLevelBinding :: Coverable TopLevelBinding -> AdaptM ()
-addCoverableTopLevelBinding a = tell (mempty {moduleCoverablesTopLevelBindings = S.singleton a})
+addCoverableTopLevelBinding e = tell (mempty {moduleCoverablesTopLevelBindings = S.singleton e})
+
+addExpression :: Coverable Expression -> AdaptM ()
+addExpression e = tell (mempty {moduleCoverablesExpressions = S.singleton e})
 
 type AdaptM = WriterT ModuleCoverables Hsc
 
@@ -64,7 +65,6 @@ adaptBind moduule = \case
 adaptMatchGroup :: GHC.Module -> MatchGroup GhcPs (LHsExpr GhcPs) -> AdaptM (MatchGroup GhcPs (LHsExpr GhcPs))
 adaptMatchGroup moduule = \case
   MG x as origin -> MG x <$> liftL (mapM (adaptLMatch moduule)) as <*> pure origin
-  mg -> pure mg
 
 adaptLMatch :: GHC.Module -> LMatch GhcPs (LHsExpr GhcPs) -> AdaptM (LMatch GhcPs (LHsExpr GhcPs))
 adaptLMatch moduule = liftL (adaptMatch moduule)
@@ -72,12 +72,10 @@ adaptLMatch moduule = liftL (adaptMatch moduule)
 adaptMatch :: GHC.Module -> Match GhcPs (LHsExpr GhcPs) -> AdaptM (Match GhcPs (LHsExpr GhcPs))
 adaptMatch moduule = \case
   Match x ctx pats body -> Match x ctx pats <$> adaptGRHSs moduule body
-  m -> pure m
 
 adaptGRHSs :: GHC.Module -> GRHSs GhcPs (LHsExpr GhcPs) -> AdaptM (GRHSs GhcPs (LHsExpr GhcPs))
 adaptGRHSs moduule = \case
   GRHSs x rhs localBinds -> GRHSs x <$> mapM (adaptLGRHS moduule) rhs <*> adaptLocalBinds moduule localBinds
-  g -> pure g
 
 adaptLGRHS ::
   GHC.Module ->
@@ -88,18 +86,24 @@ adaptLGRHS moduule = liftL (adaptGRHS moduule)
 adaptGRHS :: GHC.Module -> GRHS GhcPs (LHsExpr GhcPs) -> AdaptM (GRHS GhcPs (LHsExpr GhcPs))
 adaptGRHS moduule = \case
   GRHS x guards body -> GRHS x guards <$> adaptLExpr moduule body
-  grhs -> pure grhs
 
 adaptLocalBinds :: GHC.Module -> LHsLocalBinds GhcPs -> AdaptM (LHsLocalBinds GhcPs)
-adaptLocalBinds moduule = \case
-  -- TODO
-  lbs -> pure lbs
+adaptLocalBinds _ = pure -- moduule = \case
+--   -- TODO
+--   HsValBinds x ->
+--   lbs -> pure lbs
 
 adaptLExpr :: GHC.Module -> LHsExpr GhcPs -> AdaptM (LHsExpr GhcPs)
-adaptLExpr moduule = transformM $ \le@(L span e) -> do
+adaptLExpr moduule = transformM $ \le@(L sp e) -> do
   if null (children le) -- is a child itself
-    then case spanLocation span of
-      Just loc -> pure $ L span $ applyAdapterExpr moduule loc e
+    then case spanLocation sp of
+      Just loc -> do
+        addExpression
+          Coverable
+            { coverableValue = Expression {expressionIdentifier = Nothing},
+              coverableLocation = loc
+            }
+        pure $ L sp $ applyAdapterExpr moduule loc e
       Nothing -> pure le
     else pure le
 
@@ -143,7 +147,6 @@ adaptTopLevelBind moduule = \case
     let on = rdrNameOcc (unLoc originalName)
         nameString = occNameString on
     liftIO $ putStrLn $ "Adapting bind: " ++ nameString
-    let strToLog = rdrNameToString (moduleUnit moduule) (mkRdrQual (moduleName moduule) on)
     let mLoc = spanLocation (getLoc originalName)
     case mLoc of
       Nothing -> pure [FunBind x originalName originalMatches originalTicks]
@@ -206,12 +209,7 @@ adaptTopLevelBind moduule = \case
 
 applyAdapterExpr :: GHC.Module -> Location -> HsExpr GhcPs -> HsExpr GhcPs
 applyAdapterExpr moduule loc e =
-  let strToLog =
-        unwords
-          [ unitToString (moduleUnit moduule),
-            moduleNameString (moduleName moduule),
-            locationString loc
-          ]
+  let strToLog = mkStringToLog moduule loc
    in HsApp
         NoExtField
         ( noLoc
@@ -224,7 +222,7 @@ applyAdapterExpr moduule loc e =
         (noLoc e)
 
 spanLocation :: SrcSpan -> Maybe Location
-spanLocation span = case span of
+spanLocation sp = case sp of
   RealSrcSpan s _ ->
     Just
       Location
@@ -233,6 +231,14 @@ spanLocation span = case span of
           locationColumnEnd = fromIntegral (srcSpanEndCol s)
         }
   UnhelpfulSpan _ -> Nothing
+
+mkStringToLog :: GHC.Module -> Location -> String
+mkStringToLog moduule loc =
+  unwords
+    [ unitToString (moduleUnit moduule),
+      moduleNameString (moduleName moduule),
+      locationString loc
+    ]
 
 rdrNameToString :: GHC.Unit -> RdrName -> String
 rdrNameToString unit n =
@@ -247,4 +253,12 @@ rdrNameToString unit n =
 
 -- We drop the hash because it differs in a cabal build versus a nix build.
 unitToString :: GHC.Unit -> String
-unitToString = T.unpack . T.intercalate "-" . drop 1 . reverse . T.splitOn "-" . T.pack . unitString
+unitToString u =
+  case reverse . T.splitOn "-" . T.pack $ unitString u of
+    [] -> "-"
+    -- If there's only one component, it's probably the "main" package, and we
+    -- still want to see this instead of drop it
+    [x] -> T.unpack x
+    -- If there is more than one component, the last component is the hash, so
+    -- we drop it.
+    (_ : rest) -> T.unpack $ T.intercalate "-" $ reverse rest
