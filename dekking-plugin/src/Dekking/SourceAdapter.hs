@@ -10,6 +10,7 @@ import qualified Data.Set as S
 import qualified Data.Text as T
 import Dekking.Coverable
 import GHC hiding (moduleName)
+import GHC.Data.Bag
 import GHC.Driver.Types as GHC
 import GHC.Plugins as GHC
 
@@ -56,6 +57,9 @@ adaptDecl = \case
   -- TODO
   d -> pure d
 
+adaptLBind :: LHsBind GhcPs -> AdaptM (LHsBind GhcPs)
+adaptLBind = liftL adaptBind
+
 adaptBind :: HsBind GhcPs -> AdaptM (HsBind GhcPs)
 adaptBind = \case
   FunBind x name matchGroup ticks -> FunBind x name <$> adaptMatchGroup matchGroup <*> pure ticks
@@ -87,7 +91,24 @@ adaptGRHS = \case
   GRHS x guards body -> GRHS x guards <$> adaptLExpr body
 
 adaptLocalBinds :: LHsLocalBinds GhcPs -> AdaptM (LHsLocalBinds GhcPs)
-adaptLocalBinds = pure -- moduule = \case
+adaptLocalBinds = liftL $ \case
+  HsValBinds x valBinds -> HsValBinds x <$> adaptValBinds valBinds
+  lbs -> pure lbs
+
+adaptValBinds :: HsValBinds GhcPs -> AdaptM (HsValBinds GhcPs)
+adaptValBinds = \case
+  ValBinds x binds sigs -> ValBinds x <$> mapBagM adaptLBind binds <*> pure sigs
+  XValBindsLR (NValBinds binds sigs) ->
+    XValBindsLR
+      <$> ( NValBinds
+              <$> mapM
+                ( \(f, s) ->
+                    (,) f <$> mapBagM adaptLBind s
+                )
+                binds
+              <*> pure sigs
+          )
+
 --   -- TODO
 --   HsValBinds x ->
 --   lbs -> pure lbs
@@ -112,9 +133,15 @@ adaptLExpr (L sp e) = fmap (L sp) $ do
     HsVar _ (L _ rdr) -> applyAdapter $ Just $ occNameString $ rdrNameOcc rdr
     HsUnboundVar x on -> pure $ HsUnboundVar x on
     HsConLikeOut x cl -> pure $ HsConLikeOut x cl
+    HsRecFld x afo -> pure $ HsRecFld x afo
+    HsOverLabel x mid fs -> pure $ HsOverLabel x mid fs
+    HsIPVar x iv -> pure $ HsIPVar x iv
+    HsOverLit x ol -> HsOverLit x <$> adaptOverLit ol
+    HsLit _ _ -> applyAdapter Nothing
+    HsLam x mg -> HsLam x <$> adaptMatchGroup mg
     HsApp x left right -> HsApp x <$> adaptLExpr left <*> adaptLExpr right
-    HsPar x le -> HsPar x <$> adaptLExpr le
-    HsDo x ctx stmts -> HsDo x ctx <$> liftL (mapM adaptExprLStmt) stmts
+    -- TODO: Things inside a visible type application
+    -- HsAppType x body t -> HsAppType x <$> adaptLExpr body <*> pure t
     OpApp x left middle right ->
       OpApp x
         <$> adaptLExpr left
@@ -141,8 +168,17 @@ adaptLExpr (L sp e) = fmap (L sp) $ do
         -- , which fails to parse
         <*> pure middle
         <*> adaptLExpr right
+    NegApp x body se -> NegApp x <$> adaptLExpr body <*> pure se
+    HsPar x le -> HsPar x <$> adaptLExpr le
+    HsIf x condE ifE elseE -> HsIf x <$> adaptLExpr condE <*> adaptLExpr ifE <*> adaptLExpr elseE
+    HsLet x lbs body -> HsLet x <$> adaptLocalBinds lbs <*> adaptLExpr body
+    HsDo x ctx stmts -> HsDo x ctx <$> liftL (mapM adaptExprLStmt) stmts
     -- TODO
     _ -> pure e
+
+adaptOverLit :: HsOverLit GhcPs -> AdaptM (HsOverLit GhcPs)
+adaptOverLit = \case
+  OverLit x v e -> OverLit x v <$> (unLoc <$> adaptLExpr (noLoc e))
 
 adaptExprLStmt ::
   ExprLStmt GhcPs ->

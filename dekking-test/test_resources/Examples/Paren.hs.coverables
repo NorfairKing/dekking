@@ -3,6 +3,22 @@
         "expressions": [
             {
                 "location": {
+                    "end": 20,
+                    "line": 7,
+                    "start": 13
+                },
+                "value": null
+            },
+            {
+                "location": {
+                    "end": 31,
+                    "line": 7,
+                    "start": 24
+                },
+                "value": null
+            },
+            {
+                "location": {
                     "end": 13,
                     "line": 10,
                     "start": 10
@@ -14,6 +30,14 @@
                     "end": 18,
                     "line": 10,
                     "start": 15
+                },
+                "value": "+"
+            },
+            {
+                "location": {
+                    "end": 14,
+                    "line": 19,
+                    "start": 11
                 },
                 "value": "+"
             },
