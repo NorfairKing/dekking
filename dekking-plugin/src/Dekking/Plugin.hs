@@ -23,7 +23,7 @@ adaptParseResult _ ms pr = do
     then pure pr
     else do
       -- Transform the source
-      (lm', bindings) <- runWriterT (adaptLocatedHsModule m (hpm_module pr))
+      (lm', coverables) <- runWriterT (adaptLocatedHsModule m (hpm_module pr))
       forM_ (ml_hs_file (ms_location ms)) $ \sourceFile ->
         -- Output the coverables
         liftIO $ do
@@ -38,10 +38,10 @@ adaptParseResult _ ms pr = do
                 fromAbsFile p
               ]
           writeModuleCoverablesFile coverablesFile $
-            ModuleCoverables
-              { moduleCoverablesPackageName = unitToString (moduleUnit m),
-                moduleCoverablesModuleName = moduleNameString mn,
-                moduleCoverablesSource = sourceCode,
-                moduleCoverablesTopLevelBindings = bindings
+            ModuleCoverablesFile
+              { moduleCoverablesFilePackageName = unitToString (moduleUnit m),
+                moduleCoverablesFileModuleName = moduleNameString mn,
+                moduleCoverablesFileSource = sourceCode,
+                moduleCoverablesFileCoverables = coverables
               }
       pure pr {hpm_module = lm'}

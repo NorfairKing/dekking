@@ -29,14 +29,18 @@ spec = sequential $ do
       don't $ uncoveredWithArg 5
       pure $ goldenStringFile "test_resources/Examples/TopLevel.hs.coverage" (readFile (fromAbsFile coverageFile))
     it "makes a coverage report" $ do
-      coverableFile <- resolveFile' "test_resources/Examples/TopLevel.hs.coverables"
-      coverables <- readModuleCoverablesFile coverableFile
+      coverablesPath <- resolveFile' "test_resources/Examples/TopLevel.hs.coverables"
+      coverablesFile <- readModuleCoverablesFile coverablesPath
       coverageFile <- resolveFile' "test_resources/Examples/TopLevel.hs.coverage"
       coverage <- readCoverageFile coverageFile
       pure $
         pureGoldenJSONValueFile
           "test_resources/Examples/TopLevel.hs.report"
-          (computeModuleCoverageReport coverables (S.map (\(_, _, x) -> x) coverage))
+          ( computeModuleCoverageReport
+              (moduleCoverablesFileSource coverablesFile)
+              (moduleCoverablesFileCoverables coverablesFile)
+              (S.map (\(_, _, x) -> x) coverage)
+          )
 
   describe "Multi" $ do
     it "Makes the same coverables for the Multi modules" $ do

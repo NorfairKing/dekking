@@ -19,7 +19,7 @@ import Path
 import Path.IO
 
 newtype Coverables = Coverables
-  { coverablesModules :: Map PackageName (Map ModuleName ModuleCoverables)
+  { coverablesModules :: Map PackageName (Map ModuleName (String, ModuleCoverables))
   }
   deriving stock (Show, Eq)
   deriving (FromJSON, ToJSON) via (Autodocodec Coverables)
@@ -36,26 +36,60 @@ instance Monoid Coverables where
   mappend = (Prelude.<>)
 
 instance HasCodec Coverables where
-  codec = dimapCodec Coverables coverablesModules codec
+  codec =
+    dimapCodec Coverables coverablesModules $
+      mapCodec $
+        mapCodec $
+          object "CoverablesWithSource" $
+            (,)
+              <$> requiredField "source" "source code" .= fst
+              <*> requiredField "coverables" "coverables" .= snd
+
+data ModuleCoverablesFile = ModuleCoverablesFile
+  { moduleCoverablesFilePackageName :: PackageName,
+    moduleCoverablesFileModuleName :: ModuleName,
+    moduleCoverablesFileSource :: String,
+    moduleCoverablesFileCoverables :: ModuleCoverables
+  }
+  deriving stock (Show, Eq)
+  deriving (FromJSON, ToJSON) via (Autodocodec ModuleCoverablesFile)
+
+instance HasCodec ModuleCoverablesFile where
+  codec =
+    object "ModuleCoverablesFile" $
+      ModuleCoverablesFile
+        <$> requiredField "package-name" "Package name" .= moduleCoverablesFilePackageName
+        <*> requiredField "module-name" "Module name" .= moduleCoverablesFileModuleName
+        <*> requiredField "source" "source code" .= moduleCoverablesFileSource
+        <*> requiredField "coverables" "coverables" .= moduleCoverablesFileCoverables
 
 data ModuleCoverables = ModuleCoverables
-  { moduleCoverablesPackageName :: PackageName,
-    moduleCoverablesModuleName :: ModuleName,
-    moduleCoverablesSource :: String,
-    moduleCoverablesTopLevelBindings :: Set (Coverable TopLevelBinding),
+  { moduleCoverablesTopLevelBindings :: Set (Coverable TopLevelBinding),
     moduleCoverablesExpressions :: Set (Coverable Expression)
   }
   deriving stock (Show, Eq)
   deriving (FromJSON, ToJSON) via (Autodocodec ModuleCoverables)
 
+instance Semigroup ModuleCoverables where
+  (<>) mc1 mc2 =
+    ModuleCoverables
+      { moduleCoverablesTopLevelBindings = moduleCoverablesTopLevelBindings mc1 <> moduleCoverablesTopLevelBindings mc2,
+        moduleCoverablesExpressions = moduleCoverablesExpressions mc1 <> moduleCoverablesExpressions mc2
+      }
+
+instance Monoid ModuleCoverables where
+  mempty =
+    ModuleCoverables
+      { moduleCoverablesTopLevelBindings = mempty,
+        moduleCoverablesExpressions = mempty
+      }
+  mappend = (<>)
+
 instance HasCodec ModuleCoverables where
   codec =
     object "ModuleCoverables" $
       ModuleCoverables
-        <$> requiredField "package-name" "Package name" .= moduleCoverablesPackageName
-        <*> requiredField "module-name" "Module name" .= moduleCoverablesModuleName
-        <*> requiredField "source" "source code" .= moduleCoverablesSource
-        <*> optionalFieldWithOmittedDefault "top-level-bindings" mempty "Top level bindings" .= moduleCoverablesTopLevelBindings
+        <$> optionalFieldWithOmittedDefault "top-level-bindings" mempty "Top level bindings" .= moduleCoverablesTopLevelBindings
         <*> optionalFieldWithOmittedDefault "expressions" mempty "Expressions" .= moduleCoverablesExpressions
 
 data Coverable a = Coverable
@@ -105,7 +139,7 @@ type PackageName = String
 
 type ModuleName = String
 
-readModuleCoverablesFile :: Path Abs File -> IO ModuleCoverables
+readModuleCoverablesFile :: Path Abs File -> IO ModuleCoverablesFile
 readModuleCoverablesFile p = do
   errOrRes <- eitherDecodeFileStrict (fromAbsFile p)
   case errOrRes of
@@ -120,7 +154,7 @@ readModuleCoverablesFile p = do
           ]
     Right result -> pure result
 
-writeModuleCoverablesFile :: Path Abs File -> ModuleCoverables -> IO ()
+writeModuleCoverablesFile :: Path Abs File -> ModuleCoverablesFile -> IO ()
 writeModuleCoverablesFile p moduleCoverables = do
   SB.writeFile (fromAbsFile p) (LB.toStrict (encodePretty moduleCoverables))
 
@@ -132,9 +166,15 @@ readCoverablesFiles dirs = do
       . concat
       <$> mapM (fmap snd . listDirRecur) (S.toList dirs)
   fmap (Coverables . M.unionsWith M.union) $
-    forM coverablesFiles $ \coverablesFile -> do
-      coverables <- readModuleCoverablesFile coverablesFile
-      pure $ M.singleton (moduleCoverablesPackageName coverables) (M.singleton (moduleCoverablesModuleName coverables) coverables)
+    forM coverablesFiles $ \coverablesFilePath -> do
+      coverablesFile <- readModuleCoverablesFile coverablesFilePath
+      pure $
+        M.singleton
+          (moduleCoverablesFilePackageName coverablesFile)
+          ( M.singleton
+              (moduleCoverablesFileModuleName coverablesFile)
+              (moduleCoverablesFileSource coverablesFile, moduleCoverablesFileCoverables coverablesFile)
+          )
 
 coverablesExtension :: String
 coverablesExtension = ".coverables"

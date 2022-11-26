@@ -1,39 +1,41 @@
 {
+    "coverables": {
+        "top-level-bindings": [
+            {
+                "location": {
+                    "end": 8,
+                    "line": 4,
+                    "start": 1
+                },
+                "value": "covered"
+            },
+            {
+                "location": {
+                    "end": 15,
+                    "line": 7,
+                    "start": 1
+                },
+                "value": "coveredWithArg"
+            },
+            {
+                "location": {
+                    "end": 10,
+                    "line": 10,
+                    "start": 1
+                },
+                "value": "uncovered"
+            },
+            {
+                "location": {
+                    "end": 17,
+                    "line": 13,
+                    "start": 1
+                },
+                "value": "uncoveredWithArg"
+            }
+        ]
+    },
     "module-name": "Examples.TopLevel",
     "package-name": "0.0.0.0-test-dekking",
-    "source": "module Examples.TopLevel where\n\ncovered :: IO ()\ncovered = pure ()\n\ncoveredWithArg :: Int -> IO ()\ncoveredWithArg _ = pure ()\n\nuncovered :: IO ()\nuncovered = pure ()\n\nuncoveredWithArg :: Int -> IO ()\nuncoveredWithArg _ = pure ()\n",
-    "top-level-bindings": [
-        {
-            "location": {
-                "end": 8,
-                "line": 4,
-                "start": 1
-            },
-            "value": "covered"
-        },
-        {
-            "location": {
-                "end": 15,
-                "line": 7,
-                "start": 1
-            },
-            "value": "coveredWithArg"
-        },
-        {
-            "location": {
-                "end": 10,
-                "line": 10,
-                "start": 1
-            },
-            "value": "uncovered"
-        },
-        {
-            "location": {
-                "end": 17,
-                "line": 13,
-                "start": 1
-            },
-            "value": "uncoveredWithArg"
-        }
-    ]
+    "source": "module Examples.TopLevel where\n\ncovered :: IO ()\ncovered = pure ()\n\ncoveredWithArg :: Int -> IO ()\ncoveredWithArg _ = pure ()\n\nuncovered :: IO ()\nuncovered = pure ()\n\nuncoveredWithArg :: Int -> IO ()\nuncoveredWithArg _ = pure ()\n"
 }

@@ -1,34 +1,34 @@
 {
     "0.0.0.0-test-dekking": {
         "Examples.Multi.A": {
-            "module-name": "Examples.Multi.A",
-            "package-name": "0.0.0.0-test-dekking",
-            "source": "module Examples.Multi.A where\n\nfive :: Int\nfive = 5\n",
-            "top-level-bindings": [
-                {
-                    "location": {
-                        "end": 5,
-                        "line": 4,
-                        "start": 1
-                    },
-                    "value": "five"
-                }
-            ]
+            "coverables": {
+                "top-level-bindings": [
+                    {
+                        "location": {
+                            "end": 5,
+                            "line": 4,
+                            "start": 1
+                        },
+                        "value": "five"
+                    }
+                ]
+            },
+            "source": "module Examples.Multi.A where\n\nfive :: Int\nfive = 5\n"
         },
         "Examples.Multi.B": {
-            "module-name": "Examples.Multi.B",
-            "package-name": "0.0.0.0-test-dekking",
-            "source": "module Examples.Multi.B where\n\nsix :: Int\nsix = 6\n",
-            "top-level-bindings": [
-                {
-                    "location": {
-                        "end": 4,
-                        "line": 4,
-                        "start": 1
-                    },
-                    "value": "six"
-                }
-            ]
+            "coverables": {
+                "top-level-bindings": [
+                    {
+                        "location": {
+                            "end": 4,
+                            "line": 4,
+                            "start": 1
+                        },
+                        "value": "six"
+                    }
+                ]
+            },
+            "source": "module Examples.Multi.B where\n\nsix :: Int\nsix = 6\n"
         }
     }
 }

@@ -101,7 +101,7 @@ computeCoverageReport Coverables {..} topLevelCoverage =
     M.mapWithKey
       ( \packageName modules ->
           M.mapWithKey
-            ( \moduleName moduleCoverables ->
+            ( \moduleName (sourceCode, moduleCoverables) ->
                 let relevantCoverage =
                       S.fromList
                         . mapMaybe
@@ -112,7 +112,7 @@ computeCoverageReport Coverables {..} topLevelCoverage =
                           )
                         . S.toList
                         $ topLevelCoverage
-                 in computeModuleCoverageReport moduleCoverables relevantCoverage
+                 in computeModuleCoverageReport sourceCode moduleCoverables relevantCoverage
             )
             modules
       )
@@ -125,11 +125,11 @@ newtype CoverageReport = CoverageReport {coverageReportModules :: Map PackageNam
 instance HasCodec CoverageReport where
   codec = dimapCodec CoverageReport coverageReportModules codec
 
-computeModuleCoverageReport :: ModuleCoverables -> Set Location -> ModuleCoverageReport
-computeModuleCoverageReport ModuleCoverables {..} covereds =
+computeModuleCoverageReport :: String -> ModuleCoverables -> Set Location -> ModuleCoverageReport
+computeModuleCoverageReport sourceCode ModuleCoverables {..} covereds =
   let coverage = computeCoverage moduleCoverablesTopLevelBindings covereds
    in ModuleCoverageReport
-        { moduleCoverageReportAnnotatedSource = produceAnnotatedSource moduleCoverablesSource coverage,
+        { moduleCoverageReportAnnotatedSource = produceAnnotatedSource sourceCode coverage,
           moduleCoverageReportTopLevelBindings = coverage
         }
 

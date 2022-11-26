@@ -17,9 +17,9 @@ import GHC.Driver.Types as GHC
 import GHC.Plugins as GHC
 
 addCoverableTopLevelBinding :: Coverable TopLevelBinding -> AdaptM ()
-addCoverableTopLevelBinding a = tell (S.singleton a)
+addCoverableTopLevelBinding a = tell (mempty {moduleCoverablesTopLevelBindings = S.singleton a})
 
-type AdaptM = WriterT (Set (Coverable TopLevelBinding)) Hsc
+type AdaptM = WriterT ModuleCoverables Hsc
 
 adapterImport :: LImportDecl GhcPs
 adapterImport = noLoc (simpleImportDecl adapterModuleName)
