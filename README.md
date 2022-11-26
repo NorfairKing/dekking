@@ -117,6 +117,33 @@ dekking-test-0.0.0.0 Examples.Multi.A 4 1 5
 
 ![Strategy graph](docs/strategy.svg)
 
+### Nix API
+
+Nix support is a strong requirement of the `dekking` project.
+A flake has been provided.
+The default package contains the following `passthru` attributes:
+
+* `addCoverables`: Add a `coverables` output to a Haskell package.
+* `addCoverage`: Add a `coverage` output to a Haskell package.
+* `addCoverablesAndCoverage`: both of the above
+* `addCoverageReport`: Add a coverage `report` output to a Haskell package, similar to `doCoverage`.
+* `compileCoverageReport`: Compile a coverage report (internal, you probably won't need this.)
+* `makeCoverageReport`: Produce a coverage report from multiple Haskell packages.
+  Example usage:
+  ``` nix
+  {
+    fuzzy-time-report = dekking.makeCoverageReport {
+      name = "fuzzy-time-coverage-report";
+      packages = [
+        "fuzzy-time"
+        "fuzzy-time-gen"
+      ];
+    };
+  }
+  ```
+
+See the `e2e-test` directory for many more examples.
+
 ### Why a source-to-source transformation?
 
 TODO
