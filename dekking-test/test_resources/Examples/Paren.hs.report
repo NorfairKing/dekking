@@ -29,35 +29,19 @@
             },
             {
                 "annotation": "Uncoverable",
-                "source": " = do"
+                "source": " ="
             }
         ],
         [
             {
                 "annotation": "Uncoverable",
-                "source": "  -- Parentheses are respected"
+                "source": "  -- -- Parentheses are respected"
             }
         ],
         [
             {
                 "annotation": "Uncoverable",
-                "source": "  "
-            },
-            {
-                "annotation": "Covered",
-                "source": "putStrLn"
-            },
-            {
-                "annotation": "Uncoverable",
-                "source": " (\"Hello\" "
-            },
-            {
-                "annotation": "Covered",
-                "source": "<>"
-            },
-            {
-                "annotation": "Uncoverable",
-                "source": " \"world\")"
+                "source": "  -- putStrLn (\"Hello\" <> \"world\")"
             }
         ],
         [
@@ -69,7 +53,79 @@
         [
             {
                 "annotation": "Uncoverable",
-                "source": "  -- Currying works correctly"
+                "source": "  -- -- Currying works correctly"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "  -- print ((+) ((+) 5 6) 7)"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": ""
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "  -- -- Operators are respected"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "  -- print (7 + 8 + 9)"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": ""
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "  -- -- Custom operators are respected"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "  -- print (3 +++ 4 +++ 5)"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": ""
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "  -- -- Infix operators work fine"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "  -- print (5 `exp` 2)"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": ""
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "  -- Dollars work just fine"
             }
         ],
         [
@@ -80,6 +136,14 @@
             {
                 "annotation": "Covered",
                 "source": "print"
+            },
+            {
+                "annotation": "Uncoverable",
+                "source": " "
+            },
+            {
+                "annotation": "Covered",
+                "source": "$"
             },
             {
                 "annotation": "Uncoverable",
@@ -87,19 +151,27 @@
             },
             {
                 "annotation": "Covered",
-                "source": "(+)"
+                "source": "succ"
             },
             {
                 "annotation": "Uncoverable",
-                "source": " ("
+                "source": " "
             },
             {
                 "annotation": "Covered",
-                "source": "(+)"
+                "source": "$"
             },
             {
                 "annotation": "Uncoverable",
-                "source": " 5 6) 7)"
+                "source": " "
+            },
+            {
+                "annotation": "Covered",
+                "source": "5"
+            },
+            {
+                "annotation": "Uncoverable",
+                "source": ")"
             }
         ],
         [
@@ -111,103 +183,7 @@
         [
             {
                 "annotation": "Uncoverable",
-                "source": "  -- Operators are respected"
-            }
-        ],
-        [
-            {
-                "annotation": "Uncoverable",
-                "source": "  "
-            },
-            {
-                "annotation": "Covered",
-                "source": "print"
-            },
-            {
-                "annotation": "Uncoverable",
-                "source": " (7 "
-            },
-            {
-                "annotation": "Covered",
-                "source": "+"
-            },
-            {
-                "annotation": "Uncoverable",
-                "source": " 8 "
-            },
-            {
-                "annotation": "Covered",
-                "source": "+"
-            },
-            {
-                "annotation": "Uncoverable",
-                "source": " 9)"
-            }
-        ],
-        [
-            {
-                "annotation": "Uncoverable",
-                "source": ""
-            }
-        ],
-        [
-            {
-                "annotation": "Uncoverable",
-                "source": "  -- Custom operators are respected"
-            }
-        ],
-        [
-            {
-                "annotation": "Uncoverable",
-                "source": "  "
-            },
-            {
-                "annotation": "Covered",
-                "source": "print"
-            },
-            {
-                "annotation": "Uncoverable",
-                "source": " (3 "
-            },
-            {
-                "annotation": "Covered",
-                "source": "+++"
-            },
-            {
-                "annotation": "Uncoverable",
-                "source": " 4 "
-            },
-            {
-                "annotation": "Covered",
-                "source": "+++"
-            },
-            {
-                "annotation": "Uncoverable",
-                "source": " 5)"
-            }
-        ],
-        [
-            {
-                "annotation": "Uncoverable",
-                "source": ""
-            }
-        ],
-        [
-            {
-                "annotation": "Uncoverable",
-                "source": ""
-            },
-            {
-                "annotation": "Covered",
-                "source": "(+++)"
-            },
-            {
-                "annotation": "Uncoverable",
-                "source": " = "
-            },
-            {
-                "annotation": "Covered",
-                "source": "(+)"
+                "source": "-- (+++) = (+)"
             }
         ]
     ],
@@ -215,113 +191,49 @@
         "covered": [
             {
                 "location": {
-                    "end": 13,
-                    "line": 9,
-                    "start": 10
+                    "end": 20,
+                    "line": 21,
+                    "start": 19
                 },
-                "value": "+"
+                "value": null
+            },
+            {
+                "location": {
+                    "end": 10,
+                    "line": 21,
+                    "start": 9
+                },
+                "value": "$"
             },
             {
                 "location": {
                     "end": 18,
-                    "line": 9,
-                    "start": 15
+                    "line": 21,
+                    "start": 17
                 },
-                "value": "+"
+                "value": "$"
             },
             {
                 "location": {
-                    "end": 13,
-                    "line": 12,
+                    "end": 8,
+                    "line": 21,
+                    "start": 3
+                },
+                "value": "print"
+            },
+            {
+                "location": {
+                    "end": 16,
+                    "line": 21,
                     "start": 12
                 },
-                "value": "+"
-            },
-            {
-                "location": {
-                    "end": 17,
-                    "line": 12,
-                    "start": 16
-                },
-                "value": "+"
-            },
-            {
-                "location": {
-                    "end": 12,
-                    "line": 17,
-                    "start": 9
-                },
-                "value": "+"
-            },
-            {
-                "location": {
-                    "end": 15,
-                    "line": 15,
-                    "start": 12
-                },
-                "value": "+++"
-            },
-            {
-                "location": {
-                    "end": 21,
-                    "line": 15,
-                    "start": 18
-                },
-                "value": "+++"
-            },
-            {
-                "location": {
-                    "end": 23,
-                    "line": 6,
-                    "start": 21
-                },
-                "value": "<>"
-            },
-            {
-                "location": {
-                    "end": 8,
-                    "line": 9,
-                    "start": 3
-                },
-                "value": "print"
-            },
-            {
-                "location": {
-                    "end": 8,
-                    "line": 12,
-                    "start": 3
-                },
-                "value": "print"
-            },
-            {
-                "location": {
-                    "end": 8,
-                    "line": 15,
-                    "start": 3
-                },
-                "value": "print"
-            },
-            {
-                "location": {
-                    "end": 11,
-                    "line": 6,
-                    "start": 3
-                },
-                "value": "putStrLn"
+                "value": "succ"
             }
         ],
         "uncovered": []
     },
     "top-level-bindings": {
         "covered": [
-            {
-                "location": {
-                    "end": 6,
-                    "line": 17,
-                    "start": 1
-                },
-                "value": "+++"
-            },
             {
                 "location": {
                     "end": 5,

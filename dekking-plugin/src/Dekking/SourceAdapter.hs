@@ -95,21 +95,42 @@ adaptLocalBinds = pure -- moduule = \case
 
 adaptLExpr :: LHsExpr GhcPs -> AdaptM (LHsExpr GhcPs)
 adaptLExpr = transformM $ \le@(L sp e) -> do
-  case e of
-    HsVar _ (L _ rdr) ->
-      case spanLocation sp of
+  let applyAdapter mName = case spanLocation sp of
         Just loc -> do
           addExpression
             Coverable
-              { coverableValue =
-                  Expression
-                    { expressionIdentifier = Just $ occNameString $ rdrNameOcc rdr
-                    },
+              { coverableValue = Expression {expressionIdentifier = mName},
                 coverableLocation = loc
               }
           e' <- applyAdapterExpr loc e
           pure $ L sp e'
         Nothing -> pure le
+  case e of
+    HsVar _ (L _ rdr) -> applyAdapter $ Just $ occNameString $ rdrNameOcc rdr
+    HsOverLit _ _ -> applyAdapter Nothing
+    HsLit _ _ -> applyAdapter Nothing
+    -- OpApp x left middle right -> pure $ L sp $ OpApp x (noLoc (HsPar NoExtField left)) (noLoc (HsPar NoExtField middle)) (noLoc (HsPar NoExtField right))
+    -- OpApp x left middle right -> pure $ L sp $ HsPar NoExtField $ noLoc $ OpApp x left middle right
+    -- We manually transform
+    --
+    -- "a + b"
+    -- into
+    -- "((+) a) b"
+    --
+    -- and
+    --
+    -- 5 `exp` 6
+    -- into
+    -- (exp 5) 6
+    -- OpApp x left middle right ->
+    --   pure $
+    --     L sp $
+    --       HsPar NoExtField $
+    --         noLoc $
+    --           HsApp
+    --             x
+    --             (noLoc (HsPar NoExtField (noLoc (HsApp NoExtField middle left))))
+    --             right
     _ -> pure le
 
 adaptTopLevelDecl :: HsDecl GhcPs -> AdaptM [HsDecl GhcPs]
@@ -219,16 +240,18 @@ applyAdapterExpr loc e = do
   moduule <- ask
   let strToLog = mkStringToLog moduule loc
   pure $
-    HsApp
-      NoExtField
-      ( noLoc
-          ( HsApp
-              NoExtField
-              (noLoc (HsVar NoExtField (noLoc (Qual adapterModuleName (mkVarOcc "adaptValue")))))
-              (noLoc (HsLit NoExtField (HsString NoSourceText (mkFastString strToLog))))
+    HsPar NoExtField $
+      noLoc $
+        HsApp
+          NoExtField
+          ( noLoc
+              ( HsApp
+                  NoExtField
+                  (noLoc (HsVar NoExtField (noLoc (Qual adapterModuleName (mkVarOcc "adaptValue")))))
+                  (noLoc (HsLit NoExtField (HsString NoSourceText (mkFastString strToLog))))
+              )
           )
-      )
-      (noLoc e)
+          (noLoc e)
 
 spanLocation :: SrcSpan -> Maybe Location
 spanLocation sp = case sp of

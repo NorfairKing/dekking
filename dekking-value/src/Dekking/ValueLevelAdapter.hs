@@ -1,3 +1,4 @@
+{-# LANGUAGE RankNTypes #-}
 -- The docs here:
 -- https://hackage.haskell.org/package/base-4.17.0.0/docs/System-IO-Unsafe.html#v:unsafePerformIO
 -- recommend these two compiler flags:
@@ -24,12 +25,12 @@ withCoverageHandle func =
     func h
 
 {-# NOINLINE adaptValue #-}
-adaptValue :: String -> a -> a
-adaptValue logStr a = unsafePerformIO $
+adaptValue :: String -> (forall a. a -> a)
+adaptValue logStr = unsafePerformIO $
   withCoverageHandle $ \coverageHandle -> do
     hPutStrLn coverageHandle logStr
     hFlush coverageHandle
-    pure a
+    pure id
 
 -- TODO try out 'unsafeDupablePerformIO' and consider whether I
 -- need 'unsafeInterleaveIO'

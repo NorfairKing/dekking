@@ -18,6 +18,7 @@ library:
   - -w
   # Show what's happening.
   - -ddump-parsed
+  - -ddump-parsed-ast
   - -ddump-rn
   dependencies:
   - aeson

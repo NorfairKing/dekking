@@ -48,6 +48,12 @@ let
       ];
     };
     # External packages' code coverage reports
+    cursor-report = pkgs.dekking.makeCoverageReport {
+      name = "cursor-coverage-report";
+      packages = [
+        "cursor"
+      ];
+    };
     # yesod-report = pkgs.dekking.makeCoverageReport {
     #   name = "yesod-coverage-report";
     #   packages = [

@@ -6,6 +6,7 @@ import Dekking.Coverage
 import Dekking.Report
 import Examples.Multi.A
 import Examples.Multi.B
+import qualified Examples.OverloadedStrings as OverloadedStrings
 import qualified Examples.Paren as Paren
 import qualified Examples.TopLevel as TopLevel
 import Path
@@ -55,8 +56,8 @@ spec = sequential . doNotRandomiseExecutionOrder $ do
     don't TopLevel.uncovered
     don't $ TopLevel.uncoveredWithArg 5
 
-  singleFileSpec "Paren" $ do
-    Paren.main
+  singleFileSpec "Paren" Paren.main
+  singleFileSpec "OverloadedStrings" OverloadedStrings.main
 
   describe "Multi" $ do
     it "Makes the same coverables for the Multi modules" $ do

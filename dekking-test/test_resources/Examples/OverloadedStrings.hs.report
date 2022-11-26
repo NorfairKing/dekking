@@ -1,0 +1,194 @@
+{
+    "annotated-source": [
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "{-# LANGUAGE OverloadedStrings #-}"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": ""
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "module Examples.OverloadedStrings where"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": ""
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "import Data.Text (Text)"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": ""
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "main :: IO ()"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": ""
+            },
+            {
+                "annotation": "Covered",
+                "source": "main"
+            },
+            {
+                "annotation": "Uncoverable",
+                "source": " = do"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "  let printString :: String -> IO ()"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "      printString = "
+            },
+            {
+                "annotation": "Covered",
+                "source": "print"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "  let printText :: Text -> IO ()"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "      printText = "
+            },
+            {
+                "annotation": "Covered",
+                "source": "print"
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "  "
+            },
+            {
+                "annotation": "Covered",
+                "source": "printString"
+            },
+            {
+                "annotation": "Uncoverable",
+                "source": " "
+            },
+            {
+                "annotation": "Covered",
+                "source": "\"Hi\""
+            }
+        ],
+        [
+            {
+                "annotation": "Uncoverable",
+                "source": "  "
+            },
+            {
+                "annotation": "Covered",
+                "source": "printText"
+            },
+            {
+                "annotation": "Uncoverable",
+                "source": " "
+            },
+            {
+                "annotation": "Covered",
+                "source": "\"Hi\""
+            }
+        ]
+    ],
+    "expressions": {
+        "covered": [
+            {
+                "location": {
+                    "end": 19,
+                    "line": 13,
+                    "start": 15
+                },
+                "value": null
+            },
+            {
+                "location": {
+                    "end": 17,
+                    "line": 14,
+                    "start": 13
+                },
+                "value": null
+            },
+            {
+                "location": {
+                    "end": 26,
+                    "line": 10,
+                    "start": 21
+                },
+                "value": "print"
+            },
+            {
+                "location": {
+                    "end": 24,
+                    "line": 12,
+                    "start": 19
+                },
+                "value": "print"
+            },
+            {
+                "location": {
+                    "end": 14,
+                    "line": 13,
+                    "start": 3
+                },
+                "value": "printString"
+            },
+            {
+                "location": {
+                    "end": 12,
+                    "line": 14,
+                    "start": 3
+                },
+                "value": "printText"
+            }
+        ],
+        "uncovered": []
+    },
+    "top-level-bindings": {
+        "covered": [
+            {
+                "location": {
+                    "end": 5,
+                    "line": 8,
+                    "start": 1
+                },
+                "value": "main"
+            }
+        ],
+        "uncovered": []
+    }
+}
