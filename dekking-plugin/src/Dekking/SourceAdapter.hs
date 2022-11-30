@@ -139,6 +139,7 @@ adaptLExpr (L sp e) = fmap (L sp) $ do
     HsOverLit {} -> applyAdapter Nothing
     HsLit {} -> applyAdapter Nothing
     HsLam x mg -> HsLam x <$> adaptMatchGroup mg
+    HsLamCase x mg -> HsLamCase x <$> adaptMatchGroup mg
     HsApp x left right -> HsApp x <$> adaptLExpr left <*> adaptLExpr right
     -- TODO: Things inside a visible type application might be covered more
     -- granularly but this is quite good in the meantime.
