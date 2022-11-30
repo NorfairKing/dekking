@@ -14,6 +14,7 @@ library
       Paren
       Record
       TopLevel
+      TypeApplications
   other-modules:
       Paths_syntax
   hs-source-dirs:

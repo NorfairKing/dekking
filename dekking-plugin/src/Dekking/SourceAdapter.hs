@@ -136,12 +136,13 @@ adaptLExpr (L sp e) = fmap (L sp) $ do
     HsRecFld x afo -> pure $ HsRecFld x afo
     HsOverLabel x mid fs -> pure $ HsOverLabel x mid fs
     HsIPVar x iv -> pure $ HsIPVar x iv
-    HsOverLit _ _ -> applyAdapter Nothing
-    HsLit _ _ -> applyAdapter Nothing
+    HsOverLit {} -> applyAdapter Nothing
+    HsLit {} -> applyAdapter Nothing
     HsLam x mg -> HsLam x <$> adaptMatchGroup mg
     HsApp x left right -> HsApp x <$> adaptLExpr left <*> adaptLExpr right
-    -- TODO: Things inside a visible type application
-    -- HsAppType x body t -> HsAppType x <$> adaptLExpr body <*> pure t
+    -- TODO: Things inside a visible type application might be covered more
+    -- granularly but this is quite good in the meantime.
+    HsAppType {} -> applyAdapter Nothing
     OpApp x left middle right ->
       OpApp x
         <$> adaptLExpr left
