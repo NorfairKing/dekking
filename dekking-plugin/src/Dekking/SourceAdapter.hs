@@ -247,6 +247,7 @@ adaptTopLevelExactName = undefined
 
 adaptTopLevelBind :: HsBind GhcPs -> AdaptM [HsBind GhcPs]
 adaptTopLevelBind = \case
+  PatBind x left rights ticks -> undefined
   FunBind x originalName originalMatches originalTicks -> do
     let on = rdrNameOcc (unLoc originalName)
         nameString = occNameString on
