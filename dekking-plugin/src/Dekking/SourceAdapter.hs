@@ -171,6 +171,9 @@ adaptLExpr (L sp e) = fmap (L sp) $ do
         <*> adaptLExpr right
     NegApp x body se -> NegApp x <$> adaptLExpr body <*> pure se
     HsPar x le -> HsPar x <$> adaptLExpr le
+    ExplicitTuple x args boxity -> ExplicitTuple x <$> mapM adaptLTupArg args <*> pure boxity
+    ExplicitSum x ct a body -> ExplicitSum x ct a <$> adaptLExpr body
+    HsCase x body mg -> HsCase x <$> adaptLExpr body <*> adaptMatchGroup mg
     HsIf x condE ifE elseE -> HsIf x <$> adaptLExpr condE <*> adaptLExpr ifE <*> adaptLExpr elseE
     HsLet x lbs body -> HsLet x <$> adaptLocalBinds lbs <*> adaptLExpr body
     HsDo x ctx stmts -> HsDo x ctx <$> liftL (mapM adaptExprLStmt) stmts
@@ -178,6 +181,11 @@ adaptLExpr (L sp e) = fmap (L sp) $ do
     RecordUpd x left updates -> RecordUpd x <$> adaptLExpr left <*> mapM (liftL adaptRecordField) updates
     -- TODO
     _ -> pure e
+
+adaptLTupArg :: LHsTupArg GhcPs -> AdaptM (LHsTupArg GhcPs)
+adaptLTupArg = liftL $ \case
+  Present x body -> Present x <$> adaptLExpr body
+  Missing x -> pure $ Missing x
 
 adaptRecordBinds :: HsRecordBinds GhcPs -> AdaptM (HsRecordBinds GhcPs)
 adaptRecordBinds = \case
