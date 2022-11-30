@@ -20,7 +20,7 @@ with final.haskell.lib;
       passthru = (old.passthru or { }) // {
         inherit addCoverables addCoverage addCoverablesAndCoverage addCoverageReport compileCoverageReport;
         makeCoverageReport = final.callPackage ./makeCoverageReport.nix {
-          inherit addCoverablesAndCoverage compileCoverageReport;
+          inherit addCoverables addCoverage compileCoverageReport;
         };
       };
     });

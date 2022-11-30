@@ -67,6 +67,17 @@ let
         "foobar-gen"
       ];
     };
+    foobar-custom-report = pkgs.dekking.makeCoverageReport {
+      name = "foobar-custom-coverage-report";
+      inherit haskellPackages;
+      coverables = [
+        "foobar"
+      ];
+      coverage = [
+        "foobar-gen"
+      ];
+    };
+
     # External packages' code coverage reports
     fuzzy-time-report = pkgs.dekking.makeCoverageReport {
       name = "fuzzy-time-coverage-report";
@@ -75,6 +86,21 @@ let
         "fuzzy-time-gen"
       ];
     };
+
+    safe-coloured-text-report = pkgs.dekking.makeCoverageReport {
+      name = "safe-coloured-text-report";
+      coverables = [
+        "safe-coloured-text"
+        "safe-coloured-text-layout"
+      ];
+      coverage = [
+        "safe-coloured-text-gen"
+        "safe-coloured-text-layout-gen"
+        "sydtest"
+        "genvalidity-sydtest"
+      ];
+    };
+
     # Something doesn't work with lenses yet
     # cursor-report = pkgs.dekking.makeCoverageReport {
     #   name = "cursor-coverage-report";
