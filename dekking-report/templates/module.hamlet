@@ -11,19 +11,6 @@
     <h2>
       Summary
 
-    <h3>
-      Top-level bindings
-    <p>
-      Total: #{coverageSummaryTotal topLevelSummary}
-    <p>
-      Covered: #{coverageSummaryCovered topLevelSummary}
-    <p>
-      Uncovered: #{coverageSummaryUncovered topLevelSummary}
-    <p>
-      <progress value=#{coverageSummaryCovered topLevelSummary} max=#{coverageSummaryTotal topLevelSummary}>%</progress>
-
-    <h3>
-      Expressions
     <p>
       Total: #{coverageSummaryTotal expressionSummary}
     <p>

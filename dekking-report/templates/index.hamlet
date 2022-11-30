@@ -13,11 +13,9 @@
           <th>
             Module
           <th>
-            Top-level bindings
-          <th>
             Expressions
       <tbody>
-        $forall (packageName, (moduleName, (topLevelSummary, expressionSummary))) <- summaries
+        $forall (packageName, (moduleName,  expressionSummary)) <- summaries
           <tr>
             <td>
               <code>
@@ -27,15 +25,11 @@
                 <code>
                   #{moduleName}
             <td>
-              <progress value=#{coverageSummaryCovered topLevelSummary} max=#{coverageSummaryTotal topLevelSummary}>%</progress>
-            <td>
               <progress value=#{coverageSummaryCovered expressionSummary} max=#{coverageSummaryTotal expressionSummary}>%</progress>
       <tfoot>
         <tr>
           <td>
             Total
           <td>
-          <td>
-            <progress value=#{coverageSummaryCovered totalTopLevelSummary} max=#{coverageSummaryTotal totalTopLevelSummary}>%</progress>
           <td>
             <progress value=#{coverageSummaryCovered totalExpressionSummary} max=#{coverageSummaryTotal totalExpressionSummary}>%</progress>

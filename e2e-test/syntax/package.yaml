@@ -6,6 +6,11 @@ dependencies:
 library:
   source-dirs: src
   dependencies:
+  - aeson
+  - http-client
+  - servant
+  - servant-client
+  - servant-server
   - text
 
 tests:

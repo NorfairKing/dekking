@@ -64,8 +64,7 @@ instance HasCodec ModuleCoverablesFile where
         <*> requiredField "coverables" "coverables" .= moduleCoverablesFileCoverables
 
 data ModuleCoverables = ModuleCoverables
-  { moduleCoverablesTopLevelBindings :: Set (Coverable TopLevelBinding),
-    moduleCoverablesExpressions :: Set (Coverable Expression)
+  { moduleCoverablesExpressions :: Set (Coverable Expression)
   }
   deriving stock (Show, Eq)
   deriving (FromJSON, ToJSON) via (Autodocodec ModuleCoverables)
@@ -73,15 +72,13 @@ data ModuleCoverables = ModuleCoverables
 instance Semigroup ModuleCoverables where
   (<>) mc1 mc2 =
     ModuleCoverables
-      { moduleCoverablesTopLevelBindings = moduleCoverablesTopLevelBindings mc1 <> moduleCoverablesTopLevelBindings mc2,
-        moduleCoverablesExpressions = moduleCoverablesExpressions mc1 <> moduleCoverablesExpressions mc2
+      { moduleCoverablesExpressions = moduleCoverablesExpressions mc1 <> moduleCoverablesExpressions mc2
       }
 
 instance Monoid ModuleCoverables where
   mempty =
     ModuleCoverables
-      { moduleCoverablesTopLevelBindings = mempty,
-        moduleCoverablesExpressions = mempty
+      { moduleCoverablesExpressions = mempty
       }
   mappend = (<>)
 
@@ -89,8 +86,7 @@ instance HasCodec ModuleCoverables where
   codec =
     object "ModuleCoverables" $
       ModuleCoverables
-        <$> optionalFieldWithOmittedDefault "top-level-bindings" mempty "Top level bindings" .= moduleCoverablesTopLevelBindings
-        <*> optionalFieldWithOmittedDefault "expressions" mempty "Expressions" .= moduleCoverablesExpressions
+        <$> optionalFieldWithOmittedDefault "expressions" mempty "Expressions" .= moduleCoverablesExpressions
 
 data Coverable a = Coverable
   { coverableValue :: !a,
@@ -122,12 +118,6 @@ instance HasCodec Location where
 
 locationString :: Location -> String
 locationString Location {..} = unwords [show locationLine, show locationColumnStart, show locationColumnEnd]
-
-newtype TopLevelBinding = TopLevelBinding {topLevelBindingIdentifier :: String}
-  deriving stock (Show, Eq, Ord)
-
-instance HasCodec TopLevelBinding where
-  codec = dimapCodec TopLevelBinding topLevelBindingIdentifier codec
 
 newtype Expression = Expression {expressionIdentifier :: Maybe String}
   deriving stock (Show, Eq, Ord)

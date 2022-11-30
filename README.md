@@ -149,6 +149,22 @@ See the `e2e-test` directory for many more examples.
 
 TODO
 
+### Why is there no separate coverage for top-level bindings, patterns, or alternatives?
+
+Only expressions are evaluated, so only expressions can be covered.
+Expression coverage also shows you alternative coverage because alternatives
+point to an expression.
+Top-level bindings are not somehow special either.
+They are a code organisation tool that need not have any impact on whether
+covering them is more important.
+
+## Why are there no controls to fail when a coverage percentage is not met?
+
+Making automated decisions using a coverage percentage is usually a
+shortsighted way to use that number.
+If you really want to automate such a thing, you can use the `report.json` file
+that `dekking-report` outputs.
+
 ## Why not "just" use HPC?
 
 * Strong nix support
