@@ -1,11 +1,28 @@
-{ lib, stdenv, haskellPackages, addCoverables, addCoverage, compileCoverageReport }:
+{ lib
+, stdenv
+, haskellPackages
+, addDekkingValueDependency
+, addCoverables
+, addCoverage
+, compileCoverageReport
+}:
 let x = haskellPackages; # Trick we have to use for naming conflicts
 in
 { name ? "coverage-report"
 , haskellPackages ? x
-, packages ? [ ] # List of package names
-, coverables ? [ ] # List of package names
-, coverage ? [ ] # List of package names
+  # List of package names
+  # These packages will be reported and their test suite's coverage collected.
+, packages ? [ ]
+  # List of package names
+  # These packages will be reported but their test suite's coverage NOT collected.
+, coverables ? [ ]
+  # List of package names
+  # These packages will NOT be reported but thuir test suite's coverage will be collected.
+, coverage ? [ ]
+  # List of package names
+  # These packages will be linked against dekking-value to prevent linking errors.
+  # See ./nix/addDekkingValueDependency.nix for more details.
+, needToBeLinkedAgainstDekkingValue ? [ ] # List of package names
 , extraScript ? ""
 }:
 let
@@ -18,6 +35,14 @@ let
   # source-transformed package will now pick up the source-transformed
   # dependency instead of the normal dependency and output coverage
   # correctly.
+  addDekkingValueDependencyOverride = self: super:
+    builtins.listToAttrs
+      (builtins.map
+        (pname: {
+          name = pname;
+          value = addDekkingValueDependency super.${pname};
+        })
+        needToBeLinkedAgainstDekkingValue);
   addCoverableOverride = self: super:
     builtins.listToAttrs (builtins.map
       (pname: {
@@ -34,7 +59,9 @@ let
       allCoverage);
   newHaskellPackages = haskellPackages.override (old: {
     overrides = lib.composeExtensions (old.overrides or (_: _: { }))
-      (lib.composeExtensions addCoverableOverride addCoverageOverride);
+      (lib.composeExtensions
+        addDekkingValueDependencyOverride
+        (lib.composeExtensions addCoverableOverride addCoverageOverride));
   });
 in
 compileCoverageReport {

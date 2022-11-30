@@ -89,13 +89,15 @@ let
 
     safe-coloured-text-report = pkgs.dekking.makeCoverageReport {
       name = "safe-coloured-text-report";
-      coverables = [
+      packages = [
         "safe-coloured-text"
         "safe-coloured-text-layout"
       ];
       coverage = [
         "safe-coloured-text-gen"
         "safe-coloured-text-layout-gen"
+      ];
+      needToBeLinkedAgainstDekkingValue = [
         "sydtest"
         "genvalidity-sydtest"
       ];
