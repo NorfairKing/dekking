@@ -25,6 +25,7 @@ library:
   - bytestring
   - containers
   - ghc
+  - ghc-boot
   - mtl
   - path
   - path-io

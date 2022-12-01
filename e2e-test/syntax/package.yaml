@@ -8,6 +8,7 @@ library:
   dependencies:
   - aeson
   - http-client
+  - microlens
   - servant
   - servant-client
   - servant-server

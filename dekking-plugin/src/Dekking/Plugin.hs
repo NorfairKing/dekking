@@ -7,12 +7,52 @@ import Dekking.Coverable
 import Dekking.SourceAdapter
 import GHC
 import GHC.Driver.Plugins
+import GHC.Driver.Session
 import GHC.Driver.Types
+import GHC.LanguageExtensions
 import Path
 import Path.IO
 
 plugin :: Plugin
-plugin = defaultPlugin {parsedResultAction = adaptParseResult}
+plugin =
+  defaultPlugin
+    { dynflagsPlugin = \_ dynFlags ->
+        -- In order to perform the source-to-source transformation, we have to set 'ImpredicativeTypes'.
+        --
+        -- For the purposes of this explanation, our sourc-transformation might
+        -- as well be `a` -> `id a`.
+        -- One would think (or at least I certainly did), that this would turn
+        -- any piece of code that type-checksinto something that also
+        -- type-checks.
+        -- However, without 'ImpredicativeTypes', it doesn't.
+        --
+        -- Indeed, without 'ImpredicativeTypes', this type-checks:
+        --
+        -- ```
+        -- exampleStringL :: Lens' Example String
+        -- exampleStringL = lens exampleString (\e s -> e {exampleString = s})
+        -- ```
+        --
+        -- But this doesn't:
+        --
+        -- ```
+        -- exampleStringL :: Lens' Example String
+        -- exampleStringL = (id lens) exampleString (\e s -> e {exampleString = s})
+        -- ```
+        --
+        -- For a simpler example, consider the following piece of code:
+        -- (Thank you @lnnf107 on twitter!)
+        --
+        -- ```
+        -- f :: Int -> (forall a. a -> a)
+        -- ```
+        --
+        -- Our transformation would turn `f` into `id f`, but then GHC would try
+        -- to instantiate the type-parameter of `id` with the polytype `Int ->
+        -- (forall a. a -> a)`, which is only possible with ImpredicativeTypes.
+        pure (xopt_set dynFlags ImpredicativeTypes),
+      parsedResultAction = adaptParseResult
+    }
 
 adaptParseResult :: [CommandLineOption] -> ModSummary -> HsParsedModule -> Hsc HsParsedModule
 adaptParseResult _ ms pr = do
