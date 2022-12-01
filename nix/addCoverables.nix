@@ -1,4 +1,6 @@
 { lib, haskell, haskellPackages, rsync }:
+{ exceptions ? [ ]
+}:
 pkg:
 
 # Add a 'coverable' output to a package by plugging in the 'Dekking' plugin and
@@ -7,7 +9,7 @@ pkg:
 let
   # Inspired by:
   # https://github.com/mpickering/haskell-nix-plugin/blob/2553ab0ff24d0d5752295acb4cf8b1b9dbcb8c76/add-plugin.nix
-  pluginOpts = [ ];
+  pluginOpts = builtins.map (e: "--exception=" + e) exceptions;
   # Build the plugin options.
   stringOpt = arg: "-fplugin-opt=Dekking:${arg}";
   stringOpts = lib.concatStringsSep " " (builtins.map stringOpt pluginOpts);

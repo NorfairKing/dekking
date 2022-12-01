@@ -121,7 +121,7 @@ let
       name = "yesod-coverage-report";
       packages = [
         "yesod"
-        # "yesod-auth"
+        "yesod-auth"
         # "yesod-auth-oauth" # Marked as broken
         "yesod-bin"
         "yesod-core"
@@ -134,6 +134,15 @@ let
         "yesod-static"
         "yesod-test"
         "yesod-websockets"
+      ];
+      exceptions = [
+        # Once this GHC bug is fixed, we should be able to remove these modules from the exceptions:
+        # https://gitlab.haskell.org/ghc/ghc/-/issues/22543
+        "Yesod.Auth"
+        "Yesod.Auth.Email"
+        "Yesod.Auth.GoogleEmail2"
+        "Yesod.Auth.Hardcoded"
+        "Yesod.Auth.OpenId"
       ];
     };
   };

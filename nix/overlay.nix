@@ -6,22 +6,32 @@ with final.haskell.lib;
     let
       dekking-report = justStaticExecutables final.haskellPackages.dekking-report;
       addDekkingValueDependency = final.callPackage ./addDekkingValueDependency.nix { };
-      addCoverables = final.callPackage ./addCoverables.nix { };
+      addCoverables = final.dekking.addCoverables' { };
+      addCoverables' = final.callPackage ./addCoverables.nix { };
       addCoverage = final.callPackage ./addCoverage.nix { inherit addDekkingValueDependency; };
       addCoverablesAndCoverage = pkg: addCoverage (addCoverables pkg);
-      addCoverageReport = final.callPackage ./addCoverageReport.nix {
+      addCoverageReport' = final.callPackage ./addCoverageReport.nix {
         inherit dekking-report;
-        inherit addCoverables addCoverage compileCoverageReport;
+        inherit addCoverables' addCoverage compileCoverageReport;
       };
+      addCoverageReport = final.dekking.addCoverageReport' { };
       compileCoverageReport = final.callPackage ./compileCoverageReport.nix {
         inherit dekking-report;
       };
     in
     dekking-report.overrideAttrs (old: {
-      passthru = (old.passthru or { }) // {
-        inherit addDekkingValueDependency addCoverables addCoverage addCoverablesAndCoverage addCoverageReport compileCoverageReport;
+      passthru = (old.passthru or{ }) // {
+        inherit
+          addDekkingValueDependency
+          addCoverables
+          addCoverables'
+          addCoverage
+          addCoverablesAndCoverage
+          addCoverageReport
+          addCoverageReport'
+          compileCoverageReport;
         makeCoverageReport = final.callPackage ./makeCoverageReport.nix {
-          inherit addDekkingValueDependency addCoverables addCoverage compileCoverageReport;
+          inherit addDekkingValueDependency addCoverables' addCoverage compileCoverageReport;
         };
       };
     });

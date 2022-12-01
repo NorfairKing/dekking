@@ -2,7 +2,8 @@ module Dekking.Plugin (plugin) where
 
 import Control.Monad.Reader
 import Control.Monad.Writer.Strict
-import Data.List (isPrefixOf)
+import Data.List (isPrefixOf, stripPrefix)
+import Data.Maybe (mapMaybe)
 import Dekking.Coverable
 import Dekking.SourceAdapter
 import GHC
@@ -55,11 +56,12 @@ plugin =
     }
 
 adaptParseResult :: [CommandLineOption] -> ModSummary -> HsParsedModule -> Hsc HsParsedModule
-adaptParseResult _ ms pr = do
+adaptParseResult es ms pr = do
   liftIO $ putStrLn "Activating the coverage logger plugin"
   let m = ms_mod ms
   let mn = moduleName m
-  if "Paths_" `isPrefixOf` moduleNameString mn
+  let exceptionModules = mapMaybe (stripPrefix "--exception=") es
+  if "Paths_" `isPrefixOf` moduleNameString mn || moduleNameString mn `elem` exceptionModules
     then pure pr
     else do
       -- Transform the source

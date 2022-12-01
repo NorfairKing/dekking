@@ -1,15 +1,17 @@
 { haskell
 , dekking-report
-, addCoverables
+, addCoverables'
 , addCoverage
 , compileCoverageReport
 }:
+
+args:
 
 # Add a 'report' output to a haskell package
 
 pkg:
 
-((haskell.lib.overrideCabal (addCoverage (addCoverables pkg))) (old: {
+((haskell.lib.overrideCabal (addCoverage (addCoverables' args pkg))) (old: {
   postInstall = (old.postInstall or "") + ''
     ${dekking-report}/bin/dekking-report --coverables $coverables --coverage $coverage --output $report
   '';

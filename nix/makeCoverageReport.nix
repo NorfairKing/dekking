@@ -2,7 +2,7 @@
 , stdenv
 , haskellPackages
 , addDekkingValueDependency
-, addCoverables
+, addCoverables'
 , addCoverage
 , compileCoverageReport
 }:
@@ -23,6 +23,8 @@ in
   # These packages will be linked against dekking-value to prevent linking errors.
   # See ./nix/addDekkingValueDependency.nix for more details.
 , needToBeLinkedAgainstDekkingValue ? [ ] # List of package names
+  # Modules that will not be source-transformed
+, exceptions ? [ ]
 , extraScript ? ""
 }:
 let
@@ -47,7 +49,7 @@ let
     builtins.listToAttrs (builtins.map
       (pname: {
         name = pname;
-        value = addCoverables super.${pname};
+        value = addCoverables' { inherit exceptions; } super.${pname};
       })
       allCoverables);
   addCoverageOverride = self: super:
