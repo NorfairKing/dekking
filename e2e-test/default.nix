@@ -117,26 +117,25 @@ let
       ];
     };
 
-    # It's not clear what is broken here yet.
-    # yesod-report = pkgs.dekking.makeCoverageReport {
-    #   name = "yesod-coverage-report";
-    #   packages = [
-    #     "yesod"
-    #     # "yesod-auth" # Simplified subsumption
-    #     # "yesod-auth-oauth" # Marked as broken
-    #     "yesod-bin" # Expression coverage is broken
-    #     "yesod-core" # Expression coverage is broken
-    #     "yesod-eventsource"
-    #     "yesod-form"
-    #     "yesod-form-multi"
-    #     "yesod-newsfeed"
-    #     "yesod-persistent"
-    #     "yesod-sitemap"
-    #     "yesod-static"
-    #     "yesod-test"
-    #     "yesod-websockets"
-    #   ];
-    # };
+    yesod-report = pkgs.dekking.makeCoverageReport {
+      name = "yesod-coverage-report";
+      packages = [
+        "yesod"
+        # "yesod-auth"
+        # "yesod-auth-oauth" # Marked as broken
+        "yesod-bin"
+        "yesod-core"
+        "yesod-eventsource"
+        "yesod-form"
+        "yesod-form-multi"
+        "yesod-newsfeed"
+        "yesod-persistent"
+        "yesod-sitemap"
+        "yesod-static"
+        "yesod-test"
+        "yesod-websockets"
+      ];
+    };
   };
 in
 (pkgs.linkFarm "e2e-tests" (builtins.attrValues (builtins.mapAttrs
