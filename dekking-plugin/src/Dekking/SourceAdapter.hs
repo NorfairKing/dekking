@@ -2,7 +2,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Dekking.SourceAdapter (adaptLocatedHsModule, unitToString) where
+module Dekking.SourceAdapter (adaptTypeCheckedModule, unitToString) where
 
 import Control.Monad.Reader
 import Control.Monad.Writer.Strict
@@ -13,73 +13,79 @@ import GHC hiding (moduleName)
 import GHC.Data.Bag
 import GHC.Driver.Types as GHC
 import GHC.Plugins as GHC
+import GHC.Tc.Types
 
 addExpression :: Coverable Expression -> AdaptM ()
 addExpression e = tell (mempty {moduleCoverablesExpressions = S.singleton e})
 
 type AdaptM = WriterT ModuleCoverables (ReaderT GHC.Module Hsc)
 
-adapterImport :: LImportDecl GhcPs
+adaptTypeCheckedModule :: TcGblEnv -> AdaptM TcGblEnv
+adaptTypeCheckedModule tcg = do
+  binds <- mapBagM adaptLBind (tcg_binds tcg)
+  pure $ tcg {tcg_binds = binds}
+
+adapterImport :: LImportDecl GhcTc
 adapterImport = noLoc (simpleImportDecl adapterModuleName)
 
 adapterModuleName :: GHC.ModuleName
 adapterModuleName = mkModuleName "Dekking.ValueLevelAdapter"
 
-adaptLocatedHsModule :: Located HsModule -> AdaptM (Located HsModule)
-adaptLocatedHsModule = liftL adaptHsModule
+-- adaptLocatedHsModule :: Located HsModule -> AdaptM (Located HsModule)
+-- adaptLocatedHsModule = liftL adaptHsModule
+--
+-- adaptHsModule :: HsModule -> AdaptM HsModule
+-- adaptHsModule m = do
+--   moduule <- ask
+--   liftIO $ putStrLn $ "Adapting module: " ++ moduleNameString (moduleName moduule)
+--   decls' <- mapM adaptLDecl (hsmodDecls m)
+--   pure (m {hsmodDecls = decls', hsmodImports = adapterImport : hsmodImports m})
 
-adaptHsModule :: HsModule -> AdaptM HsModule
-adaptHsModule m = do
-  moduule <- ask
-  liftIO $ putStrLn $ "Adapting module: " ++ moduleNameString (moduleName moduule)
-  decls' <- mapM adaptLDecl (hsmodDecls m)
-  pure (m {hsmodDecls = decls', hsmodImports = adapterImport : hsmodImports m})
-
-adaptLDecl :: Located (HsDecl GhcPs) -> AdaptM (Located (HsDecl GhcPs))
+adaptLDecl :: Located (HsDecl GhcTc) -> AdaptM (Located (HsDecl GhcTc))
 adaptLDecl = liftL $ \case
   ValD x bind -> ValD x <$> adaptBind bind
   -- TODO
   d -> pure d
 
-adaptLBind :: LHsBind GhcPs -> AdaptM (LHsBind GhcPs)
+adaptLBind :: LHsBind GhcTc -> AdaptM (LHsBind GhcTc)
 adaptLBind = liftL adaptBind
 
-adaptBind :: HsBind GhcPs -> AdaptM (HsBind GhcPs)
+adaptBind :: HsBind GhcTc -> AdaptM (HsBind GhcTc)
 adaptBind = \case
   FunBind x name matchGroup ticks -> FunBind x name <$> adaptMatchGroup matchGroup <*> pure ticks
   -- TODO
   b -> pure b
 
-adaptMatchGroup :: MatchGroup GhcPs (LHsExpr GhcPs) -> AdaptM (MatchGroup GhcPs (LHsExpr GhcPs))
+adaptMatchGroup :: MatchGroup GhcTc (LHsExpr GhcTc) -> AdaptM (MatchGroup GhcTc (LHsExpr GhcTc))
 adaptMatchGroup = \case
   MG x as origin -> MG x <$> liftL (mapM adaptLMatch) as <*> pure origin
 
-adaptLMatch :: LMatch GhcPs (LHsExpr GhcPs) -> AdaptM (LMatch GhcPs (LHsExpr GhcPs))
+adaptLMatch :: LMatch GhcTc (LHsExpr GhcTc) -> AdaptM (LMatch GhcTc (LHsExpr GhcTc))
 adaptLMatch = liftL adaptMatch
 
-adaptMatch :: Match GhcPs (LHsExpr GhcPs) -> AdaptM (Match GhcPs (LHsExpr GhcPs))
+adaptMatch :: Match GhcTc (LHsExpr GhcTc) -> AdaptM (Match GhcTc (LHsExpr GhcTc))
 adaptMatch = \case
   Match x ctx pats body -> Match x ctx pats <$> adaptGRHSs body
 
-adaptGRHSs :: GRHSs GhcPs (LHsExpr GhcPs) -> AdaptM (GRHSs GhcPs (LHsExpr GhcPs))
+adaptGRHSs :: GRHSs GhcTc (LHsExpr GhcTc) -> AdaptM (GRHSs GhcTc (LHsExpr GhcTc))
 adaptGRHSs = \case
   GRHSs x rhs localBinds -> GRHSs x <$> mapM adaptLGRHS rhs <*> adaptLocalBinds localBinds
 
 adaptLGRHS ::
-  LGRHS GhcPs (LHsExpr GhcPs) ->
-  AdaptM (LGRHS GhcPs (LHsExpr GhcPs))
+  LGRHS GhcTc (LHsExpr GhcTc) ->
+  AdaptM (LGRHS GhcTc (LHsExpr GhcTc))
 adaptLGRHS = liftL adaptGRHS
 
-adaptGRHS :: GRHS GhcPs (LHsExpr GhcPs) -> AdaptM (GRHS GhcPs (LHsExpr GhcPs))
+adaptGRHS :: GRHS GhcTc (LHsExpr GhcTc) -> AdaptM (GRHS GhcTc (LHsExpr GhcTc))
 adaptGRHS = \case
   GRHS x guards body -> GRHS x guards <$> adaptLExpr body
 
-adaptLocalBinds :: LHsLocalBinds GhcPs -> AdaptM (LHsLocalBinds GhcPs)
+adaptLocalBinds :: LHsLocalBinds GhcTc -> AdaptM (LHsLocalBinds GhcTc)
 adaptLocalBinds = liftL $ \case
   HsValBinds x valBinds -> HsValBinds x <$> adaptValBinds valBinds
   lbs -> pure lbs
 
-adaptValBinds :: HsValBinds GhcPs -> AdaptM (HsValBinds GhcPs)
+adaptValBinds :: HsValBinds GhcTc -> AdaptM (HsValBinds GhcTc)
 adaptValBinds = \case
   ValBinds x binds sigs -> ValBinds x <$> mapBagM adaptLBind binds <*> pure sigs
   XValBindsLR (NValBinds binds sigs) ->
@@ -97,7 +103,7 @@ adaptValBinds = \case
 --   HsValBinds x ->
 --   lbs -> pure lbs
 
-adaptLExpr :: LHsExpr GhcPs -> AdaptM (LHsExpr GhcPs)
+adaptLExpr :: LHsExpr GhcTc -> AdaptM (LHsExpr GhcTc)
 adaptLExpr (L sp e) = fmap (L sp) $ do
   let applyAdapter mName = case spanLocation sp of
         Just loc -> do
@@ -114,7 +120,7 @@ adaptLExpr (L sp e) = fmap (L sp) $ do
   -- multiple pieces, and GHC (correctly) assumes that that is not possible.
   -- So we have to use the manual traversal.
   case e of
-    HsVar _ (L _ rdr) -> applyAdapter $ Just $ occNameString $ rdrNameOcc rdr
+    HsVar _ (L _ var) -> applyAdapter $ Just $ occNameString $ nameOccName $ varName var
     HsUnboundVar x on -> pure $ HsUnboundVar x on
     HsConLikeOut x cl -> pure $ HsConLikeOut x cl
     HsRecFld x afo -> pure $ HsRecFld x afo
@@ -168,25 +174,25 @@ adaptLExpr (L sp e) = fmap (L sp) $ do
     -- TODO
     _ -> pure e
 
-adaptLTupArg :: LHsTupArg GhcPs -> AdaptM (LHsTupArg GhcPs)
+adaptLTupArg :: LHsTupArg GhcTc -> AdaptM (LHsTupArg GhcTc)
 adaptLTupArg = liftL $ \case
   Present x body -> Present x <$> adaptLExpr body
   Missing x -> pure $ Missing x
 
-adaptRecordBinds :: HsRecordBinds GhcPs -> AdaptM (HsRecordBinds GhcPs)
+adaptRecordBinds :: HsRecordBinds GhcTc -> AdaptM (HsRecordBinds GhcTc)
 adaptRecordBinds = \case
   HsRecFields fields md -> HsRecFields <$> mapM (liftL adaptHsRecField') fields <*> pure md
 
-adaptRecordField :: HsRecUpdField GhcPs -> AdaptM (HsRecUpdField GhcPs)
+adaptRecordField :: HsRecUpdField GhcTc -> AdaptM (HsRecUpdField GhcTc)
 adaptRecordField = adaptHsRecField'
 
-adaptHsRecField' :: HsRecField' id (LHsExpr GhcPs) -> AdaptM (HsRecField' id (LHsExpr GhcPs))
+adaptHsRecField' :: HsRecField' id (LHsExpr GhcTc) -> AdaptM (HsRecField' id (LHsExpr GhcTc))
 adaptHsRecField' = \case
   HsRecField i e b -> HsRecField i <$> adaptLExpr e <*> pure b
 
 adaptExprLStmt ::
-  ExprLStmt GhcPs ->
-  AdaptM (ExprLStmt GhcPs)
+  ExprLStmt GhcTc ->
+  AdaptM (ExprLStmt GhcTc)
 adaptExprLStmt = liftL $ \case
   LastStmt x e mb se -> LastStmt x <$> adaptLExpr e <*> pure mb <*> pure se
   BindStmt x p e -> BindStmt x p <$> adaptLExpr e
@@ -194,7 +200,7 @@ adaptExprLStmt = liftL $ \case
   LetStmt x lbs -> LetStmt x <$> adaptLocalBinds lbs
   s -> pure s -- TODO
 
-applyAdapterExpr :: Location -> HsExpr GhcPs -> AdaptM (HsExpr GhcPs)
+applyAdapterExpr :: Location -> HsExpr GhcTc -> AdaptM (HsExpr GhcTc)
 applyAdapterExpr loc e = do
   moduule <- ask
   let strToLog = mkStringToLog moduule loc
@@ -206,11 +212,14 @@ applyAdapterExpr loc e = do
           ( noLoc
               ( HsApp
                   NoExtField
-                  (noLoc (HsVar NoExtField (noLoc (Qual adapterModuleName (mkVarOcc "adaptValue")))))
+                  (noLoc (HsVar NoExtField (noLoc adaptValueVar)))
                   (noLoc (HsLit NoExtField (HsString NoSourceText (mkFastString strToLog))))
               )
           )
           (noLoc e)
+
+adaptValueVar :: Var
+adaptValueVar = undefined
 
 spanLocation :: SrcSpan -> Maybe Location
 spanLocation sp = case sp of

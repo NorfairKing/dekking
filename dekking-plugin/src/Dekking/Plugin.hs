@@ -11,6 +11,7 @@ import GHC.Driver.Plugins
 import GHC.Driver.Session
 import GHC.Driver.Types
 import GHC.LanguageExtensions
+import GHC.Tc.Types
 import Path
 import Path.IO
 
@@ -52,20 +53,20 @@ plugin =
         -- to instantiate the type-parameter of `id` with the polytype `Int ->
         -- (forall a. a -> a)`, which is only possible with ImpredicativeTypes.
         pure (xopt_set dynFlags ImpredicativeTypes),
-      parsedResultAction = adaptParseResult
+      typeCheckResultAction = adaptTypeCheckResult
     }
 
-adaptParseResult :: [CommandLineOption] -> ModSummary -> HsParsedModule -> Hsc HsParsedModule
-adaptParseResult es ms pr = do
+adaptTypeCheckResult :: [CommandLineOption] -> ModSummary -> TcGblEnv -> TcM TcGblEnv
+adaptTypeCheckResult es ms tcg = do
   liftIO $ putStrLn "Activating the coverage logger plugin"
   let m = ms_mod ms
   let mn = moduleName m
   let exceptionModules = mapMaybe (stripPrefix "--exception=") es
   if "Paths_" `isPrefixOf` moduleNameString mn || moduleNameString mn `elem` exceptionModules
-    then pure pr
+    then pure tcg
     else do
       -- Transform the source
-      (lm', coverables) <- runReaderT (runWriterT (adaptLocatedHsModule (hpm_module pr))) m
+      (tcg', coverables) <- runReaderT (runWriterT (adaptTypeCheckedModule tcg)) (tcg_mod tcg)
       forM_ (ml_hs_file (ms_location ms)) $ \sourceFile ->
         -- Output the coverables
         liftIO $ do
@@ -86,4 +87,4 @@ adaptParseResult es ms pr = do
                 moduleCoverablesFileSource = sourceCode,
                 moduleCoverablesFileCoverables = coverables
               }
-      pure pr {hpm_module = lm'}
+      pure tcg'
