@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds #-}
+-- {-# LANGUAGE DeepSubsumption #-}
 {-# LANGUAGE ImpredicativeTypes #-}
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
 
 {-# HLINT ignore #-}

@@ -31,11 +31,14 @@
         inherit system;
         config.allowUnfree = true;
         overlays = [
-          self.overlays.${system}
+          (fin: prv: {
+            haskellPackages = prv.haskell.packages.ghc924;
+          })
           (import (autodocodec + "/nix/overlay.nix"))
           (import (safe-coloured-text + "/nix/overlay.nix"))
           (import (sydtest + "/nix/overlay.nix"))
           (import (validity + "/nix/overlay.nix"))
+          self.overlays.${system}
         ];
       };
       pkgs = pkgsFor nixpkgs;
@@ -72,7 +75,7 @@
           };
         };
       devShells.${system}.default = pkgs.haskellPackages.shellFor {
-        name = "bevel-shell";
+        name = "dekking-shell";
         packages = p: builtins.attrValues p.dekkingPackages;
         withHoogle = true;
         doBenchmark = true;

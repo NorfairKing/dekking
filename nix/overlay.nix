@@ -36,7 +36,10 @@ with final.haskell.lib;
             dekking-value = buildStrictly (self.callPackage ../dekking-value { });
           };
         in
-        dekkingPackages // { inherit dekkingPackages; }
+        dekkingPackages // {
+          inherit dekkingPackages;
+          autodocodec = appendConfigureFlag super.autodocodec "--ghc-option=-w"; # Turn off warnings so the build doesn't fail.
+        }
     );
   });
 }
