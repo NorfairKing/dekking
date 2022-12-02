@@ -208,7 +208,7 @@ coverageSummaryRatio :: CoverageSummary -> Float
 coverageSummaryRatio cs = fromIntegral (coverageSummaryCovered cs) / fromIntegral (coverageSummaryTotal cs)
 
 coverageSummaryPercentage :: CoverageSummary -> String
-coverageSummaryPercentage cs = printf "%.0f %%" (100 * coverageSummaryRatio cs)
+coverageSummaryPercentage cs = printf "%.0f" (100 * coverageSummaryRatio cs)
 
 instance Semigroup CoverageSummary where
   (<>) c1 c2 =
