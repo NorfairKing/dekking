@@ -14,6 +14,7 @@ build-type:     Simple
 extra-source-files:
     templates/index.hamlet
     templates/module.hamlet
+    templates/progress-bar.hamlet
     templates/style.lucius
 
 source-repository head

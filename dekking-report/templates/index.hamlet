@@ -13,6 +13,10 @@
           <th>
             Module
           <th>
+            Covered
+          <th>
+            Total
+          <th>
             Expressions
       <tbody>
         $forall (packageName, (moduleName,  expressionSummary)) <- summaries
@@ -25,11 +29,19 @@
                 <code>
                   #{moduleName}
             <td>
-              <progress value=#{coverageSummaryCovered expressionSummary} max=#{coverageSummaryTotal expressionSummary}>%</progress>
+              #{coverageSummaryCovered expressionSummary}
+            <td>
+              #{coverageSummaryTotal expressionSummary}
+            <td>
+              #{mkProgressBar expressionSummary}
       <tfoot>
         <tr>
           <td>
             Total
           <td>
           <td>
-            <progress value=#{coverageSummaryCovered totalExpressionSummary} max=#{coverageSummaryTotal totalExpressionSummary}>%</progress>
+            #{coverageSummaryCovered totalExpressionSummary}
+          <td>
+            #{coverageSummaryTotal totalExpressionSummary}
+          <td>
+            #{mkProgressBar totalExpressionSummary}

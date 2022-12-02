@@ -18,7 +18,7 @@
     <p>
       Uncovered: #{coverageSummaryUncovered expressionSummary}
     <p>
-      <progress value=#{coverageSummaryCovered expressionSummary} max=#{coverageSummaryTotal expressionSummary}>%</progress>
+      #{mkProgressBar expressionSummary}
 
 
     <h2>

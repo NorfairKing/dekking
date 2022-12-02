@@ -8,6 +8,16 @@ table td:nth-child(1) {
   text-align: end;
   padding-right: 10px;
 }
+table td:nth-child(3) {
+  text-align: end;
+  font-family: monospace;
+  padding-right: 10px;
+}
+table td:nth-child(4) {
+  text-align: end;
+  font-family: monospace;
+  padding-right: 10px;
+}
 
 .#{coveredClass} {
   color: white;

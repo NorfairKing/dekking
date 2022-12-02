@@ -273,3 +273,6 @@ produceIntervals Coverage {..} = go Covered coverageCovered $ go Uncovered cover
         )
         m
         s
+
+mkProgressBar :: CoverageSummary -> Html
+mkProgressBar coverageSummary = $(hamletFile "templates/progress-bar.hamlet") (error "unused")
