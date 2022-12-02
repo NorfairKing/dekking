@@ -1,3 +1,4 @@
+$doctype 5
 <html>
   <head>
     <link rel="stylesheet" href=@{StyleFile}>
@@ -14,6 +15,8 @@
             Module
           <th>
             Covered
+          <th>
+            Percentage
           <th>
             Total
           <th>
@@ -33,6 +36,8 @@
             <td>
               #{coverageSummaryTotal expressionSummary}
             <td>
+              #{coverageSummaryPercentage expressionSummary}
+            <td>
               #{mkProgressBar expressionSummary}
       <tfoot>
         <tr>
@@ -44,4 +49,23 @@
           <td>
             #{coverageSummaryTotal totalExpressionSummary}
           <td>
+            #{coverageSummaryPercentage totalExpressionSummary}
+          <td>
             #{mkProgressBar totalExpressionSummary}
+
+    <script>
+      const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
+
+      const comparer = (idx, asc) => (a, b) => ((v1, v2) => 
+          v1 !== '' && v2 !== '' && !isNaN(v1) && !isNaN(v2) ? v1 - v2 : v1.toString().localeCompare(v2)
+          )(getCellValue(asc ? a : b, idx), getCellValue(asc ? b : a, idx));
+
+      // do the work...
+      document.querySelectorAll('th').forEach(th => th.addEventListener('click', (() => {
+          const table = th.closest('table');
+          const tbody = table.querySelector('tbody');
+          Array.from(tbody.querySelectorAll('tr'))
+            .sort(comparer(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
+            .forEach(tr => tbody.appendChild(tr) );
+
+      })));

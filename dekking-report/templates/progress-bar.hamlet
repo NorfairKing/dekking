@@ -1,2 +1,1 @@
-<progress value=#{coverageSummaryCovered coverageSummary} max=#{coverageSummaryTotal coverageSummary}>
-  #{coverageSummaryCovered coverageSummary} / #{coverageSummaryTotal coverageSummary}
+<progress value=#{val} max=#{mx}>

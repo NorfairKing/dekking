@@ -18,6 +18,11 @@ table td:nth-child(4) {
   font-family: monospace;
   padding-right: 10px;
 }
+table td:nth-child(5) {
+  text-align: end;
+  font-family: monospace;
+  padding-right: 5px;
+}
 
 .#{coveredClass} {
   color: white;

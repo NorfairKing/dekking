@@ -29,6 +29,7 @@ import Path.IO
 import Text.Blaze.Html.Renderer.Utf8 as Blaze
 import Text.Hamlet
 import Text.Lucius
+import Text.Printf
 import Text.Show.Pretty (pPrint)
 
 reportMain :: IO ()
@@ -203,6 +204,12 @@ computeCoverageSummary Coverage {..} =
 coverageSummaryTotal :: CoverageSummary -> Word
 coverageSummaryTotal CoverageSummary {..} = coverageSummaryUncovered + coverageSummaryCovered
 
+coverageSummaryRatio :: CoverageSummary -> Float
+coverageSummaryRatio cs = fromIntegral (coverageSummaryCovered cs) / fromIntegral (coverageSummaryTotal cs)
+
+coverageSummaryPercentage :: CoverageSummary -> String
+coverageSummaryPercentage cs = printf "%.0f %%" (100 * coverageSummaryRatio cs)
+
 instance Semigroup CoverageSummary where
   (<>) c1 c2 =
     CoverageSummary
@@ -275,4 +282,8 @@ produceIntervals Coverage {..} = go Covered coverageCovered $ go Uncovered cover
         s
 
 mkProgressBar :: CoverageSummary -> Html
-mkProgressBar coverageSummary = $(hamletFile "templates/progress-bar.hamlet") (error "unused")
+mkProgressBar coverageSummary =
+  let bothZero = coverageSummaryCovered coverageSummary == 0 && coverageSummaryTotal coverageSummary == 0
+      val = if bothZero then 1 else coverageSummaryCovered coverageSummary
+      mx = if bothZero then 1 else coverageSummaryTotal coverageSummary
+   in $(hamletFile "templates/progress-bar.hamlet") (error "unused")
