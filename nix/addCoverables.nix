@@ -38,6 +38,11 @@ in
   ];
   buildDepends = (old.buildDepends or [ ]) ++ [
     haskellPackages.dekking-plugin
+  ];
+  # We use libraryHaskellDepends instead of buildDepends because that's what
+  # cabal2nix generates, see default.nix in any of the package directories, but
+  # I don't think it actually matters.
+  libraryHaskellDepends = (old.libraryHaskellDepends or [ ]) ++ [
     haskellPackages.dekking-value
   ];
   # --include='*/': Include all directories
