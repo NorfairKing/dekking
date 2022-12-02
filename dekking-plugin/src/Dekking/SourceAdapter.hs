@@ -6,6 +6,8 @@ module Dekking.SourceAdapter (adaptLocatedHsModule, unitToString) where
 
 import Control.Monad.Reader
 import Control.Monad.Writer.Strict
+import Data.List
+import Data.Maybe
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Dekking.Coverable
@@ -30,16 +32,56 @@ adaptLocatedHsModule = liftL adaptHsModule
 
 adaptHsModule :: HsModule -> AdaptM HsModule
 adaptHsModule m = do
-  moduule <- ask
-  liftIO $ putStrLn $ "Adapting module: " ++ moduleNameString (moduleName moduule)
-  decls' <- mapM adaptLDecl (hsmodDecls m)
-  pure (m {hsmodDecls = decls', hsmodImports = adapterImport : hsmodImports m})
+  let annotations = gatherAnnotations m
+  if DontCoverModule `elem` annotations
+    then pure m
+    else do
+      moduule <- ask
+      liftIO $ putStrLn $ "Adapting module: " ++ moduleNameString (moduleName moduule)
+      decls' <- mapM (adaptTopLevelLDecl annotations) (hsmodDecls m)
+      pure (m {hsmodDecls = decls', hsmodImports = adapterImport : hsmodImports m})
 
-adaptLDecl :: Located (HsDecl GhcPs) -> AdaptM (Located (HsDecl GhcPs))
-adaptLDecl = liftL $ \case
-  ValD x bind -> ValD x <$> adaptBind bind
+-- | Annotations that guide the plugin
+data CoverAnnotation
+  = DontCoverModule
+  | DontCoverFunction String
+  deriving (Show, Eq)
+
+gatherAnnotations :: HsModule -> [CoverAnnotation]
+gatherAnnotations = mapMaybe (gatherAnnotationDecl . unLoc) . hsmodDecls
+
+gatherAnnotationDecl :: HsDecl GhcPs -> Maybe CoverAnnotation
+gatherAnnotationDecl = \case
+  AnnD _ (HsAnnotation _ _ p body) -> do
+    guard $ isNoCoverExpr body
+    case p of
+      ValueAnnProvenance rdr -> Just $ DontCoverFunction $ occNameString $ rdrNameOcc $ unLoc rdr
+      ModuleAnnProvenance -> Just DontCoverModule
+      _ -> Nothing
+  _ -> Nothing
+
+isNoCoverExpr :: LHsExpr GhcPs -> Bool
+isNoCoverExpr expr = case unLoc expr of
+  HsLit _ (HsString _ fs) | "NOCOVER" `isInfixOf` unpackFS fs -> True
+  HsOverLit _ (OverLit _ (HsIsString _ fs) _) | "NOCOVER" `isInfixOf` unpackFS fs -> True
+  HsPar _ e -> isNoCoverExpr e
+  ExprWithTySig _ e _ -> isNoCoverExpr e
+  _ -> False
+
+adaptTopLevelLDecl :: [CoverAnnotation] -> Located (HsDecl GhcPs) -> AdaptM (Located (HsDecl GhcPs))
+adaptTopLevelLDecl annotations = liftL $ \case
+  ValD x bind -> ValD x <$> adaptTopLevelBind annotations bind
   -- TODO
   d -> pure d
+
+adaptTopLevelBind :: [CoverAnnotation] -> HsBind GhcPs -> AdaptM (HsBind GhcPs)
+adaptTopLevelBind annotations = \case
+  b@(FunBind _ name _ _) ->
+    if DontCoverFunction (occNameString (rdrNameOcc (unLoc name))) `elem` annotations
+      then pure b
+      else adaptBind b
+  -- TODO
+  b -> pure b
 
 adaptLBind :: LHsBind GhcPs -> AdaptM (LHsBind GhcPs)
 adaptLBind = liftL adaptBind

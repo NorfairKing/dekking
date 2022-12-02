@@ -1,3 +1,4 @@
+import qualified Annotations
 import qualified Lens
 import qualified OverloadedStrings
 import qualified Paren
@@ -8,6 +9,7 @@ import qualified TypeApplications
 
 main :: IO ()
 main = do
+  Annotations.main
   Lens.main
   OverloadedStrings.main
   Paren.main
