@@ -45,7 +45,8 @@ in
   libraryHaskellDepends = (old.libraryHaskellDepends or [ ]) ++ [
     haskellPackages.dekking-value
   ];
-  # --include='*/': Include all directories
+  # --exclude='*test/': Exclude test directories so we don't produce coverables for the test suite code
+  # --include='*/': Include all other directories
   # --include='*.hs': Include Haskell source files
   # --include='*.hs.coverables': Include Haskell source files
   # --include='*.lhs': Include literate Haskell source files
@@ -54,6 +55,7 @@ in
   postBuild = (old.postBuild or "") + ''
     mkdir -p $coverables
     ${rsync}/bin/rsync -am \
+      --exclude='test/' \
       --include='*/' \
       --include='*.hs.coverables' \
       --include='*.lhs.coverables' \
