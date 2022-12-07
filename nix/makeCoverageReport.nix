@@ -1,5 +1,4 @@
 { lib
-, stdenv
 , haskellPackages
 , addDekkingValueDependency
 , addCoverables'
@@ -37,7 +36,7 @@ let
   # source-transformed package will now pick up the source-transformed
   # dependency instead of the normal dependency and output coverage
   # correctly.
-  addDekkingValueDependencyOverride = self: super:
+  addDekkingValueDependencyOverride = _: super:
     builtins.listToAttrs
       (builtins.map
         (pname: {
@@ -45,14 +44,14 @@ let
           value = addDekkingValueDependency super.${pname};
         })
         needToBeLinkedAgainstDekkingValue);
-  addCoverableOverride = self: super:
+  addCoverableOverride = _: super:
     builtins.listToAttrs (builtins.map
       (pname: {
         name = pname;
         value = addCoverables' { inherit exceptions; } super.${pname};
       })
       allCoverables);
-  addCoverageOverride = self: super:
+  addCoverageOverride = _: super:
     builtins.listToAttrs (builtins.map
       (pname: {
         name = pname;

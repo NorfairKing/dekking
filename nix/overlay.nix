@@ -12,7 +12,7 @@ with final.haskell.lib;
       addCoverablesAndCoverage = pkg: addCoverage (addCoverables pkg);
       addCoverageReport' = final.callPackage ./addCoverageReport.nix {
         inherit dekking-report;
-        inherit addCoverables' addCoverage compileCoverageReport;
+        inherit addCoverables' addCoverage;
       };
       addCoverageReport = final.dekking.addCoverageReport' { };
       compileCoverageReport = final.callPackage ./compileCoverageReport.nix {
@@ -38,7 +38,7 @@ with final.haskell.lib;
 
   haskellPackages = prev.haskellPackages.override (old: {
     overrides = final.lib.composeExtensions (old.overrides or (_: _: { })) (
-      self: super:
+      self: _:
         let
           dekkingPackages = {
             dekking-plugin = buildStrictly (self.callPackage ../dekking-plugin { });

@@ -3,7 +3,7 @@
 let
   haskellPackages = pkgs.haskellPackages.override (old: {
     overrides = pkgs.lib.composeExtensions (old.overrides or (_:_: { })) (
-      self: super: {
+      self: _: {
         example = self.callPackage ./example { };
         foobar = self.callPackage ./foobar { };
         foobar-gen = self.callPackage ./foobar-gen { };

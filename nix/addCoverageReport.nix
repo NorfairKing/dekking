@@ -2,7 +2,6 @@
 , dekking-report
 , addCoverables'
 , addCoverage
-, compileCoverageReport
 }:
 
 args:

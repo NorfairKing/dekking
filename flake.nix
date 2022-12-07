@@ -18,7 +18,6 @@
     { self
     , nixpkgs
     , nixpkgs-22_05
-    , home-manager
     , pre-commit-hooks
     , validity
     , safe-coloured-text

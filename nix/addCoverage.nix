@@ -1,4 +1,4 @@
-{ haskell, haskellPackages, addDekkingValueDependency }:
+{ haskell, addDekkingValueDependency }:
 
 # Add a 'coverage' output to a package that produces a coverage.dat file.
 
