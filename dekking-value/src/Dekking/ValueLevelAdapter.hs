@@ -25,7 +25,7 @@ coverageHandle = unsafePerformIO $ do
   hSetBuffering h LineBuffering
   pure h
 
--- | The value-level adapter function
+-- [tag:ThePlanTM]
 --
 -- The plan is to replace every instance of
 --
@@ -34,6 +34,22 @@ coverageHandle = unsafePerformIO $ do
 -- by
 --
 -- adaptValue "some string that identifies e" e :: t
+--
+-- This involves adding an import of this module to every source-transformed
+-- module.
+--
+-- Sadly, in the presence of RankNTypes, this transformation is not "it
+-- type-checks"-preserving.
+-- See also [ref:-XImpredicativeTypes] and
+-- https://gitlab.haskell.org/ghc/ghc/-/issues/22543
+-- Because that means that this source-transformation can fail to produce code
+-- that type-checks, we must be able to turn off covering a particular piece
+-- of code.
+-- See [ref:DisablingCoverage] for how we do this.
+
+-- | The value-level adapter function
+--
+-- See [ref:ThePlanTM]
 {-# NOINLINE adaptValue #-}
 adaptValue :: String -> (forall a. a -> a)
 adaptValue logStr = unsafePerformIO $ do

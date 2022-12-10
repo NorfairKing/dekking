@@ -1,6 +1,6 @@
 module Main where
 
-import Dekking
+import Dekking.Report
 
 main :: IO ()
 main = reportMain

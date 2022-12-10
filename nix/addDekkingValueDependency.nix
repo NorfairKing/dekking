@@ -29,7 +29,9 @@ haskell.lib.overrideCabal pkg (old: {
   ];
   # We use libraryHaskellDepends instead of buildDepends because that's what
   # cabal2nix generates, see default.nix in any of the package directories, but
-  # I don't think it actually matters.
+  # I don't think it actually matters because `libraryHaskellDepends` is
+  # combined with `buildDepends` everywhere it is used within this code:
+  # https://github.com/NixOS/nixpkgs/blob/7a6a010c3a1d00f8470a5ca888f2f927f1860a19/pkgs/development/haskell-modules/generic-builder.nix#L18.
   libraryHaskellDepends = (old.libraryHaskellDepends or [ ]) ++ [
     haskellPackages.dekking-value
   ];

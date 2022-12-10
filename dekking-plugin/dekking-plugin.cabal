@@ -18,7 +18,6 @@ source-repository head
 
 library
   exposed-modules:
-      Dekking
       Dekking.Coverable
       Dekking.Plugin
       Dekking.SourceAdapter

@@ -53,7 +53,7 @@ data Flags = Flags
 parseFlags :: OptParse.ParserInfo Flags
 parseFlags = OptParse.info parser modifier
   where
-    modifier = OptParse.fullDesc <> OptParse.progDesc "Fill a template"
+    modifier = OptParse.fullDesc <> OptParse.progDesc "Produce a coverage report"
     parser =
       Flags
         <$> many

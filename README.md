@@ -136,13 +136,15 @@ that `dekking-report` outputs.
 ## Some part of my code fails to compile with coverage
 
 Because of `RankNTypes` and limitations of `ImpredicativeTypes`, sometimes the source-transformed version of a function does not type-check anymore.
+(See `[ref:ThePlanTM]`, `[ref:-XImpredicativeTypes]`, and `[ref:DisablingCoverage]`.)
 A common example is Servant's `hoistServerWithContext`, see [ghc ticket 22543](https://gitlab.haskell.org/ghc/ghc/-/issues/22543).
 
 There are three ways to selectively turn off coverage:
 
-1. With an `--exception` for the plugin: `-fplugin-opt=Dekking:--exception=My.Module`
+1. With an `--exception` for the plugin: `-fplugin-opt=Dekking.Plugin:--exception=My.Module`
 2. With a module-level annotation: `{-# ANN module "NOCOVER" #-}`
 3. With a function-level annotation: `{-# ANN hoistServerWithContext "NOCOVER" #-}`
+
 
 ## Why not "just" use HPC?
 

@@ -67,6 +67,12 @@
               nixpkgs-fmt.enable = true;
               nixpkgs-fmt.excludes = [ ".*/default.nix" ];
               cabal2nix.enable = true;
+              tagref = {
+                enable = true;
+                entry = "${pkgs.tagref}/bin/tagref";
+                types = [ "text" ];
+                pass_filenames = false;
+              };
             };
           };
         };
@@ -76,9 +82,10 @@
         withHoogle = true;
         doBenchmark = true;
         buildInputs = (with pkgs; [
-          niv
-          zlib
           cabal-install
+          niv
+          tagref
+          zlib
         ]) ++ (with pre-commit-hooks.packages.${system};
           [
             hlint

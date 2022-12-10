@@ -39,9 +39,17 @@ adaptHsModule m = do
       moduule <- ask
       liftIO $ putStrLn $ "Adapting module: " ++ moduleNameString (moduleName moduule)
       decls' <- mapM (adaptTopLevelLDecl annotations) (hsmodDecls m)
-      pure (m {hsmodDecls = decls', hsmodImports = adapterImport : hsmodImports m})
+      pure
+        ( m
+            { hsmodDecls = decls',
+              hsmodImports =
+                -- See [ref:ThePlanTM]
+                adapterImport : hsmodImports m
+            }
+        )
 
 -- | Annotations that guide the plugin
+-- [tag:DisablingCoverage]
 data CoverAnnotation
   = DontCoverModule
   | DontCoverFunction String
@@ -139,6 +147,34 @@ adaptValBinds = \case
 --   HsValBinds x ->
 --   lbs -> pure lbs
 
+-- [tag:NoUniplate]
+-- We cannot use uniplate's method of transforming the code, because it would
+-- replace the middle part of infix operations by an expression that contains
+-- multiple pieces, and GHC (correctly) assumes that that is not possible.
+-- So we have to use the manual traversal.
+--
+-- We cannot transform the middle part of an infix operator expression
+-- because then it would consist of more than one part.
+-- This would break GHC's assumption that infix operator expressions
+-- only consist of one part, and would cause transformations of an
+-- expression like
+-- print $ succ $ 5
+-- which is
+-- print $ (succ $ 5)
+-- to result in this expression:
+-- ((f ($))
+--  ((f (($))
+--   (f print)
+--   (f succ)))
+--  (f 5))
+-- instead of this expression:
+-- ((f ($))
+--  (f print)
+--  ((f ($))
+--   (f succ)
+--   (f 5)))
+-- , which fails to parse
+
 adaptLExpr :: LHsExpr GhcPs -> AdaptM (LHsExpr GhcPs)
 adaptLExpr (L sp e) = fmap (L sp) $ do
   let applyAdapter mName = case spanLocation sp of
@@ -151,10 +187,7 @@ adaptLExpr (L sp e) = fmap (L sp) $ do
           applyAdapterExpr loc e
         Nothing -> pure e
 
-  -- We cannot use uniplate's method of transforming the code, because it would
-  -- replace the middle part of infix operations by an expression that contains
-  -- multiple pieces, and GHC (correctly) assumes that that is not possible.
-  -- So we have to use the manual traversal.
+  -- [ref:NoUniplate]
   case e of
     HsVar _ (L _ rdr) -> applyAdapter $ Just $ occNameString $ rdrNameOcc rdr
     HsUnboundVar x on -> pure $ HsUnboundVar x on
@@ -173,27 +206,7 @@ adaptLExpr (L sp e) = fmap (L sp) $ do
     OpApp x left middle right ->
       OpApp x
         <$> adaptLExpr left
-        -- We cannot transform the middle part of an infix operator expression
-        -- because then it would consist of more than one part.
-        -- This would break GHC's assumption that infix operator expressions
-        -- only consist of one part, and would cause transformations of an
-        -- expression like
-        -- print $ succ $ 5
-        -- which is
-        -- print $ (succ $ 5)
-        -- to result in this expression:
-        -- ((f ($))
-        --  ((f (($))
-        --   (f print)
-        --   (f succ)))
-        --  (f 5))
-        -- instead of this expression:
-        -- ((f ($))
-        --  (f print)
-        --  ((f ($))
-        --   (f succ)
-        --   (f 5)))
-        -- , which fails to parse
+        -- [ref:NoUniplate]
         <*> pure middle
         <*> adaptLExpr right
     NegApp x body se -> NegApp x <$> adaptLExpr body <*> pure se
@@ -236,6 +249,7 @@ adaptExprLStmt = liftL $ \case
   LetStmt x lbs -> LetStmt x <$> adaptLocalBinds lbs
   s -> pure s -- TODO
 
+-- See [ref:ThePlanTM]
 applyAdapterExpr :: Location -> HsExpr GhcPs -> AdaptM (HsExpr GhcPs)
 applyAdapterExpr loc e = do
   moduule <- ask

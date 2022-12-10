@@ -10,6 +10,7 @@ main = do
   print ((+) ((+) 5 6) 7)
 
   -- Operators are respected
+  -- See [ref:NoUniplate]
   print (7 + 8 + 9)
 
   -- Custom operators are respected

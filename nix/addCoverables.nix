@@ -11,7 +11,7 @@ let
   # https://github.com/mpickering/haskell-nix-plugin/blob/2553ab0ff24d0d5752295acb4cf8b1b9dbcb8c76/add-plugin.nix
   pluginOpts = builtins.map (e: "--exception=" + e) exceptions;
   # Build the plugin options.
-  stringOpt = arg: "-fplugin-opt=Dekking:${arg}";
+  stringOpt = arg: "-fplugin-opt=Dekking.Plugin:${arg}";
   stringOpts = lib.concatStringsSep " " (builtins.map stringOpt pluginOpts);
 in
 (haskell.lib.overrideCabal pkg (old: {
@@ -24,7 +24,7 @@ in
     "--ghc-option=-ddump-parsed"
     "--ghc-option=-ddump-rn"
     # The '-fplugin' option is required to actually run the plugin at parse-time.
-    "--ghc-option=-fplugin=Dekking"
+    "--ghc-option=-fplugin=Dekking.Plugin"
     # The '-plugin-package' flag is required for GHC to know in which haskell package to find the plugin with module name ${pluginName}
     # This works because we also add dekking to the 'buildDepends' below.
     "--ghc-option=-plugin-package=dekking-plugin"
