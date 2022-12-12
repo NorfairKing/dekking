@@ -4,13 +4,11 @@ $doctype 5
     <link rel="stylesheet" href=@{StyleFile}>
   <body>
     <h1>
-      Coverage report
+      Coverage report: #{packageName}
 
     <table>
       <thead>
         <tr>
-          <th>
-            Package
           <th>
             Module
           <th>
@@ -22,12 +20,8 @@ $doctype 5
           <th>
             Expressions
       <tbody>
-        $forall (packageName, (moduleName,  expressionSummary)) <- summaries
+        $forall (moduleName,  expressionSummary) <- summaries
           <tr>
-            <td>
-              <a href=@{PackageFile packageName}>
-                <code>
-                  #{packageName}
             <td>
               <a href=@{ModuleFile packageName moduleName}>
                 <code>
@@ -44,7 +38,6 @@ $doctype 5
         <tr>
           <td>
             Total
-          <td>
           <td>
             #{coverageSummaryCovered totalExpressionSummary}
           <td>

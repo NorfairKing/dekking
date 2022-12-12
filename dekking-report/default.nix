@@ -1,6 +1,6 @@
 { mkDerivation, aeson, aeson-pretty, autodocodec, base, blaze-html
 , bytestring, containers, dekking-plugin, lib, optparse-applicative
-, path, path-io, pretty-show, shakespeare, text
+, path, path-io, shakespeare, text
 }:
 mkDerivation {
   pname = "dekking-report";
@@ -11,7 +11,7 @@ mkDerivation {
   libraryHaskellDepends = [
     aeson aeson-pretty autodocodec base blaze-html bytestring
     containers dekking-plugin optparse-applicative path path-io
-    pretty-show shakespeare text
+    shakespeare text
   ];
   executableHaskellDepends = [ base ];
   homepage = "https://github.com/NorfairKing/dekking#readme";

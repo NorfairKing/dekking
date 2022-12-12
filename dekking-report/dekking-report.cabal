@@ -14,7 +14,9 @@ build-type:     Simple
 extra-source-files:
     templates/index.hamlet
     templates/module.hamlet
+    templates/package.hamlet
     templates/progress-bar.hamlet
+    templates/script.julius
     templates/style.lucius
 
 source-repository head
@@ -43,7 +45,6 @@ library
     , optparse-applicative
     , path
     , path-io
-    , pretty-show
     , shakespeare
     , text
   default-language: Haskell2010

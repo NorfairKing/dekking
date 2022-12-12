@@ -19,6 +19,7 @@ import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
+import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Lazy as LT
 import Dekking.Coverable
@@ -28,9 +29,9 @@ import Path
 import Path.IO
 import Text.Blaze.Html.Renderer.Utf8 as Blaze
 import Text.Hamlet
+import Text.Julius
 import Text.Lucius
 import Text.Printf
-import Text.Show.Pretty (pPrint)
 
 reportMain :: IO ()
 reportMain = do
@@ -39,42 +40,65 @@ reportMain = do
   coverables <- readCoverablesFiles settingCoverablesDirs
   coverage <- readCoverageFiles settingCoverageFiles
 
-  pPrint coverables
-  pPrint coverage
   let coverageReport = computeCoverageReport coverables coverage
-  pPrint coverageReport
+
   ensureDir settingOutputDir
+
   jsonFile <- resolveFile settingOutputDir (renderReportFile JSONFile)
   SB.writeFile (fromAbsFile jsonFile) (LB.toStrict (encodePretty coverageReport))
-  reportFile <- resolveFile settingOutputDir (renderReportFile IndexFile)
-  SB.writeFile (fromAbsFile reportFile) $ LB.toStrict $ Blaze.renderHtml $ htmlCoverageReport coverageReport
+
   styleFile <- resolveFile settingOutputDir (renderReportFile StyleFile)
   SB.writeFile (fromAbsFile styleFile) $ TE.encodeUtf8 coverageReportCss
+
+  scriptFile <- resolveFile settingOutputDir (renderReportFile ScriptFile)
+  SB.writeFile (fromAbsFile scriptFile) $ TE.encodeUtf8 coverageReportJS
+
+  reportFile <- resolveFile settingOutputDir (renderReportFile IndexFile)
+  SB.writeFile (fromAbsFile reportFile) $ LB.toStrict $ Blaze.renderHtml $ htmlCoverageReport coverageReport
+
+  forM_ (M.toList (coverageReportModules coverageReport)) $ \(pn, m) -> do
+    packagePath <- resolveFile settingOutputDir (renderReportFile (PackageFile pn))
+    ensureDir (parent packagePath)
+    SB.writeFile (fromAbsFile packagePath) $
+      LB.toStrict $ Blaze.renderHtml $ htmlPackageCoverageReport pn m
+
   forM_ (concatMap (\(pn, mn) -> (,) pn <$> M.toList mn) (M.toList (coverageReportModules coverageReport))) $ \(pn, (mn, mc)) -> do
     modulePath <- resolveFile settingOutputDir (renderReportFile (ModuleFile pn mn))
-    print modulePath
     ensureDir (parent modulePath)
     SB.writeFile (fromAbsFile modulePath) $
       LB.toStrict $ Blaze.renderHtml $ htmlModuleCoverageReport pn mn mc
 
 data ReportFile
   = JSONFile
-  | IndexFile
   | StyleFile
-  | ModuleFile PackageName ModuleName
+  | ScriptFile
+  | IndexFile
+  | PackageFile !PackageName
+  | ModuleFile !PackageName !ModuleName
 
 renderReportFile :: ReportFile -> FilePath
 renderReportFile = \case
   JSONFile -> "report.json"
-  IndexFile -> "index.html"
   StyleFile -> "style.css"
+  ScriptFile -> "script.js"
+  IndexFile -> "index.html"
+  PackageFile pn -> packageFileName pn
   ModuleFile pn mn -> moduleFileName pn mn
+
+packageFileName :: PackageName -> FilePath
+packageFileName pn = pn <> ".html"
 
 moduleFileName :: PackageName -> ModuleName -> FilePath
 moduleFileName pn mn = pn <> mn <> ".html"
 
-reportUrlRender :: ReportFile -> [Text] -> String
-reportUrlRender rf _ = renderReportFile rf
+reportUrlRender :: ReportFile -> [(Text, Text)] -> Text
+reportUrlRender rf _ = T.pack $ renderReportFile rf
+
+coverageReportCss :: Text
+coverageReportCss = LT.toStrict $ renderCss $ $(luciusFile "templates/style.lucius") reportUrlRender
+
+coverageReportJS :: Text
+coverageReportJS = LT.toStrict $ renderJavascript $ $(juliusFile "templates/script.julius") reportUrlRender
 
 htmlCoverageReport :: CoverageReport -> Html
 htmlCoverageReport CoverageReport {..} =
@@ -83,8 +107,11 @@ htmlCoverageReport CoverageReport {..} =
       totalExpressionSummary = foldMap (snd . snd) summaries
    in $(hamletFile "templates/index.hamlet") reportUrlRender
 
-coverageReportCss :: Text
-coverageReportCss = LT.toStrict $ renderCss $ $(luciusFile "templates/style.lucius") reportUrlRender
+htmlPackageCoverageReport :: PackageName -> Map ModuleName ModuleCoverageReport -> Html
+htmlPackageCoverageReport packageName moduleCoverageReports =
+  let summaries = map (second (\ModuleCoverageReport {..} -> computeCoverageSummary moduleCoverageReportExpressions)) (M.toList moduleCoverageReports)
+      totalExpressionSummary = foldMap snd summaries
+   in $(hamletFile "templates/package.hamlet") reportUrlRender
 
 htmlModuleCoverageReport :: PackageName -> ModuleName -> ModuleCoverageReport -> Html
 htmlModuleCoverageReport packageName moduleName ModuleCoverageReport {..} =

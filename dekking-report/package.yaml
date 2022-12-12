@@ -36,7 +36,6 @@ library:
   - optparse-applicative
   - path
   - path-io
-  - pretty-show
   - shakespeare
   - text
 
