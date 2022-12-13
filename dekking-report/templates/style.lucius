@@ -32,6 +32,13 @@ table td:nth-child(5) {
   background-color: #{uncoveredColour};
 }
 
+a:link.lineNum {
+  color: black;
+}
+a:visited.lineNum {
+  color: black;
+}
+
 progress[value] {
   /* Reset the default appearance */
   -webkit-appearance: none;

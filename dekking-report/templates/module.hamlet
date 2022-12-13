@@ -31,8 +31,9 @@ $doctype 5
           $forall (lineNum, lineStrings) <- annotatedLines
             <tr>
               <td>
-                <code>
-                  #{lineNum}:
+                <a .lineNum name=#{lineNum} href="##{lineNum}">
+                  <code>
+                    #{lineNum}:
               <td>
                 <code>
                   $forall (code, covered) <- lineStrings
