@@ -1,4 +1,5 @@
 { lib
+, haskell
 , haskellPackages
 , addDekkingValueDependency
 , addCoverables'
@@ -58,10 +59,19 @@ let
         value = addCoverage super.${pname};
       })
       allCoverage);
+  # We turn on 'doCheck' for all coverage packages just so it can be off by
+  # default and still be used in a coverage report.
+  addDoCheckOverride = _: super:
+    builtins.listToAttrs (builtins.map
+      (pname: {
+        name = pname;
+        value = haskell.lib.doCheck super.${pname};
+      })
+      allCoverage);
   newHaskellPackages = haskellPackages.override (old: {
     overrides = lib.composeExtensions (old.overrides or (_: _: { }))
       (lib.composeExtensions
-        addDekkingValueDependencyOverride
+        (lib.composeExtensions addDekkingValueDependencyOverride addDoCheckOverride)
         (lib.composeExtensions addCoverableOverride addCoverageOverride));
   });
 in
