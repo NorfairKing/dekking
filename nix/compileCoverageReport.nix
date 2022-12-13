@@ -3,7 +3,6 @@
 , packages ? [ ]
 , coverables ? [ ]
 , coverage ? [ ]
-, extraScript ? ""
 }:
 let
   allCoverables = coverables ++ packages;
@@ -18,9 +17,6 @@ stdenv.mkDerivation {
   srcs = [ ];
   buildInputs = [ dekking-report ];
   buildCommand = ''
-
-    ${extraScript}
-
     # Make coverage report
     set -x
     dekking-report ${coverablesOptions} ${coverageOptions} --output $out

@@ -25,7 +25,6 @@ in
 , needToBeLinkedAgainstDekkingValue ? [ ] # List of package names
   # Modules that will not be source-transformed
 , exceptions ? [ ]
-, extraScript ? ""
 }:
 let
   allCoverables = coverables ++ packages;
@@ -76,7 +75,7 @@ let
   });
 in
 compileCoverageReport {
-  inherit name extraScript;
+  inherit name;
   # It's not good enough to just call 'addCoverablesAndCoverage' on each of the packages like this:
   # packages = builtins.map (pkg: addCoverablesAndCoverage pkg) packages;
   # Why? Because every package will have coverables output output, great.
