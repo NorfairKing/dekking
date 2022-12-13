@@ -78,9 +78,33 @@ isNoCoverExpr expr = case unLoc expr of
 
 adaptTopLevelLDecl :: [CoverAnnotation] -> Located (HsDecl GhcPs) -> AdaptM (Located (HsDecl GhcPs))
 adaptTopLevelLDecl annotations = liftL $ \case
+  TyClD x tydcl -> TyClD x <$> adaptTypeOrClassDecl tydcl
+  InstD x instdcl -> InstD x <$> adaptInstanceDecl instdcl
   ValD x bind -> ValD x <$> adaptTopLevelBind annotations bind
   -- TODO
   d -> pure d
+
+adaptTypeOrClassDecl ::
+  TyClDecl GhcPs ->
+  AdaptM (TyClDecl GhcPs)
+adaptTypeOrClassDecl = \case
+  cd@ClassDecl {} -> do
+    lbs <- adaptLBinds (tcdMeths cd)
+    pure (cd {tcdMeths = lbs})
+  d -> pure d
+
+adaptInstanceDecl ::
+  InstDecl GhcPs -> AdaptM (InstDecl GhcPs)
+adaptInstanceDecl = \case
+  ClsInstD x cinstdcl -> ClsInstD x <$> adaptClassInstanceDecl cinstdcl
+  d -> pure d
+
+adaptClassInstanceDecl ::
+  ClsInstDecl GhcPs -> AdaptM (ClsInstDecl GhcPs)
+adaptClassInstanceDecl = \case
+  cid@ClsInstDecl {} -> do
+    lbs <- adaptLBinds (cid_binds cid)
+    pure (cid {cid_binds = lbs})
 
 adaptTopLevelBind :: [CoverAnnotation] -> HsBind GhcPs -> AdaptM (HsBind GhcPs)
 adaptTopLevelBind annotations = \case
@@ -90,6 +114,9 @@ adaptTopLevelBind annotations = \case
       else adaptBind b
   -- TODO
   b -> pure b
+
+adaptLBinds :: LHsBinds GhcPs -> AdaptM (LHsBinds GhcPs)
+adaptLBinds = mapBagM adaptLBind
 
 adaptLBind :: LHsBind GhcPs -> AdaptM (LHsBind GhcPs)
 adaptLBind = liftL adaptBind

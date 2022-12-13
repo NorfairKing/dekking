@@ -6,6 +6,7 @@ import qualified Record
 import qualified ServantExample
 import qualified TopLevel
 import qualified TypeApplications
+import qualified Typeclass
 
 main :: IO ()
 main = do
@@ -17,3 +18,4 @@ main = do
   ServantExample.main
   TopLevel.main
   TypeApplications.main
+  Typeclass.main

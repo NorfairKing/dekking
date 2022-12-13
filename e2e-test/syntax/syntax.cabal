@@ -18,6 +18,7 @@ library
       ServantExample
       TopLevel
       TypeApplications
+      Typeclass
   other-modules:
       Paths_syntax
   hs-source-dirs:
