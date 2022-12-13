@@ -7,6 +7,7 @@ import Data.Maybe (mapMaybe)
 import Dekking.Coverable
 import Dekking.SourceAdapter
 import GHC
+import qualified GHC.Data.EnumSet as EnumSet
 import GHC.Driver.Plugins
 import GHC.Driver.Session
 import GHC.Driver.Types
@@ -17,11 +18,21 @@ import Path.IO
 plugin :: Plugin
 plugin =
   defaultPlugin
-    { dynflagsPlugin = \_ dynFlags ->
-        pure
-          ( -- See [ref:-XImpredicativeTypes]
-            xopt_set dynFlags ImpredicativeTypes
-          ),
+    { dynflagsPlugin = \_ dynFlags -> do
+        -- See [ref:-XImpredicativeTypes]
+        let setImpredicativeTypes fs = xopt_set fs ImpredicativeTypes
+        -- Turn off safe haskell, because we don't care about it for a coverage report.
+        let turnOffSafeHaskell fs = fs {safeHaskell = Sf_Ignore}
+        -- Turn off inferring safe haskell, because we don't care about it for a coverage report.
+        let turnOffSafeInfer fs = fs {safeInfer = False}
+        -- Turn off all warnings, because the resulting source may cause warnings.
+        let turnOffWarnings fs = fs {warningFlags = EnumSet.empty, fatalWarningFlags = EnumSet.empty}
+        pure $
+          turnOffWarnings
+            . turnOffSafeInfer
+            . turnOffSafeHaskell
+            . setImpredicativeTypes
+            $ dynFlags,
       parsedResultAction = adaptParseResult
     }
 
@@ -60,6 +71,7 @@ plugin =
 -- Our transformation would turn `f` into `id f`, but then GHC would try
 -- to instantiate the type-parameter of `id` with the polytype `Int ->
 -- (forall a. a -> a)`, which is only possible with ImpredicativeTypes.
+
 adaptParseResult :: [CommandLineOption] -> ModSummary -> HsParsedModule -> Hsc HsParsedModule
 adaptParseResult es ms pr = do
   liftIO $ putStrLn "Activating the coverage logger plugin"
