@@ -20,9 +20,9 @@ in
     "--ghc-option=-fno-safe-infer"
     # Turn off all warnings, because the resulting source will cause warnings.
     "--ghc-option=-w"
-    # To see what dekking produces, at parse and rename time
-    "--ghc-option=-ddump-parsed"
-    "--ghc-option=-ddump-rn"
+    # # To see what dekking produces, at parse and rename time
+    # "--ghc-option=-ddump-parsed"
+    # "--ghc-option=-ddump-rn"
     # The '-fplugin' option is required to actually run the plugin at parse-time.
     "--ghc-option=-fplugin=Dekking"
     # The '-plugin-package' flag is required for GHC to know in which haskell package to find the plugin with module name ${pluginName}

@@ -5,6 +5,9 @@ dependencies:
 
 library:
   source-dirs: src
+  dependencies:
+  - dekking-value
+  - dekking-plugin
 
 tests:
   example-test:

@@ -12,6 +12,7 @@ import GHC.Driver.Session
 import GHC.Driver.Types
 import GHC.LanguageExtensions
 import GHC.Tc.Types
+import GHC.Types.SrcLoc
 import Path
 import Path.IO
 
@@ -53,18 +54,35 @@ plugin =
         -- to instantiate the type-parameter of `id` with the polytype `Int ->
         -- (forall a. a -> a)`, which is only possible with ImpredicativeTypes.
         pure (xopt_set dynFlags ImpredicativeTypes),
+      parsedResultAction = \_ ms pm -> do
+        liftIO $
+          putStrLn $
+            unwords
+              [ "Adding",
+                moduleNameString adapterModuleName,
+                "to the imports of",
+                moduleNameString (moduleName (ms_mod ms))
+              ]
+        m' <- liftL (\m -> pure m {hsmodImports = adapterImport : hsmodImports m}) (hpm_module pm)
+        pure $ pm {hpm_module = m'},
       typeCheckResultAction = adaptTypeCheckResult
     }
 
+adapterImport :: LImportDecl GhcPs
+adapterImport = noLoc (simpleImportDecl adapterModuleName)
+
+adapterModuleName :: GHC.ModuleName
+adapterModuleName = mkModuleName "Dekking.ValueLevelAdapter"
+
 adaptTypeCheckResult :: [CommandLineOption] -> ModSummary -> TcGblEnv -> TcM TcGblEnv
 adaptTypeCheckResult es ms tcg = do
-  liftIO $ putStrLn "Activating the coverage logger plugin"
   let m = ms_mod ms
   let mn = moduleName m
   let exceptionModules = mapMaybe (stripPrefix "--exception=") es
   if "Paths_" `isPrefixOf` moduleNameString mn || moduleNameString mn `elem` exceptionModules
     then pure tcg
     else do
+      liftIO $ putStrLn "Activating the coverage logger plugin"
       -- Transform the source
       (tcg', coverables) <- runReaderT (runWriterT (adaptTypeCheckedModule tcg)) (tcg_mod tcg)
       forM_ (ml_hs_file (ms_location ms)) $ \sourceFile ->

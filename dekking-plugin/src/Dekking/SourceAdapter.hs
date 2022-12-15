@@ -6,55 +6,62 @@ module Dekking.SourceAdapter (adaptTypeCheckedModule, unitToString) where
 
 import Control.Monad.Reader
 import Control.Monad.Writer.Strict
+import Data.List
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Dekking.Coverable
 import GHC hiding (moduleName)
 import GHC.Data.Bag
+import GHC.Data.IOEnv
 import GHC.Driver.Types as GHC
 import GHC.Plugins as GHC
 import GHC.Tc.Types
+import System.Exit
 
 addExpression :: Coverable Expression -> AdaptM ()
-addExpression e = tell (mempty {moduleCoverablesExpressions = S.singleton e})
+addExpression e = do
+  liftIO $ print ("Adding coverable:" :: String, e)
+  tell (mempty {moduleCoverablesExpressions = S.singleton e})
 
-type AdaptM = WriterT ModuleCoverables (ReaderT GHC.Module Hsc)
+type AdaptM = WriterT ModuleCoverables (ReaderT GHC.Module TcM)
 
 adaptTypeCheckedModule :: TcGblEnv -> AdaptM TcGblEnv
 adaptTypeCheckedModule tcg = do
-  binds <- mapBagM adaptLBind (tcg_binds tcg)
+  liftIO $ print (length (tcg_binds tcg))
+  tcEnv <- env_gbl <$> runTcM getEnv
+  let typeEnvVar = tcg_type_env_var tcEnv :: TcRef TypeEnv
+  typeEnv <- runTcM $ readMutVar typeEnvVar
+  liftIO $ print (map (occNameString . getOccName) (typeEnvElts typeEnv))
+  binds <- adaptLBinds (tcg_binds tcg)
   pure $ tcg {tcg_binds = binds}
 
-adapterImport :: LImportDecl GhcTc
-adapterImport = noLoc (simpleImportDecl adapterModuleName)
+-- adaptLDecl :: Located (HsDecl GhcTc) -> AdaptM (Located (HsDecl GhcTc))
+-- adaptLDecl = liftL $ \case
+--   ValD x bind -> ValD x <$> adaptBind bind
+--   -- TODO
+--   d -> pure d
 
-adapterModuleName :: GHC.ModuleName
-adapterModuleName = mkModuleName "Dekking.ValueLevelAdapter"
-
--- adaptLocatedHsModule :: Located HsModule -> AdaptM (Located HsModule)
--- adaptLocatedHsModule = liftL adaptHsModule
---
--- adaptHsModule :: HsModule -> AdaptM HsModule
--- adaptHsModule m = do
---   moduule <- ask
---   liftIO $ putStrLn $ "Adapting module: " ++ moduleNameString (moduleName moduule)
---   decls' <- mapM adaptLDecl (hsmodDecls m)
---   pure (m {hsmodDecls = decls', hsmodImports = adapterImport : hsmodImports m})
-
-adaptLDecl :: Located (HsDecl GhcTc) -> AdaptM (Located (HsDecl GhcTc))
-adaptLDecl = liftL $ \case
-  ValD x bind -> ValD x <$> adaptBind bind
-  -- TODO
-  d -> pure d
+adaptLBinds :: LHsBinds GhcTc -> AdaptM (LHsBinds GhcTc)
+adaptLBinds = mapBagM adaptLBind
 
 adaptLBind :: LHsBind GhcTc -> AdaptM (LHsBind GhcTc)
 adaptLBind = liftL adaptBind
 
 adaptBind :: HsBind GhcTc -> AdaptM (HsBind GhcTc)
 adaptBind = \case
-  FunBind x name matchGroup ticks -> FunBind x name <$> adaptMatchGroup matchGroup <*> pure ticks
-  -- TODO
-  b -> pure b
+  FunBind x i matchGroup ticks -> do
+    liftIO $ print ("FunBind" :: String, occNameString (getOccName i))
+    FunBind x i <$> adaptMatchGroup matchGroup <*> pure ticks
+  PatBind x lhs rhs ts -> do
+    liftIO $ print ("PatBind" :: String)
+    PatBind x lhs <$> adaptGRHSs rhs <*> pure ts
+  VarBind x i body -> do
+    liftIO $ print ("VarBind" :: String, occNameString (getOccName i))
+    VarBind x i <$> adaptLExpr body
+  AbsBinds x tv evs exs evbs binds ab -> do
+    liftIO $ print ("AbsBinds" :: String)
+    AbsBinds x tv evs exs evbs <$> adaptLBinds binds <*> pure ab
+  PatSynBind _ _ -> error "TODO"
 
 adaptMatchGroup :: MatchGroup GhcTc (LHsExpr GhcTc) -> AdaptM (MatchGroup GhcTc (LHsExpr GhcTc))
 adaptMatchGroup = \case
@@ -105,15 +112,18 @@ adaptValBinds = \case
 
 adaptLExpr :: LHsExpr GhcTc -> AdaptM (LHsExpr GhcTc)
 adaptLExpr (L sp e) = fmap (L sp) $ do
-  let applyAdapter mName = case spanLocation sp of
-        Just loc -> do
-          addExpression
-            Coverable
-              { coverableValue = Expression {expressionIdentifier = mName},
-                coverableLocation = loc
-              }
-          applyAdapterExpr loc e
-        Nothing -> pure e
+  let applyAdapter = applyAdapter' sp
+      applyAdapter' p mName = do
+        liftIO $ print ("Trying to apply adapter:" :: String, p)
+        case spanLocation p of
+          Just loc -> do
+            addExpression
+              Coverable
+                { coverableValue = Expression {expressionIdentifier = mName},
+                  coverableLocation = loc
+                }
+            applyAdapterExpr loc e
+          Nothing -> pure e
 
   -- We cannot use uniplate's method of transforming the code, because it would
   -- replace the middle part of infix operations by an expression that contains
@@ -171,8 +181,11 @@ adaptLExpr (L sp e) = fmap (L sp) $ do
     ExplicitList x m bodies -> ExplicitList x m <$> mapM adaptLExpr bodies
     RecordCon x name binds -> RecordCon x name <$> adaptRecordBinds binds
     RecordUpd x left updates -> RecordUpd x <$> adaptLExpr left <*> mapM (liftL adaptRecordField) updates
-    -- TODO
-    _ -> pure e
+    XExpr xe ->
+      XExpr <$> case xe of
+        WrapExpr (HsWrap w body) -> WrapExpr <$> (HsWrap w <$> (unLoc <$> adaptLExpr (noLoc body)))
+        x -> pure x
+    x -> pure x
 
 adaptLTupArg :: LHsTupArg GhcTc -> AdaptM (LHsTupArg GhcTc)
 adaptLTupArg = liftL $ \case
@@ -204,6 +217,8 @@ applyAdapterExpr :: Location -> HsExpr GhcTc -> AdaptM (HsExpr GhcTc)
 applyAdapterExpr loc e = do
   moduule <- ask
   let strToLog = mkStringToLog moduule loc
+  liftIO $ print strToLog
+  adaptValueVar <- getAdaptValueVar
   pure $
     HsPar NoExtField $
       noLoc $
@@ -218,8 +233,24 @@ applyAdapterExpr loc e = do
           )
           (noLoc e)
 
-adaptValueVar :: Var
-adaptValueVar = undefined
+runTcM :: TcM a -> AdaptM a
+runTcM = lift . lift
+
+getAdaptValueVar :: AdaptM Var
+getAdaptValueVar = do
+  tcEnv <- env_gbl <$> runTcM getEnv
+  let typeEnvVar = tcg_type_env_var tcEnv :: TcRef TypeEnv
+  typeEnv <- runTcM $ readMutVar typeEnvVar
+  -- let typeEnv = tcg_type_env tcEnv
+  liftIO $ print (map (occNameString . getOccName) (typeEnvElts typeEnv))
+  case find ((== "adaptValue") . occNameString . occName) (typeEnvIds typeEnv) of
+    Nothing -> liftIO $ do
+      putStrLn "PANIC"
+      die "Could not find adaptValue in the type environment. (Should REALLY not happen.)"
+    Just var -> pure var
+
+-- let name =
+-- lookupId
 
 spanLocation :: SrcSpan -> Maybe Location
 spanLocation sp = case sp of

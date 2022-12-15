@@ -4,7 +4,9 @@ let
   haskellPackages = pkgs.haskellPackages.override (old: {
     overrides = pkgs.lib.composeExtensions (old.overrides or (_:_: { })) (
       self: super: {
-        example = self.callPackage ./example { };
+        example = pkgs.haskell.lib.overrideCabal (self.callPackage ./example { }) (old: {
+          doHaddock = false;
+        });
         foobar = self.callPackage ./foobar { };
         foobar-gen = self.callPackage ./foobar-gen { };
         syntax = self.callPackage ./syntax { };
