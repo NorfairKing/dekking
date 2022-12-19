@@ -5,7 +5,10 @@ import Lens.Micro
 
 main :: IO ()
 main = do
-  print $ Example {exampleString = "hi"} & exampleStringL .~ "ho"
+  let example = Example {exampleString = "hi"}
+  print $ example & exampleStringL .~ "ho"
+  print $ example ^. exampleStringL
+  print $ [example] ^? ix 2
 
 data Example = Example {exampleString :: String}
   deriving (Show)
