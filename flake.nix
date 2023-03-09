@@ -67,12 +67,7 @@
               nixpkgs-fmt.enable = true;
               nixpkgs-fmt.excludes = [ ".*/default.nix" ];
               cabal2nix.enable = true;
-              tagref = {
-                enable = true;
-                entry = "${pkgs.tagref}/bin/tagref";
-                types = [ "text" ];
-                pass_filenames = false;
-              };
+              tagref.enable = true;
             };
           };
         };
@@ -84,15 +79,15 @@
         buildInputs = (with pkgs; [
           cabal-install
           niv
-          tagref
           zlib
         ]) ++ (with pre-commit-hooks.packages.${system};
           [
+            cabal2nix
             hlint
             hpack
             nixpkgs-fmt
             ormolu
-            cabal2nix
+            tagref
           ]);
         shellHook = self.checks.${system}.pre-commit.shellHook;
       };
