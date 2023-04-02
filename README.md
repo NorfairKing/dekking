@@ -3,7 +3,7 @@
 Dekking is a next-generation coverage report tool for Haskell.
 It is implemented as a GHC plugin, as opposed to [HPC](https://hackage.haskell.org/package/hpc), which is built into GHC.
 
-Current status: Ready to try out!
+Current status: Used in Prod in all my products.
 
 ## Strategy
 
