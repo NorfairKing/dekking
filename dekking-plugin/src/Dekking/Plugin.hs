@@ -8,9 +8,9 @@ import Dekking.Coverable
 import Dekking.SourceAdapter
 import GHC
 import qualified GHC.Data.EnumSet as EnumSet
+import GHC.Driver.Env
 import GHC.Driver.Plugins
 import GHC.Driver.Session
-import GHC.Driver.Types
 import GHC.LanguageExtensions
 import Path
 import Path.IO
@@ -18,7 +18,8 @@ import Path.IO
 plugin :: Plugin
 plugin =
   defaultPlugin
-    { dynflagsPlugin = \_ dynFlags -> do
+    { driverPlugin = \_ hsc -> do
+        let dynFlags = hsc_dflags hsc
         -- See [ref:-XImpredicativeTypes]
         let setImpredicativeTypes fs = xopt_set fs ImpredicativeTypes
         -- Turn off safe haskell, because we don't care about it for a coverage report.
@@ -26,13 +27,18 @@ plugin =
         -- Turn off inferring safe haskell, because we don't care about it for a coverage report.
         let turnOffSafeInfer fs = fs {safeInfer = False}
         -- Turn off all warnings, because the resulting source may cause warnings.
-        let turnOffWarnings fs = fs {warningFlags = EnumSet.empty, fatalWarningFlags = EnumSet.empty}
-        pure $
-          turnOffWarnings
-            . turnOffSafeInfer
-            . turnOffSafeHaskell
-            . setImpredicativeTypes
-            $ dynFlags,
+        let turnOffWarnings fs =
+              fs
+                { warningFlags = EnumSet.empty,
+                  fatalWarningFlags = EnumSet.empty
+                }
+        let dynFlags' =
+              turnOffWarnings
+                . turnOffSafeInfer
+                . turnOffSafeHaskell
+                . setImpredicativeTypes
+                $ dynFlags
+        pure $ hsc {hsc_dflags = dynFlags'},
       parsedResultAction = adaptParseResult
     }
 

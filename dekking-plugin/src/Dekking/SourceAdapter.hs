@@ -15,7 +15,6 @@ import GHC hiding (moduleName)
 import GHC.Data.Bag
 import GHC.Plugins as GHC
 import GHC.Types.SourceText as GHC
-import Language.Haskell.Syntax
 
 addExpression :: Coverable Expression -> AdaptM ()
 addExpression e = tell (mempty {moduleCoverablesExpressions = S.singleton e})
@@ -23,7 +22,7 @@ addExpression e = tell (mempty {moduleCoverablesExpressions = S.singleton e})
 type AdaptM = WriterT ModuleCoverables (ReaderT GHC.Module Hsc)
 
 adapterImport :: LImportDecl GhcPs
-adapterImport = wrapXRec (simpleImportDecl adapterModuleName)
+adapterImport = noLocA (simpleImportDecl adapterModuleName)
 
 adapterModuleName :: GHC.ModuleName
 adapterModuleName = mkModuleName "Dekking.ValueLevelAdapter"
@@ -155,9 +154,6 @@ adaptGRHS :: GRHS GhcPs (LHsExpr GhcPs) -> AdaptM (GRHS GhcPs (LHsExpr GhcPs))
 adaptGRHS = \case
   GRHS x guards body -> GRHS x guards <$> adaptLExpr body
 
-adaptLHsLocalBinds :: LHsLocalBinds GhcPs -> AdaptM (LHsLocalBinds GhcPs)
-adaptLHsLocalBinds = liftL adaptHsLocalBinds
-
 adaptHsLocalBinds :: HsLocalBinds GhcPs -> AdaptM (HsLocalBinds GhcPs)
 adaptHsLocalBinds = \case
   HsValBinds x valBinds -> HsValBinds x <$> adaptValBinds valBinds
@@ -210,10 +206,10 @@ adaptValBinds = \case
 -- , which fails to parse
 
 adaptLExpr :: LHsExpr GhcPs -> AdaptM (LHsExpr GhcPs)
-adaptLExpr = liftL adaptExpr
+adaptLExpr le = liftL (adaptExpr (getLocA le)) le
 
-adaptExpr :: HsExpr GhcPs -> AdaptM (HsExpr GhcPs)
-adaptExpr e = do
+adaptExpr :: SrcSpan -> HsExpr GhcPs -> AdaptM (HsExpr GhcPs)
+adaptExpr sp e = do
   let applyAdapter mName = case spanLocation sp of
         Just loc -> do
           addExpression
@@ -266,9 +262,6 @@ adaptExpr e = do
     -- TODO
     _ -> pure e
 
-adaptLTupArg :: LHsTupArg GhcPs -> AdaptM (LHsTupArg GhcPs)
-adaptLTupArg = liftL adaptTupArg
-
 adaptTupArg :: HsTupArg GhcPs -> AdaptM (HsTupArg GhcPs)
 adaptTupArg = \case
   Present x body -> Present x <$> adaptLExpr body
@@ -309,17 +302,17 @@ applyAdapterExpr loc e = do
   pure $
     HsPar
       EpAnnNotUsed
-      ( wrapXRec $
+      ( noLocA $
           HsApp
             EpAnnNotUsed
-            ( wrapXRec
+            ( noLocA
                 ( HsApp
                     EpAnnNotUsed
-                    (wrapXRec (HsVar NoExtField (wrapXRec (Qual adapterModuleName (mkVarOcc "adaptValue")))))
-                    (wrapXRec (HsLit EpAnnNotUsed (HsString NoSourceText (mkFastString strToLog))))
+                    (noLocA (HsVar NoExtField (noLocA (Qual adapterModuleName (mkVarOcc "adaptValue")))))
+                    (noLocA (HsLit EpAnnNotUsed (HsString NoSourceText (mkFastString strToLog))))
                 )
             )
-            (wrapXRec e)
+            (noLocA e)
       )
 
 spanLocation :: SrcSpan -> Maybe Location

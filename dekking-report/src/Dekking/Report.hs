@@ -60,13 +60,17 @@ reportMain = do
     packagePath <- resolveFile settingOutputDir (renderReportFile (PackageFile pn))
     ensureDir (parent packagePath)
     SB.writeFile (fromAbsFile packagePath) $
-      LB.toStrict $ Blaze.renderHtml $ htmlPackageCoverageReport pn m
+      LB.toStrict $
+        Blaze.renderHtml $
+          htmlPackageCoverageReport pn m
 
   forM_ (concatMap (\(pn, mn) -> (,) pn <$> M.toList mn) (M.toList (coverageReportModules coverageReport))) $ \(pn, (mn, mc)) -> do
     modulePath <- resolveFile settingOutputDir (renderReportFile (ModuleFile pn mn))
     ensureDir (parent modulePath)
     SB.writeFile (fromAbsFile modulePath) $
-      LB.toStrict $ Blaze.renderHtml $ htmlModuleCoverageReport pn mn mc
+      LB.toStrict $
+        Blaze.renderHtml $
+          htmlModuleCoverageReport pn mn mc
 
 data ReportFile
   = JSONFile
