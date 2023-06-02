@@ -79,16 +79,6 @@ let
     };
 
     # External packages' code coverage reports
-    cursor-report = pkgs.dekking.makeCoverageReport {
-      name = "cursor-coverage-report";
-      coverables = [
-        "cursor"
-      ];
-      coverage = [
-        "cursor-gen"
-      ];
-    };
-
     fuzzy-time-report = pkgs.dekking.makeCoverageReport {
       name = "fuzzy-time-coverage-report";
       packages = [
@@ -138,11 +128,22 @@ let
       exceptions = [
         # Once this GHC bug is fixed, we should be able to remove these modules from the exceptions:
         # https://gitlab.haskell.org/ghc/ghc/-/issues/22543
+        "Main"
         "Yesod.Auth"
+        "Yesod.Auth.Dummy"
         "Yesod.Auth.Email"
         "Yesod.Auth.GoogleEmail2"
         "Yesod.Auth.Hardcoded"
         "Yesod.Auth.OpenId"
+        "Yesod.Auth.Rpxnow"
+        "Yesod.Auth.Util.PasswordStore"
+        "Yesod.Core.Content"
+        "Yesod.Core.Handler"
+        "Yesod.Core.Internal.Response"
+        "Yesod.Core.Internal.Run"
+        "Yesod.Persist.Core"
+        "Yesod.Util.PasswordStore"
+        "Yesod.WebSockets"
       ];
     };
   };

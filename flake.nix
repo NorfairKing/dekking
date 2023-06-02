@@ -1,7 +1,7 @@
 {
   description = "dekking";
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-22.11";
+    nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-23.05";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
     validity.url = "github:NorfairKing/validity";
     validity.flake = false;
@@ -11,13 +11,11 @@
     safe-coloured-text.flake = false;
     sydtest.url = "github:NorfairKing/sydtest";
     sydtest.flake = false;
-    nixpkgs-22_05.url = "github:NixOS/nixpkgs?ref=nixos-22.05";
   };
 
   outputs =
     { self
     , nixpkgs
-    , nixpkgs-22_05
     , pre-commit-hooks
     , validity
     , safe-coloured-text
@@ -47,10 +45,7 @@
           backwardCompatibilityCheckFor = nixpkgs:
             let pkgs' = pkgsFor nixpkgs;
             in pkgs'.dekking;
-          allNixpkgs = {
-            inherit
-              nixpkgs-22_05;
-          };
+          allNixpkgs = { };
           backwardCompatibilityChecks = pkgs.lib.mapAttrs (_: nixpkgs: backwardCompatibilityCheckFor nixpkgs) allNixpkgs;
         in
         backwardCompatibilityChecks //
@@ -72,7 +67,7 @@
           };
         };
       devShells.${system}.default = pkgs.haskellPackages.shellFor {
-        name = "bevel-shell";
+        name = "dekking-shell";
         packages = p: builtins.attrValues p.dekkingPackages;
         withHoogle = true;
         doBenchmark = true;
