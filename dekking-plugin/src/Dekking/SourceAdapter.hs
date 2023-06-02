@@ -13,8 +13,9 @@ import qualified Data.Text as T
 import Dekking.Coverable
 import GHC hiding (moduleName)
 import GHC.Data.Bag
-import GHC.Driver.Types as GHC
 import GHC.Plugins as GHC
+import GHC.Types.SourceText as GHC
+import Language.Haskell.Syntax
 
 addExpression :: Coverable Expression -> AdaptM ()
 addExpression e = tell (mempty {moduleCoverablesExpressions = S.singleton e})
@@ -282,18 +283,22 @@ applyAdapterExpr loc e = do
   moduule <- ask
   let strToLog = mkStringToLog moduule loc
   pure $
-    HsPar NoExtField $
-      noLoc $
-        HsApp
-          NoExtField
-          ( noLoc
-              ( HsApp
-                  NoExtField
-                  (noLoc (HsVar NoExtField (noLoc (Qual adapterModuleName (mkVarOcc "adaptValue")))))
-                  (noLoc (HsLit NoExtField (HsString NoSourceText (mkFastString strToLog))))
-              )
-          )
-          (noLoc e)
+    HsPar
+      NoExtField
+      HsTok
+      ( noLoc $
+          HsApp
+            NoExtField
+            ( noLoc
+                ( HsApp
+                    NoExtField
+                    (noLoc (HsVar NoExtField (noLoc (Qual adapterModuleName (mkVarOcc "adaptValue")))))
+                    (noLoc (HsLit NoExtField (HsString NoSourceText (mkFastString strToLog))))
+                )
+            )
+            (noLoc e)
+      )
+      HsTok
 
 spanLocation :: SrcSpan -> Maybe Location
 spanLocation sp = case sp of
