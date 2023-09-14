@@ -22,4 +22,10 @@ stdenv.mkDerivation {
     dekking-report ${coverablesOptions} ${coverageOptions} --output $out
     set +x
   '';
+  passthru = {
+    packages = builtins.listToAttrs
+      (builtins.map
+        (package: { name = package.pname; value = package; })
+        (builtins.concatLists [ packages coverables coverage ]));
+  };
 }

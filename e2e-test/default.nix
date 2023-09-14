@@ -15,6 +15,10 @@ let
   foobarPkgWithCoverables = pkgs.dekking.addCoverablesAndCoverage haskellPackages.foobar;
   foobarGenPkgWithCoverables = pkgs.dekking.addCoverablesAndCoverage haskellPackages.foobar-gen;
   syntaxPkgWithCoverables = pkgs.dekking.addCoverablesAndCoverage haskellPackages.syntax;
+  example-compiled-report = pkgs.dekking.compileCoverageReport {
+    name = "compiled-coverage-report";
+    packages = [ examplePkgWithCoverables ];
+  };
   tests = {
     # Single example package
     ## The example package can 'just' build
@@ -22,10 +26,7 @@ let
     ## We can add coverables to the example package.
     example-with-coverables = examplePkgWithCoverables;
     ## We can compile a report when we add coverables and coverage manually
-    example-compiled-report = pkgs.dekking.compileCoverageReport {
-      name = "compiled-coverage-report";
-      packages = [ examplePkgWithCoverables ];
-    };
+    inherit example-compiled-report;
     ## We can make a coverage report for the raw package
     example-report = pkgs.dekking.makeCoverageReport {
       name = "made-coverage-report";
@@ -34,6 +35,8 @@ let
     };
     # We can make a single-package coverage report for the example package
     example-with-report = pkgs.dekking.addCoverageReport haskellPackages.example;
+
+    passthru-build = example-compiled-report.packages.example;
 
     # Syntax package, to cover as much haskell syntax as possible
     ## The syntax package can 'just' build
