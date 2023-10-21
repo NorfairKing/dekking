@@ -67,12 +67,10 @@ let
         value = haskell.lib.doCheck super.${pname};
       })
       allCoverage);
-  newHaskellPackages = haskellPackages.override (old: {
-    overrides = lib.composeExtensions (old.overrides or (_: _: { }))
-      (lib.composeExtensions
-        (lib.composeExtensions addDekkingValueDependencyOverride addDoCheckOverride)
-        (lib.composeExtensions addCoverableOverride addCoverageOverride));
-  });
+  newHaskellPackages = haskellPackages.extend
+    (lib.composeExtensions
+      (lib.composeExtensions addDekkingValueDependencyOverride addDoCheckOverride)
+      (lib.composeExtensions addCoverableOverride addCoverageOverride));
 in
 compileCoverageReport {
   inherit name;

@@ -9,6 +9,8 @@
     autodocodec.flake = false;
     safe-coloured-text.url = "github:NorfairKing/safe-coloured-text";
     safe-coloured-text.flake = false;
+    fast-myers-diff.url = "github:NorfairKing/fast-myers-diff";
+    fast-myers-diff.flake = false;
     sydtest.url = "github:NorfairKing/sydtest";
     sydtest.flake = false;
   };
@@ -19,54 +21,49 @@
     , pre-commit-hooks
     , validity
     , safe-coloured-text
+    , fast-myers-diff
     , sydtest
     , autodocodec
     }:
     let
       system = "x86_64-linux";
-      pkgsFor = nixpkgs: import nixpkgs {
-        inherit system;
-        config.allowUnfree = true;
-        overlays = [
-          self.overlays.${system}
-          (import (autodocodec + "/nix/overlay.nix"))
-          (import (safe-coloured-text + "/nix/overlay.nix"))
-          (import (sydtest + "/nix/overlay.nix"))
-          (import (validity + "/nix/overlay.nix"))
-        ];
-      };
-      pkgs = pkgsFor nixpkgs;
+      nixpkgsFor = nixpkgs: import nixpkgs { inherit system; };
+      pkgs = nixpkgsFor nixpkgs;
+      allOverrides = pkgs.lib.composeManyExtensions [
+        (pkgs.callPackage (validity + "/nix/overrides.nix") { })
+        (pkgs.callPackage (autodocodec + "/nix/overrides.nix") { })
+        (pkgs.callPackage (safe-coloured-text + "/nix/overrides.nix") { })
+        (pkgs.callPackage (fast-myers-diff + "/nix/overrides.nix") { })
+        (pkgs.callPackage (sydtest + "/nix/overrides.nix") { })
+        self.overrides.${system}
+      ];
+      haskellPackagesFor = nixpkgs: (nixpkgsFor nixpkgs).haskellPackages.extend allOverrides;
+      haskellPackages = haskellPackagesFor nixpkgs;
     in
     {
+      overrides.${system} = pkgs.callPackage ./nix/overrides.nix { };
       overlays.${system} = import ./nix/overlay.nix;
-      packages.${system}.default = pkgs.dekking;
-      checks.${system} =
-        let
-          backwardCompatibilityCheckFor = nixpkgs:
-            let pkgs' = pkgsFor nixpkgs;
-            in pkgs'.dekking;
-          allNixpkgs = { };
-          backwardCompatibilityChecks = pkgs.lib.mapAttrs (_: nixpkgs: backwardCompatibilityCheckFor nixpkgs) allNixpkgs;
-        in
-        backwardCompatibilityChecks //
-        pkgs.haskellPackages.dekkingPackages // {
-          release = self.packages.${system}.default;
-          shell = self.devShells.${system}.default;
-          e2e-test = import ./e2e-test { inherit pkgs; };
-          pre-commit = pre-commit-hooks.lib.${system}.run {
-            src = ./.;
-            hooks = {
-              hlint.enable = true;
-              hpack.enable = true;
-              ormolu.enable = true;
-              nixpkgs-fmt.enable = true;
-              nixpkgs-fmt.excludes = [ ".*/default.nix" ];
-              cabal2nix.enable = true;
-              tagref.enable = true;
-            };
+      packages.${system} = {
+        inherit (haskellPackages) dekking; default = haskellPackages.dekking;
+      } // haskellPackages.dekkingPackages;
+      checks.${system} = {
+        release = haskellPackages.dekkingRelease;
+        shell = self.devShells.${system}.default;
+        e2e-test = import ./e2e-test { inherit (pkgs) lib linkFarm; baseHaskellPackages = haskellPackages; };
+        pre-commit = pre-commit-hooks.lib.${system}.run {
+          src = ./.;
+          hooks = {
+            hlint.enable = true;
+            hpack.enable = true;
+            ormolu.enable = true;
+            nixpkgs-fmt.enable = true;
+            nixpkgs-fmt.excludes = [ ".*/default.nix" ];
+            cabal2nix.enable = true;
+            tagref.enable = true;
           };
         };
-      devShells.${system}.default = pkgs.haskellPackages.shellFor {
+      };
+      devShells.${system}.default = haskellPackages.shellFor {
         name = "dekking-shell";
         packages = p: builtins.attrValues p.dekkingPackages;
         withHoogle = true;

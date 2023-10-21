@@ -1,21 +1,23 @@
-{ pkgs }:
+{ lib
+, linkFarm
+, baseHaskellPackages
+}:
+
+with lib;
 
 let
-  haskellPackages = pkgs.haskellPackages.override (old: {
-    overrides = pkgs.lib.composeExtensions (old.overrides or (_:_: { })) (
-      self: _: {
-        example = self.callPackage ./example { };
-        foobar = self.callPackage ./foobar { };
-        foobar-gen = self.callPackage ./foobar-gen { };
-        syntax = self.callPackage ./syntax { };
-      }
-    );
+  haskellPackages = baseHaskellPackages.extend (self: _: {
+    example = self.callPackage ./example { };
+    foobar = self.callPackage ./foobar { };
+    foobar-gen = self.callPackage ./foobar-gen { };
+    syntax = self.callPackage ./syntax { };
   });
-  examplePkgWithCoverables = pkgs.dekking.addCoverablesAndCoverage haskellPackages.example;
-  foobarPkgWithCoverables = pkgs.dekking.addCoverablesAndCoverage haskellPackages.foobar;
-  foobarGenPkgWithCoverables = pkgs.dekking.addCoverablesAndCoverage haskellPackages.foobar-gen;
-  syntaxPkgWithCoverables = pkgs.dekking.addCoverablesAndCoverage haskellPackages.syntax;
-  example-compiled-report = pkgs.dekking.compileCoverageReport {
+  dekking = haskellPackages.dekking;
+  examplePkgWithCoverables = dekking.addCoverablesAndCoverage haskellPackages.example;
+  foobarPkgWithCoverables = dekking.addCoverablesAndCoverage haskellPackages.foobar;
+  foobarGenPkgWithCoverables = dekking.addCoverablesAndCoverage haskellPackages.foobar-gen;
+  syntaxPkgWithCoverables = dekking.addCoverablesAndCoverage haskellPackages.syntax;
+  example-compiled-report = dekking.compileCoverageReport {
     name = "compiled-coverage-report";
     packages = [ examplePkgWithCoverables ];
   };
@@ -28,13 +30,13 @@ let
     ## We can compile a report when we add coverables and coverage manually
     inherit example-compiled-report;
     ## We can make a coverage report for the raw package
-    example-report = pkgs.dekking.makeCoverageReport {
+    example-report = dekking.makeCoverageReport {
       name = "made-coverage-report";
       inherit haskellPackages;
       packages = [ "example" ];
     };
     # We can make a single-package coverage report for the example package
-    example-with-report = pkgs.dekking.addCoverageReport haskellPackages.example;
+    example-with-report = dekking.addCoverageReport haskellPackages.example;
 
     passthru-build = example-compiled-report.packages.example;
 
@@ -44,13 +46,13 @@ let
     ## We can add coverables to the syntax package and it can still be built
     syntax-with-coverables = syntaxPkgWithCoverables;
     ## We can make a coverage report for the syntax package
-    syntax-report = pkgs.dekking.makeCoverageReport {
+    syntax-report = dekking.makeCoverageReport {
       name = "syntax-coverage-report";
       inherit haskellPackages;
       packages = [ "syntax" ];
     };
     ## We can add a coverage report for the syntax package
-    syntax-with-report = pkgs.dekking.addCoverageReport haskellPackages.syntax;
+    syntax-with-report = dekking.addCoverageReport haskellPackages.syntax;
 
 
 
@@ -62,7 +64,7 @@ let
     foobar-with-coverables = foobarPkgWithCoverables;
     foobar-gen-with-coverables = foobarGenPkgWithCoverables;
     ## Coverage report compilation for both raw together
-    foobar-report = pkgs.dekking.makeCoverageReport {
+    foobar-report = dekking.makeCoverageReport {
       name = "foobar-made-coverage-report";
       inherit haskellPackages;
       packages = [
@@ -70,7 +72,7 @@ let
         "foobar-gen"
       ];
     };
-    foobar-custom-report = pkgs.dekking.makeCoverageReport {
+    foobar-custom-report = dekking.makeCoverageReport {
       name = "foobar-custom-coverage-report";
       inherit haskellPackages;
       coverables = [
@@ -82,7 +84,7 @@ let
     };
 
     # External packages' code coverage reports
-    fuzzy-time-report = pkgs.dekking.makeCoverageReport {
+    fuzzy-time-report = dekking.makeCoverageReport {
       name = "fuzzy-time-coverage-report";
       packages = [
         "fuzzy-time"
@@ -94,7 +96,7 @@ let
       ];
     };
 
-    safe-coloured-text-report = pkgs.dekking.makeCoverageReport {
+    safe-coloured-text-report = dekking.makeCoverageReport {
       name = "safe-coloured-text-report";
       packages = [
         "safe-coloured-text"
@@ -110,7 +112,7 @@ let
       ];
     };
 
-    yesod-report = pkgs.dekking.makeCoverageReport {
+    yesod-report = dekking.makeCoverageReport {
       name = "yesod-coverage-report";
       packages = [
         "yesod"
@@ -151,7 +153,7 @@ let
     };
   };
 in
-(pkgs.linkFarm "e2e-tests" (builtins.attrValues (builtins.mapAttrs
+(linkFarm "e2e-tests" (builtins.attrValues (builtins.mapAttrs
   (name: test: {
     inherit name;
     path = test;
