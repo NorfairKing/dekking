@@ -21,6 +21,12 @@ in
     # The '-plugin-package' flag is required for GHC to know in which haskell package to find the plugin with module name ${pluginName}
     # This works because we also add dekking to the 'buildDepends' below.
     "--ghc-option=-plugin-package=dekking-plugin"
+    # Turn off warnings because the converted code may produce warnings and we
+    # don't care about them.
+    # Doing this from inside the plugin doesn't seem to work anymore as of GHC
+    # 9.4 so we do it here instead.
+    # [ref:TurningOffWarnings]
+    "--ghc-option=-w"
     # Here we pass the command-line options to the 'Dekking' plugin
     "--ghc-options=\"${stringOpts}\""
     # The -package option is required because the result of the plugin's

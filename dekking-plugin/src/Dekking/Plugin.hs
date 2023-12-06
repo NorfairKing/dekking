@@ -18,29 +18,31 @@ import Path.IO
 plugin :: Plugin
 plugin =
   defaultPlugin
-    { driverPlugin = \_ hsc -> do
-        let dynFlags = hsc_dflags hsc
-        -- See [ref:-XImpredicativeTypes]
-        let setImpredicativeTypes fs = xopt_set fs ImpredicativeTypes
-        -- Turn off safe haskell, because we don't care about it for a coverage report.
-        let turnOffSafeHaskell fs = fs {safeHaskell = Sf_Ignore}
-        -- Turn off inferring safe haskell, because we don't care about it for a coverage report.
-        let turnOffSafeInfer fs = fs {safeInfer = False}
-        -- Turn off all warnings, because the resulting source may cause warnings.
-        let turnOffWarnings fs =
-              fs
-                { warningFlags = EnumSet.empty,
-                  fatalWarningFlags = EnumSet.empty
-                }
-        let dynFlags' =
-              turnOffWarnings
-                . turnOffSafeInfer
-                . turnOffSafeHaskell
-                . setImpredicativeTypes
-                $ dynFlags
-        pure $ hsc {hsc_dflags = dynFlags'},
+    { driverPlugin = \_ -> pure . hscUpdateFlags fixDynFlags,
       parsedResultAction = adaptParseResult
     }
+
+fixDynFlags :: DynFlags -> DynFlags
+fixDynFlags =
+  -- See [ref:-XImpredicativeTypes]
+  let setImpredicativeTypes fs = xopt_set fs ImpredicativeTypes
+      -- Turn off safe haskell, because we don't care about it for a coverage report.
+      turnOffSafeHaskell fs = fs {safeHaskell = Sf_Ignore}
+      -- Turn off inferring safe haskell, because we don't care about it for a coverage report.
+      turnOffSafeInfer fs = fs {safeInfer = False}
+      -- Turn off all warnings, because the resulting source may cause warnings.
+      -- This doesn't seem to work anymore as of ghc 9.4 so we do this is nix/addCoverables.nix instead.
+      -- See [tag:TurningOffWarnings]
+      turnOffWarnings fs =
+        fs
+          { warningFlags = EnumSet.empty,
+            fatalWarningFlags = EnumSet.empty,
+            generalFlags = EnumSet.delete Opt_WarnIsError $ generalFlags fs
+          }
+   in turnOffWarnings
+        . turnOffSafeInfer
+        . turnOffSafeHaskell
+        . setImpredicativeTypes
 
 -- [tag:-XImpredicativeTypes]
 --
@@ -78,9 +80,9 @@ plugin =
 -- to instantiate the type-parameter of `id` with the polytype `Int ->
 -- (forall a. a -> a)`, which is only possible with ImpredicativeTypes.
 
-adaptParseResult :: [CommandLineOption] -> ModSummary -> HsParsedModule -> Hsc HsParsedModule
+adaptParseResult :: [CommandLineOption] -> ModSummary -> ParsedResult -> Hsc ParsedResult
 adaptParseResult es ms pr = do
-  liftIO $ putStrLn "Activating the coverage logger plugin"
+  let pm = parsedResultModule pr
   let m = ms_mod ms
   let mn = moduleName m
   let exceptionModules = mapMaybe (stripPrefix "--exception=") es
@@ -88,7 +90,7 @@ adaptParseResult es ms pr = do
     then pure pr
     else do
       -- Transform the source
-      (lm', coverables) <- runReaderT (runWriterT (adaptLocatedHsModule (hpm_module pr))) m
+      (lm', coverables) <- runReaderT (runWriterT (adaptLocatedHsModule (hpm_module pm))) m
       forM_ (ml_hs_file (ms_location ms)) $ \sourceFile ->
         -- Output the coverables
         liftIO $ do
@@ -109,4 +111,4 @@ adaptParseResult es ms pr = do
                 moduleCoverablesFileSource = sourceCode,
                 moduleCoverablesFileCoverables = coverables
               }
-      pure pr {hpm_module = lm'}
+      pure pr {parsedResultModule = pm {hpm_module = lm'}}

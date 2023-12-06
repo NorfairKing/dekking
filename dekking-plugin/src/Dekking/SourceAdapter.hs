@@ -71,8 +71,8 @@ gatherAnnotationDecl = \case
 isNoCoverExpr :: LHsExpr GhcPs -> Bool
 isNoCoverExpr expr = case unLoc expr of
   HsLit _ (HsString _ fs) | "NOCOVER" `isInfixOf` unpackFS fs -> True
-  HsOverLit _ (OverLit _ (HsIsString _ fs) _) | "NOCOVER" `isInfixOf` unpackFS fs -> True
-  HsPar _ e -> isNoCoverExpr e
+  HsOverLit _ (OverLit _ (HsIsString _ fs)) | "NOCOVER" `isInfixOf` unpackFS fs -> True
+  HsPar _ _ e _ -> isNoCoverExpr e
   ExprWithTySig _ e _ -> isNoCoverExpr e
   _ -> False
 
@@ -214,7 +214,7 @@ adaptExpr sp e = do
         Just loc -> do
           addExpression
             Coverable
-              { coverableValue = Expression {expressionIdentifier = mName},
+              { coverableValue = Dekking.Coverable.Expression {expressionIdentifier = mName},
                 coverableLocation = loc
               }
           applyAdapterExpr loc e
@@ -224,14 +224,12 @@ adaptExpr sp e = do
   case e of
     HsVar _ (L _ rdr) -> applyAdapter $ Just $ occNameString $ rdrNameOcc rdr
     HsUnboundVar x on -> pure $ HsUnboundVar x on
-    HsConLikeOut x cl -> pure $ HsConLikeOut x cl
-    HsRecFld x afo -> pure $ HsRecFld x afo
     HsOverLabel x fs -> pure $ HsOverLabel x fs
     HsIPVar x iv -> pure $ HsIPVar x iv
     HsOverLit {} -> applyAdapter Nothing
     HsLit {} -> applyAdapter Nothing
     HsLam x mg -> HsLam x <$> adaptMatchGroup mg
-    HsLamCase x mg -> HsLamCase x <$> adaptMatchGroup mg
+    HsLamCase x v mg -> HsLamCase x v <$> adaptMatchGroup mg
     HsApp x left right -> HsApp x <$> adaptLExpr left <*> adaptLExpr right
     -- TODO: Things inside a visible type application might be covered more
     -- granularly but this is quite good in the meantime.
@@ -243,12 +241,12 @@ adaptExpr sp e = do
         <*> pure middle
         <*> adaptLExpr right
     NegApp x body se -> NegApp x <$> adaptLExpr body <*> pure se
-    HsPar x le -> HsPar x <$> adaptLExpr le
+    HsPar x l le r -> HsPar x l <$> adaptLExpr le <*> pure r
     ExplicitTuple x args boxity -> ExplicitTuple x <$> mapM adaptTupArg args <*> pure boxity
     ExplicitSum x ct a body -> ExplicitSum x ct a <$> adaptLExpr body
     HsCase x body mg -> HsCase x <$> adaptLExpr body <*> adaptMatchGroup mg
     HsIf x condE ifE elseE -> HsIf x <$> adaptLExpr condE <*> adaptLExpr ifE <*> adaptLExpr elseE
-    HsLet x lbs body -> HsLet x <$> adaptHsLocalBinds lbs <*> adaptLExpr body
+    HsLet x l lbs i body -> HsLet x l <$> adaptHsLocalBinds lbs <*> pure i <*> adaptLExpr body
     HsDo x ctx stmts -> HsDo x ctx <$> liftL (mapM adaptExprLStmt) stmts
     ExplicitList x bodies -> ExplicitList x <$> mapM adaptLExpr bodies
     RecordCon x name binds -> RecordCon x name <$> adaptRecordBinds binds
@@ -272,17 +270,19 @@ adaptRecordBinds = \case
   HsRecFields fields md -> HsRecFields <$> mapM (liftL adaptHsRecField') fields <*> pure md
 
 adaptLRecordUpdateProjection :: LHsRecUpdProj GhcPs -> AdaptM (LHsRecUpdProj GhcPs)
-adaptLRecordUpdateProjection = liftL adaptHsRecField'
+adaptLRecordUpdateProjection = liftL $ \case
+  HsFieldBind ex i e b -> HsFieldBind ex i <$> adaptLExpr e <*> pure b
 
 adaptLRecordUpdateField :: LHsRecUpdField GhcPs -> AdaptM (LHsRecUpdField GhcPs)
 adaptLRecordUpdateField = liftL adaptRecordUpdateField
 
 adaptRecordUpdateField :: HsRecUpdField GhcPs -> AdaptM (HsRecUpdField GhcPs)
-adaptRecordUpdateField = adaptHsRecField'
+adaptRecordUpdateField = \case
+  HsFieldBind ex i e b -> HsFieldBind ex i <$> adaptLExpr e <*> pure b
 
-adaptHsRecField' :: HsRecField' id (LHsExpr GhcPs) -> AdaptM (HsRecField' id (LHsExpr GhcPs))
+adaptHsRecField' :: HsRecField id (LHsExpr GhcPs) -> AdaptM (HsRecField id (LHsExpr GhcPs))
 adaptHsRecField' = \case
-  HsRecField ex i e b -> HsRecField ex i <$> adaptLExpr e <*> pure b
+  HsFieldBind ex i e b -> HsFieldBind ex i <$> adaptLExpr e <*> pure b
 
 adaptExprLStmt ::
   ExprLStmt GhcPs ->
@@ -302,6 +302,7 @@ applyAdapterExpr loc e = do
   pure $
     HsPar
       EpAnnNotUsed
+      noHsTok
       ( noLocA $
           HsApp
             EpAnnNotUsed
@@ -314,6 +315,7 @@ applyAdapterExpr loc e = do
             )
             (noLocA e)
       )
+      noHsTok
 
 spanLocation :: SrcSpan -> Maybe Location
 spanLocation sp = case sp of
