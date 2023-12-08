@@ -27,6 +27,7 @@ in
     # 9.4 so we do it here instead.
     # [ref:TurningOffWarnings]
     "--ghc-option=-w"
+    "--ghc-option=-Wwarn"
     # Here we pass the command-line options to the 'Dekking' plugin
     "--ghc-options=\"${stringOpts}\""
     # The -package option is required because the result of the plugin's
