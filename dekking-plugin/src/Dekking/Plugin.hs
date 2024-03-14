@@ -15,6 +15,8 @@ import GHC.LanguageExtensions
 import Path
 import Path.IO
 
+import Control.Monad
+
 plugin :: Plugin
 plugin =
   defaultPlugin
