@@ -1,5 +1,6 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RankNTypes, ImpredicativeTypes #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Dekking.SourceAdapter (adaptLocatedHsModule, unitToString) where
@@ -11,10 +12,20 @@ import Data.Maybe
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Dekking.Coverable
-import GHC hiding (moduleName)
+import GHC hiding (moduleName, HsModule)
+import qualified GHC
 import GHC.Data.Bag
 import GHC.Plugins as GHC
 import GHC.Types.SourceText as GHC
+
+import Control.Monad
+
+type HsModule = GHC.HsModule GhcPs
+
+liftL :: (Monad m) => (a -> m b) -> GenLocated l a -> m (GenLocated l b)
+liftL f (L loc a) = do
+    a' <- f a
+    pure $ L loc a'
 
 addExpression :: Coverable Expression -> AdaptM ()
 addExpression e = tell (mempty {moduleCoverablesExpressions = S.singleton e})
@@ -60,7 +71,8 @@ gatherAnnotations = mapMaybe (gatherAnnotationDecl . unLoc) . hsmodDecls
 
 gatherAnnotationDecl :: HsDecl GhcPs -> Maybe CoverAnnotation
 gatherAnnotationDecl = \case
-  AnnD _ (HsAnnotation _ _ p body) -> do
+  -- AnnD _ (HsAnnotation _ _ p body) -> do
+  AnnD _ (HsAnnotation _ p body) -> do
     guard $ isNoCoverExpr body
     case p of
       ValueAnnProvenance rdr -> Just $ DontCoverFunction $ occNameString $ rdrNameOcc $ unLoc rdr
@@ -111,7 +123,7 @@ adaptClassInstanceDecl = \case
 
 adaptTopLevelBind :: [CoverAnnotation] -> HsBind GhcPs -> AdaptM (HsBind GhcPs)
 adaptTopLevelBind annotations = \case
-  b@(FunBind _ name _ _) ->
+  b@(FunBind { fun_id = name }) ->
     if DontCoverFunction (occNameString (rdrNameOcc (unLoc name))) `elem` annotations
       then pure b
       else adaptBind b
@@ -126,13 +138,20 @@ adaptLBind = liftL adaptBind
 
 adaptBind :: HsBind GhcPs -> AdaptM (HsBind GhcPs)
 adaptBind = \case
-  FunBind x name matchGroup ticks -> FunBind x name <$> adaptMatchGroup matchGroup <*> pure ticks
+  FunBind x name matchGroup
+   --  ticks
+    -> FunBind x name <$> adaptMatchGroup matchGroup
+      -- <*> pure ticks
   -- TODO
   b -> pure b
 
 adaptMatchGroup :: MatchGroup GhcPs (LHsExpr GhcPs) -> AdaptM (MatchGroup GhcPs (LHsExpr GhcPs))
 adaptMatchGroup = \case
-  MG x as origin -> MG x <$> liftL (mapM adaptLMatch) as <*> pure origin
+  MG x as
+    -- origin
+    ->
+      MG x <$> liftL (mapM adaptLMatch) as
+          -- <*> pure origin
 
 adaptLMatch :: LMatch GhcPs (LHsExpr GhcPs) -> AdaptM (LMatch GhcPs (LHsExpr GhcPs))
 adaptLMatch = liftL adaptMatch
@@ -224,7 +243,8 @@ adaptExpr sp e = do
   case e of
     HsVar _ (L _ rdr) -> applyAdapter $ Just $ occNameString $ rdrNameOcc rdr
     HsUnboundVar x on -> pure $ HsUnboundVar x on
-    HsOverLabel x fs -> pure $ HsOverLabel x fs
+    -- HsOverLabel x fs -> pure $ HsOverLabel x fs
+    HsOverLabel x srcTxt fs -> pure $ HsOverLabel x srcTxt fs
     HsIPVar x iv -> pure $ HsIPVar x iv
     HsOverLit {} -> applyAdapter Nothing
     HsLit {} -> applyAdapter Nothing
