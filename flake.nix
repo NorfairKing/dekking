@@ -72,15 +72,7 @@
           cabal-install
           niv
           zlib
-        ]) ++ (with pre-commit-hooks.packages.${system};
-          [
-            cabal2nix
-            hlint
-            hpack
-            nixpkgs-fmt
-            ormolu
-            tagref
-          ]);
+        ]) ++ self.checks.${system}.pre-commit.enabledPackages;
         shellHook = self.checks.${system}.pre-commit.shellHook;
       };
     };
