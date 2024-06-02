@@ -83,19 +83,6 @@ let
       ];
     };
 
-    # External packages' code coverage reports
-    fuzzy-time-report = dekking.makeCoverageReport {
-      name = "fuzzy-time-coverage-report";
-      packages = [
-        "fuzzy-time"
-        "cursor-fuzzy-time"
-      ];
-      coverage = [
-        "fuzzy-time-gen"
-        "cursor-fuzzy-time-gen"
-      ];
-    };
-
     safe-coloured-text-report = dekking.makeCoverageReport {
       name = "safe-coloured-text-report";
       packages = [
@@ -117,7 +104,7 @@ let
       packages = [
         "yesod"
         "yesod-auth"
-        # "yesod-auth-oauth" # Marked as broken
+        "yesod-auth-oauth"
         "yesod-bin"
         "yesod-core"
         "yesod-eventsource"
@@ -135,6 +122,7 @@ let
         # https://gitlab.haskell.org/ghc/ghc/-/issues/22543
         "Main"
         "Yesod.Auth"
+        "Yesod.Auth.OAuth"
         "Yesod.Auth.Dummy"
         "Yesod.Auth.Email"
         "Yesod.Auth.GoogleEmail2"

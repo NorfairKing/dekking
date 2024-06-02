@@ -94,7 +94,7 @@ data Coverable a = Coverable
   }
   deriving stock (Show, Eq, Ord)
 
-instance HasCodec a => HasCodec (Coverable a) where
+instance (HasCodec a) => HasCodec (Coverable a) where
   codec =
     object "Coverable" $
       Coverable

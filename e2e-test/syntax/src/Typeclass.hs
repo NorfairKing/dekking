@@ -4,7 +4,7 @@ module Typeclass where
 
 class ExampleClass a where
   exampleString :: a -> String
-  default exampleString :: Show a => a -> String
+  default exampleString :: (Show a) => a -> String
   exampleString = show
 
 instance ExampleClass Int where

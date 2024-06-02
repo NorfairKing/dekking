@@ -4,6 +4,7 @@
 
 module Dekking.SourceAdapter (adaptLocatedHsModule, unitToString) where
 
+import Control.Monad
 import Control.Monad.Reader
 import Control.Monad.Writer.Strict
 import Data.List
@@ -27,10 +28,10 @@ adapterImport = noLocA (simpleImportDecl adapterModuleName)
 adapterModuleName :: GHC.ModuleName
 adapterModuleName = mkModuleName "Dekking.ValueLevelAdapter"
 
-adaptLocatedHsModule :: Located HsModule -> AdaptM (Located HsModule)
-adaptLocatedHsModule = liftL adaptHsModule
+adaptLocatedHsModule :: Located (HsModule GhcPs) -> AdaptM (Located (HsModule GhcPs))
+adaptLocatedHsModule = traverse adaptHsModule
 
-adaptHsModule :: HsModule -> AdaptM HsModule
+adaptHsModule :: HsModule GhcPs -> AdaptM (HsModule GhcPs)
 adaptHsModule m = do
   let annotations = gatherAnnotations m
   if DontCoverModule `elem` annotations
@@ -55,12 +56,12 @@ data CoverAnnotation
   | DontCoverFunction String
   deriving (Show, Eq)
 
-gatherAnnotations :: HsModule -> [CoverAnnotation]
+gatherAnnotations :: HsModule GhcPs -> [CoverAnnotation]
 gatherAnnotations = mapMaybe (gatherAnnotationDecl . unLoc) . hsmodDecls
 
 gatherAnnotationDecl :: HsDecl GhcPs -> Maybe CoverAnnotation
 gatherAnnotationDecl = \case
-  AnnD _ (HsAnnotation _ _ p body) -> do
+  AnnD _ (HsAnnotation _ p body) -> do
     guard $ isNoCoverExpr body
     case p of
       ValueAnnProvenance rdr -> Just $ DontCoverFunction $ occNameString $ rdrNameOcc $ unLoc rdr
@@ -77,7 +78,7 @@ isNoCoverExpr expr = case unLoc expr of
   _ -> False
 
 adaptTopLevelLDecl :: [CoverAnnotation] -> LHsDecl GhcPs -> AdaptM (LHsDecl GhcPs)
-adaptTopLevelLDecl annotations = liftL $ adaptTopLevelDecl annotations
+adaptTopLevelLDecl annotations = traverse $ adaptTopLevelDecl annotations
 
 adaptTopLevelDecl :: [CoverAnnotation] -> HsDecl GhcPs -> AdaptM (HsDecl GhcPs)
 adaptTopLevelDecl annotations = \case
@@ -111,7 +112,7 @@ adaptClassInstanceDecl = \case
 
 adaptTopLevelBind :: [CoverAnnotation] -> HsBind GhcPs -> AdaptM (HsBind GhcPs)
 adaptTopLevelBind annotations = \case
-  b@(FunBind _ name _ _) ->
+  b@(FunBind _ name _) ->
     if DontCoverFunction (occNameString (rdrNameOcc (unLoc name))) `elem` annotations
       then pure b
       else adaptBind b
@@ -122,20 +123,20 @@ adaptLBinds :: LHsBinds GhcPs -> AdaptM (LHsBinds GhcPs)
 adaptLBinds = mapBagM adaptLBind
 
 adaptLBind :: LHsBind GhcPs -> AdaptM (LHsBind GhcPs)
-adaptLBind = liftL adaptBind
+adaptLBind = traverse adaptBind
 
 adaptBind :: HsBind GhcPs -> AdaptM (HsBind GhcPs)
 adaptBind = \case
-  FunBind x name matchGroup ticks -> FunBind x name <$> adaptMatchGroup matchGroup <*> pure ticks
+  FunBind x name matchGroup -> FunBind x name <$> adaptMatchGroup matchGroup
   -- TODO
   b -> pure b
 
 adaptMatchGroup :: MatchGroup GhcPs (LHsExpr GhcPs) -> AdaptM (MatchGroup GhcPs (LHsExpr GhcPs))
 adaptMatchGroup = \case
-  MG x as origin -> MG x <$> liftL (mapM adaptLMatch) as <*> pure origin
+  MG x as -> MG x <$> traverse (mapM adaptLMatch) as
 
 adaptLMatch :: LMatch GhcPs (LHsExpr GhcPs) -> AdaptM (LMatch GhcPs (LHsExpr GhcPs))
-adaptLMatch = liftL adaptMatch
+adaptLMatch = traverse adaptMatch
 
 adaptMatch :: Match GhcPs (LHsExpr GhcPs) -> AdaptM (Match GhcPs (LHsExpr GhcPs))
 adaptMatch = \case
@@ -148,7 +149,7 @@ adaptGRHSs = \case
 adaptLGRHS ::
   LGRHS GhcPs (LHsExpr GhcPs) ->
   AdaptM (LGRHS GhcPs (LHsExpr GhcPs))
-adaptLGRHS = liftL adaptGRHS
+adaptLGRHS = traverse adaptGRHS
 
 adaptGRHS :: GRHS GhcPs (LHsExpr GhcPs) -> AdaptM (GRHS GhcPs (LHsExpr GhcPs))
 adaptGRHS = \case
@@ -206,7 +207,7 @@ adaptValBinds = \case
 -- , which fails to parse
 
 adaptLExpr :: LHsExpr GhcPs -> AdaptM (LHsExpr GhcPs)
-adaptLExpr le = liftL (adaptExpr (getLocA le)) le
+adaptLExpr le = traverse (adaptExpr (getLocA le)) le
 
 adaptExpr :: SrcSpan -> HsExpr GhcPs -> AdaptM (HsExpr GhcPs)
 adaptExpr sp e = do
@@ -224,7 +225,7 @@ adaptExpr sp e = do
   case e of
     HsVar _ (L _ rdr) -> applyAdapter $ Just $ occNameString $ rdrNameOcc rdr
     HsUnboundVar x on -> pure $ HsUnboundVar x on
-    HsOverLabel x fs -> pure $ HsOverLabel x fs
+    HsOverLabel x s fs -> pure $ HsOverLabel x s fs
     HsIPVar x iv -> pure $ HsIPVar x iv
     HsOverLit {} -> applyAdapter Nothing
     HsLit {} -> applyAdapter Nothing
@@ -247,7 +248,7 @@ adaptExpr sp e = do
     HsCase x body mg -> HsCase x <$> adaptLExpr body <*> adaptMatchGroup mg
     HsIf x condE ifE elseE -> HsIf x <$> adaptLExpr condE <*> adaptLExpr ifE <*> adaptLExpr elseE
     HsLet x l lbs i body -> HsLet x l <$> adaptHsLocalBinds lbs <*> pure i <*> adaptLExpr body
-    HsDo x ctx stmts -> HsDo x ctx <$> liftL (mapM adaptExprLStmt) stmts
+    HsDo x ctx stmts -> HsDo x ctx <$> traverse (mapM adaptExprLStmt) stmts
     ExplicitList x bodies -> ExplicitList x <$> mapM adaptLExpr bodies
     RecordCon x name binds -> RecordCon x name <$> adaptRecordBinds binds
     RecordUpd x left updates ->
@@ -267,14 +268,14 @@ adaptTupArg = \case
 
 adaptRecordBinds :: HsRecordBinds GhcPs -> AdaptM (HsRecordBinds GhcPs)
 adaptRecordBinds = \case
-  HsRecFields fields md -> HsRecFields <$> mapM (liftL adaptHsRecField') fields <*> pure md
+  HsRecFields fields md -> HsRecFields <$> mapM (traverse adaptHsRecField') fields <*> pure md
 
 adaptLRecordUpdateProjection :: LHsRecUpdProj GhcPs -> AdaptM (LHsRecUpdProj GhcPs)
-adaptLRecordUpdateProjection = liftL $ \case
+adaptLRecordUpdateProjection = traverse $ \case
   HsFieldBind ex i e b -> HsFieldBind ex i <$> adaptLExpr e <*> pure b
 
 adaptLRecordUpdateField :: LHsRecUpdField GhcPs -> AdaptM (LHsRecUpdField GhcPs)
-adaptLRecordUpdateField = liftL adaptRecordUpdateField
+adaptLRecordUpdateField = traverse adaptRecordUpdateField
 
 adaptRecordUpdateField :: HsRecUpdField GhcPs -> AdaptM (HsRecUpdField GhcPs)
 adaptRecordUpdateField = \case
@@ -287,7 +288,7 @@ adaptHsRecField' = \case
 adaptExprLStmt ::
   ExprLStmt GhcPs ->
   AdaptM (ExprLStmt GhcPs)
-adaptExprLStmt = liftL $ \case
+adaptExprLStmt = traverse $ \case
   LastStmt x e mb se -> LastStmt x <$> adaptLExpr e <*> pure mb <*> pure se
   BindStmt x p e -> BindStmt x p <$> adaptLExpr e
   BodyStmt x e se1 se2 -> BodyStmt x <$> adaptLExpr e <*> pure se1 <*> pure se2

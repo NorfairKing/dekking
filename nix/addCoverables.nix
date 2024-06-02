@@ -15,6 +15,13 @@ let
   stringOpts = lib.concatStringsSep " " (builtins.map stringOpt pluginOpts);
 in
 (haskell.lib.overrideCabal pkg (old: {
+  # This is necessary to get the nixpkgs infrastructure to not pass in `pie` to `hardeningDisable`.
+  # so that we don't get this error:
+  # ```
+  # ld.gold: error: dist/build/Paths_foobar.o: requires unsupported dynamic reloc 11; recompile with -fPIC
+  # ```
+  # I don't understand why, so please fill this in if you know why.
+  enableStaticLibraries = false;
   buildFlags = (old.buildFlags or [ ]) ++ [
     # The '-fplugin' option is required to actually run the plugin at parse-time.
     "--ghc-option=-fplugin=Dekking.Plugin"
@@ -62,9 +69,7 @@ in
       --exclude='*' \
       . $coverables
   '';
-  # Ugly hack because we can't just add flags to the 'test' invocation.
-  # Show test output as we go, instead of all at once afterwards.
-  testTarget = (old.testTarget or "") + " --show-details=direct";
-})).overrideAttrs (old: {
-  outputs = (old.outputs or [ ]) ++ [ "coverables" ];
-})
+})).overrideAttrs
+  (old: {
+    outputs = (old.outputs or [ ]) ++ [ "coverables" ];
+  })

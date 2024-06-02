@@ -199,7 +199,7 @@ data Coverage a = Coverage
   }
   deriving (Show, Eq, Ord)
 
-instance Ord a => Semigroup (Coverage a) where
+instance (Ord a) => Semigroup (Coverage a) where
   (<>) c1 c2 =
     Coverage
       { coverageCovered = coverageCovered c1 <> coverageCovered c2,

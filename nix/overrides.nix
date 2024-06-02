@@ -7,7 +7,7 @@
 }:
 with lib;
 with haskell.lib;
-self: _:
+self: super:
 let
   dekkingPackages = {
     dekking-plugin = buildStrictly (self.callPackage ../dekking-plugin { });

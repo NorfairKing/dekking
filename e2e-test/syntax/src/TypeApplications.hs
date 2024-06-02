@@ -11,7 +11,7 @@ main = do
   print (oneArgument @String "hi")
   print (twoArguments @String "hi" "ho")
 
-noArguments :: IsString a => a
+noArguments :: (IsString a) => a
 noArguments = "no arguments"
 
 oneArgument :: (IsString a, Semigroup a) => a -> a

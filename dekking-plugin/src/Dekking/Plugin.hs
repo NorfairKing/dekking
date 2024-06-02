@@ -1,5 +1,6 @@
 module Dekking.Plugin (plugin) where
 
+import Control.Monad
 import Control.Monad.Reader
 import Control.Monad.Writer.Strict
 import Data.List (isPrefixOf, stripPrefix)
