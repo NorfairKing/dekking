@@ -13,6 +13,8 @@
     fast-myers-diff.flake = false;
     sydtest.url = "github:NorfairKing/sydtest";
     sydtest.flake = false;
+    opt-env-conf.url = "github:NorfairKing/opt-env-conf";
+    opt-env-conf.flake = false;
   };
 
   outputs =
@@ -23,6 +25,7 @@
     , safe-coloured-text
     , fast-myers-diff
     , sydtest
+    , opt-env-conf
     , autodocodec
     }:
     let
@@ -35,6 +38,7 @@
         (pkgs.callPackage (safe-coloured-text + "/nix/overrides.nix") { })
         (pkgs.callPackage (fast-myers-diff + "/nix/overrides.nix") { })
         (pkgs.callPackage (sydtest + "/nix/overrides.nix") { })
+        (pkgs.callPackage (opt-env-conf + "/nix/overrides.nix") { })
         self.overrides.${system}
       ];
       haskellPackagesFor = nixpkgs: (nixpkgsFor nixpkgs).haskellPackages.extend allOverrides;
