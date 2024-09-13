@@ -99,6 +99,20 @@ let
       ];
     };
 
+    opt-env-conf-report = dekking.makeCoverageReport {
+      name = "opt-env-conf-report";
+      packages = [
+        "opt-env-conf"
+      ];
+      coverage = [
+        "opt-env-conf-test"
+      ];
+      needToBeLinkedAgainstDekkingValue = [
+        "sydtest"
+        "genvalidity-sydtest"
+      ];
+    };
+
     yesod-report = dekking.makeCoverageReport {
       name = "yesod-coverage-report";
       packages = [
