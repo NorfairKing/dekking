@@ -251,13 +251,10 @@ adaptExpr sp e = do
     HsDo x ctx stmts -> HsDo x ctx <$> traverse (mapM adaptExprLStmt) stmts
     ExplicitList x bodies -> ExplicitList x <$> mapM adaptLExpr bodies
     RecordCon x name binds -> RecordCon x name <$> adaptRecordBinds binds
-    RecordUpd x left updates ->
+    RecordUpd x left fields ->
       RecordUpd x
         <$> adaptLExpr left
-        <*> either
-          (fmap Left . mapM adaptLRecordUpdateField)
-          (fmap Right . mapM adaptLRecordUpdateProjection)
-          updates
+        <*> adaptLHsRecUpdFields fields
     -- TODO
     _ -> pure e
 
@@ -270,14 +267,20 @@ adaptRecordBinds :: HsRecordBinds GhcPs -> AdaptM (HsRecordBinds GhcPs)
 adaptRecordBinds = \case
   HsRecFields fields md -> HsRecFields <$> mapM (traverse adaptHsRecField') fields <*> pure md
 
+adaptLHsRecUpdFields ::
+  LHsRecUpdFields GhcPs -> AdaptM (LHsRecUpdFields GhcPs)
+adaptLHsRecUpdFields = \case
+  RegularRecUpdFields x fields -> RegularRecUpdFields x <$> mapM adaptLRecordUpdateField fields
+  OverloadedRecUpdFields x fields -> OverloadedRecUpdFields x <$> mapM adaptLRecordUpdateProjection fields
+
 adaptLRecordUpdateProjection :: LHsRecUpdProj GhcPs -> AdaptM (LHsRecUpdProj GhcPs)
 adaptLRecordUpdateProjection = traverse $ \case
   HsFieldBind ex i e b -> HsFieldBind ex i <$> adaptLExpr e <*> pure b
 
-adaptLRecordUpdateField :: LHsRecUpdField GhcPs -> AdaptM (LHsRecUpdField GhcPs)
+adaptLRecordUpdateField :: LHsRecUpdField GhcPs GhcPs -> AdaptM (LHsRecUpdField GhcPs GhcPs)
 adaptLRecordUpdateField = traverse adaptRecordUpdateField
 
-adaptRecordUpdateField :: HsRecUpdField GhcPs -> AdaptM (HsRecUpdField GhcPs)
+adaptRecordUpdateField :: HsRecUpdField GhcPs GhcPs -> AdaptM (HsRecUpdField GhcPs GhcPs)
 adaptRecordUpdateField = \case
   HsFieldBind ex i e b -> HsFieldBind ex i <$> adaptLExpr e <*> pure b
 
