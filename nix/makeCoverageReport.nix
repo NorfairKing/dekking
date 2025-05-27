@@ -64,7 +64,16 @@ let
     builtins.listToAttrs (builtins.map
       (pname: {
         name = pname;
-        value = haskell.lib.doCheck (haskell.lib.dontBenchmark super.${pname});
+        value = haskell.lib.overrideCabal (super.${pname}) (old: {
+          doCheck = true;
+          doCoverage = false; # No HPC coverage either
+          # We turn all of these off because it's just extra work that doesn't
+          # need to be done for coverage.
+          doBenchmark = false;
+          doHaddock = false;
+          doHoogle = false;
+          hyperlinkSource = false;
+        });
       })
       allCoverage);
   newHaskellPackages = haskellPackages.extend
