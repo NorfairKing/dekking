@@ -64,7 +64,7 @@ let
     builtins.listToAttrs (builtins.map
       (pname: {
         name = pname;
-        value = haskell.lib.doCheck super.${pname};
+        value = haskell.lib.doCheck (haskell.lib.dontBenchmark super.${pname});
       })
       allCoverage);
   newHaskellPackages = haskellPackages.extend
