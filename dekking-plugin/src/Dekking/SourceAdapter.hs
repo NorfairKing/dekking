@@ -73,7 +73,7 @@ isNoCoverExpr :: LHsExpr GhcPs -> Bool
 isNoCoverExpr expr = case unLoc expr of
   HsLit _ (HsString _ fs) | "NOCOVER" `isInfixOf` unpackFS fs -> True
   HsOverLit _ (OverLit _ (HsIsString _ fs)) | "NOCOVER" `isInfixOf` unpackFS fs -> True
-  HsPar _ _ e _ -> isNoCoverExpr e
+  HsPar _ e -> isNoCoverExpr e
   ExprWithTySig _ e _ -> isNoCoverExpr e
   _ -> False
 
@@ -229,8 +229,7 @@ adaptExpr sp e = do
     HsIPVar x iv -> pure $ HsIPVar x iv
     HsOverLit {} -> applyAdapter Nothing
     HsLit {} -> applyAdapter Nothing
-    HsLam x mg -> HsLam x <$> adaptMatchGroup mg
-    HsLamCase x v mg -> HsLamCase x v <$> adaptMatchGroup mg
+    HsLam x v mg -> HsLam x v <$> adaptMatchGroup mg
     HsApp x left right -> HsApp x <$> adaptLExpr left <*> adaptLExpr right
     -- TODO: Things inside a visible type application might be covered more
     -- granularly but this is quite good in the meantime.
@@ -242,12 +241,12 @@ adaptExpr sp e = do
         <*> pure middle
         <*> adaptLExpr right
     NegApp x body se -> NegApp x <$> adaptLExpr body <*> pure se
-    HsPar x l le r -> HsPar x l <$> adaptLExpr le <*> pure r
+    HsPar x le -> HsPar x <$> adaptLExpr le
     ExplicitTuple x args boxity -> ExplicitTuple x <$> mapM adaptTupArg args <*> pure boxity
     ExplicitSum x ct a body -> ExplicitSum x ct a <$> adaptLExpr body
     HsCase x body mg -> HsCase x <$> adaptLExpr body <*> adaptMatchGroup mg
     HsIf x condE ifE elseE -> HsIf x <$> adaptLExpr condE <*> adaptLExpr ifE <*> adaptLExpr elseE
-    HsLet x l lbs i body -> HsLet x l <$> adaptHsLocalBinds lbs <*> pure i <*> adaptLExpr body
+    HsLet x lbs body -> HsLet x <$> adaptHsLocalBinds lbs <*> adaptLExpr body
     HsDo x ctx stmts -> HsDo x ctx <$> traverse (mapM adaptExprLStmt) stmts
     ExplicitList x bodies -> ExplicitList x <$> mapM adaptLExpr bodies
     RecordCon x name binds -> RecordCon x name <$> adaptRecordBinds binds
@@ -305,21 +304,19 @@ applyAdapterExpr loc e = do
   let strToLog = mkStringToLog moduule loc
   pure $
     HsPar
-      EpAnnNotUsed
-      noHsTok
+      (NoEpTok, NoEpTok)
       ( noLocA $
           HsApp
-            EpAnnNotUsed
+            NoExtField
             ( noLocA
                 ( HsApp
-                    EpAnnNotUsed
+                    NoExtField
                     (noLocA (HsVar NoExtField (noLocA (Qual adapterModuleName (mkVarOcc "adaptValue")))))
-                    (noLocA (HsLit EpAnnNotUsed (HsString NoSourceText (mkFastString strToLog))))
+                    (noLocA (HsLit NoExtField (HsString NoSourceText (mkFastString strToLog))))
                 )
             )
             (noLocA e)
       )
-      noHsTok
 
 spanLocation :: SrcSpan -> Maybe Location
 spanLocation sp = case sp of
