@@ -75,10 +75,8 @@ let
     foobar-custom-report = dekking.makeCoverageReport {
       name = "foobar-custom-coverage-report";
       inherit haskellPackages;
-      coverables = [
+      packages = [
         "foobar"
-      ];
-      coverage = [
         "foobar-gen"
       ];
     };
