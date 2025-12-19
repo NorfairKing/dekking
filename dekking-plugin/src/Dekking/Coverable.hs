@@ -151,9 +151,8 @@ writeModuleCoverablesFile p moduleCoverables = do
 readCoverablesFiles :: Set (Path Abs Dir) -> IO Coverables
 readCoverablesFiles dirs = do
   coverablesFiles <-
-    filter
-      (maybe False (isSuffixOf coverablesExtension) . fileExtension)
-      . concat
+    concatMap
+      (filter (maybe False (isSuffixOf coverablesExtension) . fileExtension))
       <$> mapM (fmap snd . listDirRecur) (S.toList dirs)
   fmap (Coverables . M.unionsWith M.union) $
     forM coverablesFiles $ \coverablesFilePath -> do
