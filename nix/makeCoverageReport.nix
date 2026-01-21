@@ -1,7 +1,6 @@
 { lib
 , haskell
 , haskellPackages
-, addDekkingValueDependency
 , addCoverables'
 , addCoverage
 , compileCoverageReport
@@ -17,12 +16,8 @@ in
   # These packages will be reported but their test suite's coverage NOT collected.
 , coverables ? [ ]
   # List of package names
-  # These packages will NOT be reported but thuir test suite's coverage will be collected.
+  # These packages will NOT be reported but their test suite's coverage will be collected.
 , coverage ? [ ]
-  # List of package names
-  # These packages will be linked against dekking-value to prevent linking errors.
-  # See ./nix/addDekkingValueDependency.nix for more details.
-, needToBeLinkedAgainstDekkingValue ? [ ] # List of package names
   # Modules that will not be source-transformed
 , exceptions ? [ ]
 }:
@@ -36,14 +31,6 @@ let
   # source-transformed package will now pick up the source-transformed
   # dependency instead of the normal dependency and output coverage
   # correctly.
-  addDekkingValueDependencyOverride = _: super:
-    builtins.listToAttrs
-      (builtins.map
-        (pname: {
-          name = pname;
-          value = addDekkingValueDependency super.${pname};
-        })
-        needToBeLinkedAgainstDekkingValue);
   addCoverableOverride = _: super:
     builtins.listToAttrs (builtins.map
       (pname: {
@@ -78,7 +65,7 @@ let
       allCoverage);
   newHaskellPackages = haskellPackages.extend
     (lib.composeExtensions
-      (lib.composeExtensions addDekkingValueDependencyOverride addDoCheckOverride)
+      addDoCheckOverride
       (lib.composeExtensions addCoverableOverride addCoverageOverride));
 in
 compileCoverageReport {

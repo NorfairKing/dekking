@@ -17,14 +17,11 @@ let
   dekking =
     let
       dekking-report = justStaticExecutables self.dekking-report;
-      addDekkingValueDependency = import ./addDekkingValueDependency.nix {
-        inherit haskell; haskellPackages = self;
-      };
       addCoverables' = import ./addCoverables.nix {
         inherit lib haskell rsync; haskellPackages = self;
       };
       addCoverables = self.dekking.addCoverables' { };
-      addCoverage = import ./addCoverage.nix { inherit haskell addDekkingValueDependency; };
+      addCoverage = import ./addCoverage.nix { inherit haskell; };
       addCoverablesAndCoverage = pkg: addCoverage (addCoverables pkg);
       addCoverageReport' = import ./addCoverageReport.nix {
         inherit haskell;
@@ -39,7 +36,6 @@ let
     dekking-report.overrideAttrs (old: {
       passthru = (old.passthru or{ }) // {
         inherit
-          addDekkingValueDependency
           addCoverables
           addCoverables'
           addCoverage
@@ -48,7 +44,7 @@ let
           addCoverageReport'
           compileCoverageReport;
         makeCoverageReport = import ./makeCoverageReport.nix {
-          inherit lib haskell addDekkingValueDependency addCoverables' addCoverage compileCoverageReport;
+          inherit lib haskell addCoverables' addCoverage compileCoverageReport;
           haskellPackages = self;
         };
       };

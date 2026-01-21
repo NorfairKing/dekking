@@ -15,6 +15,23 @@ let
   stringOpts = lib.concatStringsSep " " (builtins.map stringOpt pluginOpts);
 in
 (haskell.lib.overrideCabal pkg (old: {
+  # Patch the .cabal file to add dekking-value as a build-depends.
+  # This is necessary because the source transformation adds imports of
+  # Dekking.ValueLevelAdapter, and we need dekking-value to be properly
+  # registered as a dependency in the package database (package.conf).
+  # Without this, downstream packages that link against the transformed
+  # library will fail with undefined symbol errors for adaptValue.
+  prePatch = (old.prePatch or "") + ''
+    # Find the .cabal file
+    cabalFile=$(find . -maxdepth 1 -name "*.cabal" | head -1)
+    if [ -n "$cabalFile" ]; then
+      echo "Adding dekking-value to build-depends in $cabalFile"
+      # Add dekking-value to the library's build-depends section
+      # We look for "build-depends:" and append dekking-value after the first dependency
+      ${lib.getExe haskellPackages.cabal-fmt} -i "$cabalFile" 2>/dev/null || true
+      sed -i 's/^  build-depends:/  build-depends:\n    dekking-value,/' "$cabalFile"
+    fi
+  '';
   # This is necessary to get the nixpkgs infrastructure to not pass in `pie` to `hardeningDisable`.
   # so that we don't get this error:
   # ```

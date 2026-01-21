@@ -69,6 +69,8 @@ let
       inherit haskellPackages;
       packages = [
         "foobar"
+      ];
+      coverage = [
         "foobar-gen"
       ];
     };
@@ -77,6 +79,8 @@ let
       inherit haskellPackages;
       packages = [
         "foobar"
+      ];
+      coverage = [
         "foobar-gen"
       ];
     };
@@ -91,10 +95,6 @@ let
         "safe-coloured-text-gen"
         "safe-coloured-text-layout-gen"
       ];
-      needToBeLinkedAgainstDekkingValue = [
-        "sydtest"
-        "genvalidity-sydtest"
-      ];
     };
 
     opt-env-conf-report = dekking.makeCoverageReport {
@@ -104,10 +104,6 @@ let
       ];
       coverage = [
         "opt-env-conf-test"
-      ];
-      needToBeLinkedAgainstDekkingValue = [
-        "sydtest"
-        "genvalidity-sydtest"
       ];
     };
 
