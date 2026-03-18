@@ -119,11 +119,18 @@ instance HasCodec Location where
 locationString :: Location -> String
 locationString Location {..} = unwords [show locationLine, show locationColumnStart, show locationColumnEnd]
 
-newtype Expression = Expression {expressionIdentifier :: Maybe String}
+data Expression = Expression
+  { expressionIdentifier :: Maybe String,
+    expressionTopLevelBinding :: Maybe String
+  }
   deriving stock (Show, Eq, Ord)
 
 instance HasCodec Expression where
-  codec = dimapCodec Expression expressionIdentifier codec
+  codec =
+    object "Expression" $
+      Expression
+        <$> requiredField "identifier" "expression identifier" .= expressionIdentifier
+        <*> optionalFieldWithOmittedDefault "top-level-binding" Nothing "enclosing top-level binding" .= expressionTopLevelBinding
 
 type PackageName = String
 

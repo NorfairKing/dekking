@@ -2,7 +2,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Dekking.SourceAdapter (adaptLocatedHsModule, unitToString) where
+module Dekking.SourceAdapter (adaptLocatedHsModule, unitToString, AdaptEnv (..)) where
 
 import Control.Monad
 import Control.Monad.Reader
@@ -20,7 +20,12 @@ import GHC.Types.SourceText as GHC
 addExpression :: Coverable Expression -> AdaptM ()
 addExpression e = tell (mempty {moduleCoverablesExpressions = S.singleton e})
 
-type AdaptM = WriterT ModuleCoverables (ReaderT GHC.Module Hsc)
+data AdaptEnv = AdaptEnv
+  { adaptEnvModule :: !GHC.Module,
+    adaptEnvTopLevelBinding :: !(Maybe String)
+  }
+
+type AdaptM = WriterT ModuleCoverables (ReaderT AdaptEnv Hsc)
 
 adapterImport :: LImportDecl GhcPs
 adapterImport = noLocA (simpleImportDecl adapterModuleName)
@@ -37,7 +42,7 @@ adaptHsModule m = do
   if DontCoverModule `elem` annotations
     then pure m
     else do
-      moduule <- ask
+      moduule <- asks adaptEnvModule
       liftIO $ putStrLn $ "Adapting module: " ++ moduleNameString (moduleName moduule)
       decls' <- mapM (adaptTopLevelLDecl annotations) (hsmodDecls m)
       pure
@@ -113,9 +118,10 @@ adaptClassInstanceDecl = \case
 adaptTopLevelBind :: [CoverAnnotation] -> HsBind GhcPs -> AdaptM (HsBind GhcPs)
 adaptTopLevelBind annotations = \case
   b@(FunBind _ name _) ->
-    if DontCoverFunction (occNameString (rdrNameOcc (unLoc name))) `elem` annotations
-      then pure b
-      else adaptBind b
+    let bindName = occNameString (rdrNameOcc (unLoc name))
+     in if DontCoverFunction bindName `elem` annotations
+          then pure b
+          else local (\env -> env {adaptEnvTopLevelBinding = Just bindName}) $ adaptBind b
   -- TODO
   b -> pure b
 
@@ -211,11 +217,16 @@ adaptLExpr le = traverse (adaptExpr (getLocA le)) le
 
 adaptExpr :: SrcSpan -> HsExpr GhcPs -> AdaptM (HsExpr GhcPs)
 adaptExpr sp e = do
+  topLevel <- asks adaptEnvTopLevelBinding
   let applyAdapter mName = case spanLocation sp of
         Just loc -> do
           addExpression
             Coverable
-              { coverableValue = Dekking.Coverable.Expression {expressionIdentifier = mName},
+              { coverableValue =
+                  Dekking.Coverable.Expression
+                    { expressionIdentifier = mName,
+                      expressionTopLevelBinding = topLevel
+                    },
                 coverableLocation = loc
               }
           applyAdapterExpr loc e
@@ -300,7 +311,7 @@ adaptExprLStmt = traverse $ \case
 -- See [ref:ThePlanTM]
 applyAdapterExpr :: Location -> HsExpr GhcPs -> AdaptM (HsExpr GhcPs)
 applyAdapterExpr loc e = do
-  moduule <- ask
+  moduule <- asks adaptEnvModule
   let strToLog = mkStringToLog moduule loc
   pure $
     HsPar

@@ -28,6 +28,8 @@ library
       Dekking.Coverage
       Dekking.OptParse
       Dekking.Report
+      Dekking.Report.Html
+      Dekking.Report.Uncovered
   other-modules:
       Paths_dekking_report
   hs-source-dirs:
