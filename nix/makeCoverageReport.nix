@@ -1,9 +1,12 @@
 { lib
+, stdenv
 , haskell
 , haskellPackages
 , addCoverables'
 , addCoverage
+, assertCoverageThreshold
 , compileCoverageReport
+, requireCoverage
 }:
 let x = haskellPackages; # Trick we have to use for naming conflicts
 in
@@ -20,6 +23,10 @@ in
 , coverage ? [ ]
   # Modules that will not be source-transformed
 , exceptions ? [ ]
+  # If true, the build fails when there are no covered expressions at all.
+, mustCover ? true
+  # Minimum coverage percentage (0-100). If set, the build fails when coverage is below this threshold.
+, threshold ? null
 }:
 let
   allCoverables = coverables ++ packages;
@@ -67,18 +74,39 @@ let
     (lib.composeExtensions
       addDoCheckOverride
       (lib.composeExtensions addCoverableOverride addCoverageOverride));
+  report = compileCoverageReport {
+    inherit name;
+    # It's not good enough to just call 'addCoverablesAndCoverage' on each of the packages like this:
+    # packages = builtins.map (pkg: addCoverablesAndCoverage pkg) packages;
+    # Why? Because every package will have coverables output output, great.
+    # However, it still needs to be compiled against the
+    # 'addCoverablesAndCoverage' version of its dependencies.
+    # So we need to also replace all the dependency of every reverse dependency
+    # of every package in the list first.
+    # builtins.map (pkg: newHaskellPackages.${pkg.pname}) packages;
+    packages = builtins.map (pname: newHaskellPackages.${pname}) packages;
+    coverage = builtins.map (pname: newHaskellPackages.${pname}) coverage;
+    coverables = builtins.map (pname: newHaskellPackages.${pname}) coverables;
+  };
+  checks =
+    lib.optional mustCover
+      (requireCoverage {
+        name = "${name}-require-coverage";
+        inherit report;
+      })
+    ++ lib.optional (threshold != null) (assertCoverageThreshold {
+      name = "${name}-threshold-check";
+      inherit report threshold;
+    });
 in
-compileCoverageReport {
-  inherit name;
-  # It's not good enough to just call 'addCoverablesAndCoverage' on each of the packages like this:
-  # packages = builtins.map (pkg: addCoverablesAndCoverage pkg) packages;
-  # Why? Because every package will have coverables output output, great.
-  # However, it still needs to be compiled against the
-  # 'addCoverablesAndCoverage' version of its dependencies.
-  # So we need to also replace all the dependency of every reverse dependency
-  # of every package in the list first.
-  # builtins.map (pkg: newHaskellPackages.${pkg.pname}) packages;
-  packages = builtins.map (pname: newHaskellPackages.${pname}) packages;
-  coverage = builtins.map (pname: newHaskellPackages.${pname}) coverage;
-  coverables = builtins.map (pname: newHaskellPackages.${pname}) coverables;
-}
+if checks == [ ] then report
+else
+  stdenv.mkDerivation {
+    name = "${name}-checked";
+    srcs = [ ];
+    buildInputs = checks;
+    buildCommand = ''
+      ln -s ${report} $out
+    '';
+    passthru = report.passthru or { };
+  }

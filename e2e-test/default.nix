@@ -38,6 +38,35 @@ let
     # We can make a single-package coverage report for the example package
     example-with-report = dekking.addCoverageReport haskellPackages.example;
 
+    ## We can assert a coverage threshold on a compiled report
+    example-threshold = dekking.assertCoverageThreshold {
+      name = "example-threshold-check";
+      report = example-compiled-report;
+      threshold = 10;
+    };
+
+    ## We can require that coverage exists on a compiled report
+    example-require-coverage = dekking.requireCoverage {
+      name = "example-require-coverage";
+      report = example-compiled-report;
+    };
+
+    ## We can make a coverage report with a threshold via makeCoverageReport
+    example-report-with-threshold = dekking.makeCoverageReport {
+      name = "made-coverage-report-with-threshold";
+      inherit haskellPackages;
+      packages = [ "example" ];
+      threshold = 10;
+    };
+
+    ## We can make a coverage report with mustCover via makeCoverageReport
+    example-report-must-cover = dekking.makeCoverageReport {
+      name = "made-coverage-report-must-cover";
+      inherit haskellPackages;
+      packages = [ "example" ];
+      mustCover = true;
+    };
+
     passthru-build = example-compiled-report.packages.example;
 
     # Syntax package, to cover as much haskell syntax as possible

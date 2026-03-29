@@ -1,6 +1,7 @@
 { lib
 , stdenv
 , haskell
+, jq
 , rsync
 , symlinkJoin
 , ...
@@ -32,6 +33,12 @@ let
       compileCoverageReport = import ./compileCoverageReport.nix {
         inherit lib stdenv dekking-report;
       };
+      assertCoverageThreshold = import ./assertCoverageThreshold.nix {
+        inherit lib stdenv jq;
+      };
+      requireCoverage = import ./requireCoverage.nix {
+        inherit lib stdenv jq;
+      };
     in
     dekking-report.overrideAttrs (old: {
       passthru = (old.passthru or{ }) // {
@@ -42,9 +49,11 @@ let
           addCoverablesAndCoverage
           addCoverageReport
           addCoverageReport'
-          compileCoverageReport;
+          assertCoverageThreshold
+          compileCoverageReport
+          requireCoverage;
         makeCoverageReport = import ./makeCoverageReport.nix {
-          inherit lib haskell addCoverables' addCoverage compileCoverageReport;
+          inherit lib stdenv haskell addCoverables' addCoverage assertCoverageThreshold compileCoverageReport requireCoverage;
           haskellPackages = self;
         };
       };

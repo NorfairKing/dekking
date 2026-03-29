@@ -98,6 +98,7 @@ The default package contains the following `passthru` attributes:
 * `addCoverageReport`: Add a coverage `report` output to a Haskell package, similar to `doCoverage`.
 * `compileCoverageReport`: Compile a coverage report (internal, you probably won't need this.)
 * `makeCoverageReport`: Produce a coverage report from multiple Haskell packages.
+  Accepts optional `threshold` (0-100) and `mustCover` (boolean, default `true`) arguments.
   Example usage:
   ``` nix
   {
@@ -107,6 +108,28 @@ The default package contains the following `passthru` attributes:
         "fuzzy-time"
         "fuzzy-time-gen"
       ];
+      threshold = 10; # Fail if coverage drops below 10%
+    };
+  }
+  ```
+* `requireCoverage`: Assert that a coverage report has covered expressions. Fails the build if no expressions were covered at all, which usually means tests are not running.
+  Example usage:
+  ``` nix
+  {
+    coverage-exists = dekking.requireCoverage {
+      name = "my-coverage-exists-check";
+      report = myCoverageReport;
+    };
+  }
+  ```
+* `assertCoverageThreshold`: Assert that a coverage report meets a minimum coverage percentage. Can be used standalone on any coverage report derivation.
+  Example usage:
+  ``` nix
+  {
+    coverage-check = dekking.assertCoverageThreshold {
+      name = "my-coverage-check";
+      report = myCoverageReport;
+      threshold = 10;
     };
   }
   ```
@@ -126,12 +149,11 @@ Top-level bindings are not somehow special either.
 They are a code organisation tool that need not have any impact on whether
 covering them is more important.
 
-## Why are there no controls to fail when a coverage percentage is not met?
+## Coverage thresholds
 
-Making automated decisions using a coverage percentage is usually a
-shortsighted way to use that number.
-If you really want to automate such a thing, you can use the `report.json` file
-that `dekking-report` outputs.
+You can use `makeCoverageReport`'s `threshold` argument or `assertCoverageThreshold` to fail the build when coverage drops below a given percentage.
+To fail the build when no expressions were covered at all (e.g. tests were accidentally turned off), use `mustCover = true` (the default) in `makeCoverageReport` or `requireCoverage` standalone.
+See the Nix API section above for usage examples.
 
 ## Some part of my code fails to compile with coverage
 
