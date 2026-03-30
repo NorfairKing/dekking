@@ -10,7 +10,7 @@ main = do
 data Example = Example {exampleString :: String}
   deriving (Show)
 
--- Making sure that existential types still type-check after the source-transformation.
+-- Making sure that lenses still type-check after the source-transformation.
 -- See [ref:-XImpredicativeTypes]
 exampleStringL :: Lens' Example String
 exampleStringL = lens exampleString (\e s -> e {exampleString = id s})

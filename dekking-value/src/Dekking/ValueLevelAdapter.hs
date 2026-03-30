@@ -33,28 +33,36 @@ coverageHandle = unsafePerformIO $ do
 --
 -- by
 --
--- adaptValue "some string that identifies e" e :: t
+-- _dekking_<line>_<colStart>_<colEnd> e :: t
+--
+-- where _dekking_<line>_<colStart>_<colEnd> is a top-level NOINLINE CAF:
+--
+-- {-# NOINLINE _dekking_<line>_<colStart>_<colEnd> #-}
+-- _dekking_<line>_<colStart>_<colEnd> :: forall a. a -> a
+-- _dekking_<line>_<colStart>_<colEnd> = adaptValue "some string that identifies e"
+--
+-- Because the partial application is a top-level CAF, the unsafePerformIO
+-- inside adaptValue fires exactly once per source location (even at -O0),
+-- and is then updated to 'id' by GHC's thunk update mechanism.
 --
 -- This involves adding an import of this module to every source-transformed
 -- module.
---
--- Sadly, in the presence of RankNTypes, this transformation is not "it
--- type-checks"-preserving.
--- See also [ref:-XImpredicativeTypes] and
--- https://gitlab.haskell.org/ghc/ghc/-/issues/22543
--- Because that means that this source-transformation can fail to produce code
--- that type-checks, we must be able to turn off covering a particular piece
--- of code.
--- See [ref:DisablingCoverage] for how we do this.
 
 -- | The value-level adapter function
 --
--- See [ref:ThePlanTM]
+-- Records that an expression at the given source location was evaluated.
+-- Each call site is a top-level CAF (see [ref:ThePlanTM]), so the
+-- unsafePerformIO runs exactly once per source location. Blackholing
+-- is safe here because there are no circular dependencies between CAFs
+-- (each just writes a line to the coverage handle).
+--
+-- We use unsafePerformIO (not unsafeDupablePerformIO) because the
+-- latter can cause "thread blocked indefinitely in an MVar operation"
+-- errors: duplicate evaluations of the same CAF both call hPutStrLn
+-- on the shared Handle, and if one is killed mid-write the Handle's
+-- internal MVar is never released.
 {-# NOINLINE adaptValue #-}
 adaptValue :: String -> (forall a. a -> a)
 adaptValue logStr = unsafePerformIO $ do
   hPutStrLn coverageHandle logStr
   pure id
-
--- TODO try out 'unsafeDupablePerformIO' and consider whether I
--- need 'unsafeInterleaveIO'

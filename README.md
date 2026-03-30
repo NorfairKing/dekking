@@ -157,9 +157,8 @@ See the Nix API section above for usage examples.
 
 ## Some part of my code fails to compile with coverage
 
-Because of `RankNTypes` and limitations of `ImpredicativeTypes`, sometimes the source-transformed version of a function does not type-check anymore.
+Sometimes the source-transformed version of a function does not type-check anymore.
 (See `[ref:ThePlanTM]`, `[ref:-XImpredicativeTypes]`, and `[ref:DisablingCoverage]`.)
-A common example is Servant's `hoistServerWithContext`, see [ghc ticket 22543](https://gitlab.haskell.org/ghc/ghc/-/issues/22543).
 
 There are three ways to selectively turn off coverage:
 

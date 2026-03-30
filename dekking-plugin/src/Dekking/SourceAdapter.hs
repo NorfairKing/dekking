@@ -2,7 +2,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Dekking.SourceAdapter (adaptLocatedHsModule, unitToString, AdaptEnv (..)) where
+module Dekking.SourceAdapter (adaptLocatedHsModule, unitToString, AdaptEnv (..), AdaptOutput (..)) where
 
 import Control.Monad
 import Control.Monad.Reader
@@ -18,14 +18,43 @@ import GHC.Plugins as GHC
 import GHC.Types.SourceText as GHC
 
 addExpression :: Coverable Expression -> AdaptM ()
-addExpression e = tell (mempty {moduleCoverablesExpressions = S.singleton e})
+addExpression e = tell (mempty {adaptOutputCoverables = S.singleton e})
+
+-- | Add a top-level CAF (Constant Applicative Form) declaration to the output.
+--
+-- See [ref:CafApproach]
+addCafDecl :: LHsDecl GhcPs -> AdaptM ()
+addCafDecl d = tell (mempty {adaptOutputCafDecls = [d]})
 
 data AdaptEnv = AdaptEnv
   { adaptEnvModule :: !GHC.Module,
     adaptEnvTopLevelBinding :: !(Maybe String)
   }
 
-type AdaptM = WriterT ModuleCoverables (ReaderT AdaptEnv Hsc)
+-- | Output accumulated during the source adaptation pass.
+data AdaptOutput = AdaptOutput
+  { -- | The set of coverable expressions found in the module.
+    adaptOutputCoverables :: !(S.Set (Coverable Expression)),
+    -- | Top-level CAF declarations to be appended to the module.
+    -- See [ref:CafApproach]
+    adaptOutputCafDecls :: ![LHsDecl GhcPs]
+  }
+
+instance Semigroup AdaptOutput where
+  a <> b =
+    AdaptOutput
+      { adaptOutputCoverables = adaptOutputCoverables a `S.union` adaptOutputCoverables b,
+        adaptOutputCafDecls = adaptOutputCafDecls a ++ adaptOutputCafDecls b
+      }
+
+instance Monoid AdaptOutput where
+  mempty =
+    AdaptOutput
+      { adaptOutputCoverables = S.empty,
+        adaptOutputCafDecls = []
+      }
+
+type AdaptM = WriterT AdaptOutput (ReaderT AdaptEnv Hsc)
 
 adapterImport :: LImportDecl GhcPs
 adapterImport = noLocA (simpleImportDecl adapterModuleName)
@@ -44,10 +73,10 @@ adaptHsModule m = do
     else do
       moduule <- asks adaptEnvModule
       liftIO $ putStrLn $ "Adapting module: " ++ moduleNameString (moduleName moduule)
-      decls' <- mapM (adaptTopLevelLDecl annotations) (hsmodDecls m)
+      (decls', output) <- listen $ mapM (adaptTopLevelLDecl annotations) (hsmodDecls m)
       pure
         ( m
-            { hsmodDecls = decls',
+            { hsmodDecls = decls' ++ adaptOutputCafDecls output,
               hsmodImports =
                 -- See [ref:ThePlanTM]
                 adapterImport : hsmodImports m
@@ -308,24 +337,99 @@ adaptExprLStmt = traverse $ \case
   LetStmt x lbs -> LetStmt x <$> adaptHsLocalBinds lbs
   s -> pure s -- TODO
 
+-- | Generate a unique name for a CAF (Constant Applicative Form) at a source
+-- location within a module. The module name is included to avoid name
+-- collisions when one adapted module imports another.
+cafName :: GHC.Module -> Location -> OccName
+cafName moduule loc =
+  mkVarOcc $
+    "_dekking_"
+      ++ map sanitize (moduleNameString (moduleName moduule))
+      ++ "_"
+      ++ show (locationLine loc)
+      ++ "_"
+      ++ show (locationColumnStart loc)
+      ++ "_"
+      ++ show (locationColumnEnd loc)
+  where
+    sanitize '.' = '_'
+    sanitize c = c
+
+-- [tag:CafApproach]
+--
+-- We generate a top-level CAF (Constant Applicative Form) per expression
+-- location. A CAF is a top-level value with no arguments, which GHC evaluates
+-- at most once and then caches the result. This means the unsafeDupablePerformIO
+-- inside adaptValue fires exactly once per source location, even at -O0, and is
+-- then replaced by 'id' via GHC's thunk update mechanism.
+--
+-- Without the CAF approach, 'adaptValue "loc"' would be a local expression
+-- that is re-evaluated on every call to the enclosing function, causing
+-- repeated file I/O and performance problems in test suites with many
+-- evaluations.
+
+-- | Generate a top-level CAF declaration and a NOINLINE pragma for it.
+--
+-- @
+-- {-\# NOINLINE _dekking_Mod_L_CS_CE \#-}
+-- _dekking_Mod_L_CS_CE = adaptValue "pkg mod L CS CE"
+-- @
+mkCafDecls :: GHC.Module -> Location -> String -> [LHsDecl GhcPs]
+mkCafDecls moduule loc strToLog =
+  let name = cafName moduule loc
+      lname = noLocA (Unqual name)
+      -- The binding: _dekking_Mod_L_CS_CE = adaptValue "pkg mod L CS CE"
+      rhs =
+        HsApp
+          NoExtField
+          (noLocA (HsVar NoExtField (noLocA (Qual adapterModuleName (mkVarOcc "adaptValue")))))
+          (noLocA (HsLit NoExtField (HsString NoSourceText (mkFastString strToLog))))
+      match =
+        Match
+          []
+          (FunRhs lname Prefix NoSrcStrict)
+          []
+          ( GRHSs
+              emptyComments
+              [noLocA (GRHS noAnn [] (noLocA rhs))]
+              (EmptyLocalBinds NoExtField)
+          )
+      bind = FunBind NoExtField lname (MG FromSource (noLocA [noLocA match]))
+      bindDecl = noLocA (ValD NoExtField bind)
+      -- The NOINLINE pragma ensures GHC does not inline the CAF, which would
+      -- defeat the purpose of evaluating the IO exactly once.
+      inlineSig =
+        InlineSig
+          []
+          lname
+          ( InlinePragma
+              { inl_src = NoSourceText,
+                inl_inline = NoInline (SourceText "NOINLINE"),
+                inl_sat = Nothing,
+                inl_act = AlwaysActive,
+                inl_rule = FunLike
+              }
+          )
+      sigDecl = noLocA (SigD NoExtField inlineSig)
+   in [sigDecl, bindDecl]
+
 -- See [ref:ThePlanTM]
 applyAdapterExpr :: Location -> HsExpr GhcPs -> AdaptM (HsExpr GhcPs)
 applyAdapterExpr loc e = do
   moduule <- asks adaptEnvModule
   let strToLog = mkStringToLog moduule loc
+      name = cafName moduule loc
+  -- Register the CAF declarations for later inclusion in the module.
+  -- See [ref:CafApproach]
+  mapM_ addCafDecl (mkCafDecls moduule loc strToLog)
+  -- Wrap the expression: _dekking_Mod_L_CS_CE e
   pure $
     HsPar
       (NoEpTok, NoEpTok)
       ( noLocA $
           HsApp
             NoExtField
-            ( noLocA
-                ( HsApp
-                    NoExtField
-                    (noLocA (HsVar NoExtField (noLocA (Qual adapterModuleName (mkVarOcc "adaptValue")))))
-                    (noLocA (HsLit NoExtField (HsString NoSourceText (mkFastString strToLog))))
-                )
-            )
+            (noLocA (HsVar NoExtField (noLocA (Unqual name))))
             (noLocA e)
       )
 

@@ -11,7 +11,7 @@ import GHC
 import qualified GHC.Data.EnumSet as EnumSet
 import GHC.Driver.Env
 import GHC.Driver.Plugins
-import GHC.Driver.Session
+import GHC.Driver.Session (xopt_set)
 import GHC.LanguageExtensions
 import Path
 import Path.IO
@@ -25,7 +25,42 @@ plugin =
 
 fixDynFlags :: DynFlags -> DynFlags
 fixDynFlags =
-  -- See [ref:-XImpredicativeTypes]
+  -- [tag:-XImpredicativeTypes]
+  --
+  -- In order to perform the source-to-source transformation, we have to set
+  -- 'ImpredicativeTypes'.
+  --
+  -- For the purposes of this explanation, our source-transformation might
+  -- as well be `a` -> `id a`.
+  -- One would think (or at least I certainly did), that this would turn
+  -- any piece of code that type-checks into something that also
+  -- type-checks.
+  -- However, without 'ImpredicativeTypes', it doesn't.
+  --
+  -- Indeed, without 'ImpredicativeTypes', this type-checks:
+  --
+  -- ```
+  -- exampleStringL :: Lens' Example String
+  -- exampleStringL = lens exampleString (\e s -> e {exampleString = s})
+  -- ```
+  --
+  -- But this doesn't:
+  --
+  -- ```
+  -- exampleStringL :: Lens' Example String
+  -- exampleStringL = (id lens) exampleString (\e s -> e {exampleString = s})
+  -- ```
+  --
+  -- For a simpler example, consider the following piece of code:
+  -- (Thank you @lnnf107 on twitter!)
+  --
+  -- ```
+  -- f :: Int -> (forall a. a -> a)
+  -- ```
+  --
+  -- Our transformation would turn `f` into `id f`, but then GHC would try
+  -- to instantiate the type-parameter of `id` with the polytype `Int ->
+  -- (forall a. a -> a)`, which is only possible with ImpredicativeTypes.
   let setImpredicativeTypes fs = xopt_set fs ImpredicativeTypes
       -- Turn off safe haskell, because we don't care about it for a coverage report.
       turnOffSafeHaskell fs = fs {safeHaskell = Sf_Ignore}
@@ -45,42 +80,6 @@ fixDynFlags =
         . turnOffSafeHaskell
         . setImpredicativeTypes
 
--- [tag:-XImpredicativeTypes]
---
--- In order to perform the source-to-source transformation, we have to set 'ImpredicativeTypes'.
---
--- For the purposes of this explanation, our sourc-transformation might
--- as well be `a` -> `id a`.
--- One would think (or at least I certainly did), that this would turn
--- any piece of code that type-checksinto something that also
--- type-checks.
--- However, without 'ImpredicativeTypes', it doesn't.
---
--- Indeed, without 'ImpredicativeTypes', this type-checks:
---
--- ```
--- exampleStringL :: Lens' Example String
--- exampleStringL = lens exampleString (\e s -> e {exampleString = s})
--- ```
---
--- But this doesn't:
---
--- ```
--- exampleStringL :: Lens' Example String
--- exampleStringL = (id lens) exampleString (\e s -> e {exampleString = s})
--- ```
---
--- For a simpler example, consider the following piece of code:
--- (Thank you @lnnf107 on twitter!)
---
--- ```
--- f :: Int -> (forall a. a -> a)
--- ```
---
--- Our transformation would turn `f` into `id f`, but then GHC would try
--- to instantiate the type-parameter of `id` with the polytype `Int ->
--- (forall a. a -> a)`, which is only possible with ImpredicativeTypes.
-
 adaptParseResult :: [CommandLineOption] -> ModSummary -> ParsedResult -> Hsc ParsedResult
 adaptParseResult es ms pr = do
   let pm = parsedResultModule pr
@@ -91,10 +90,14 @@ adaptParseResult es ms pr = do
     then pure pr
     else do
       -- Transform the source
-      (lm', coverables) <-
+      (lm', output) <-
         runReaderT
           (runWriterT (adaptLocatedHsModule (hpm_module pm)))
-          AdaptEnv {adaptEnvModule = m, adaptEnvTopLevelBinding = Nothing}
+          AdaptEnv
+            { adaptEnvModule = m,
+              adaptEnvTopLevelBinding = Nothing
+            }
+      let coverables = ModuleCoverables {moduleCoverablesExpressions = adaptOutputCoverables output}
       forM_ (ml_hs_file (ms_location ms)) $ \sourceFile ->
         -- Output the coverables
         liftIO $ do

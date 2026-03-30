@@ -3,7 +3,7 @@
 }:
 mkDerivation {
   pname = "dekking-plugin";
-  version = "0.0.0.0";
+  version = "0.1.0.0";
   src = ./.;
   libraryHaskellDepends = [
     aeson aeson-pretty autodocodec base bytestring containers ghc
