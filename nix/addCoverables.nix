@@ -11,8 +11,8 @@ let
   # https://github.com/mpickering/haskell-nix-plugin/blob/2553ab0ff24d0d5752295acb4cf8b1b9dbcb8c76/add-plugin.nix
   pluginOpts = builtins.map (e: "--exception=" + e) exceptions;
   # Build the plugin options.
-  stringOpt = arg: "-fplugin-opt=Dekking.Plugin:${arg}";
-  stringOpts = lib.concatStringsSep " " (builtins.map stringOpt pluginOpts);
+  stringOpt = arg: "--ghc-option=-fplugin-opt=Dekking.Plugin:${arg}";
+  stringOpts = builtins.map stringOpt pluginOpts;
 in
 (haskell.lib.overrideCabal pkg (old: {
   # Patch the .cabal file to add dekking-value as a build-depends.
@@ -53,7 +53,7 @@ in
     "--ghc-option=-w"
     "--ghc-option=-Wwarn"
     # Here we pass the command-line options to the 'Dekking' plugin
-    "--ghc-options=\"${stringOpts}\""
+  ] ++ stringOpts ++ [
     # The -package option is required because the result of the plugin's
     # source-to-source transformation adds an import of
     # Dekking.ValueLevelAdapter that would not resolve otherwise, without the
