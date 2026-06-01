@@ -1,5 +1,7 @@
 # Next-gen test coverage reports for Haskell
 
+[![NixCI](https://staging.nix-ci.com/badge/gh:NorfairKing:dekking)](https://staging.nix-ci.com/gh:NorfairKing:dekking)
+
 Dekking is a next-generation coverage report tool for Haskell.
 It is implemented as a GHC plugin, as opposed to [HPC](https://hackage.haskell.org/package/hpc), which is built into GHC.
 
