@@ -29,7 +29,7 @@ in
       # Add dekking-value to the library's build-depends section
       # We look for "build-depends:" and append dekking-value after the first dependency
       ${lib.getExe haskellPackages.cabal-fmt} -i "$cabalFile" 2>/dev/null || true
-      sed -i 's/^  build-depends:/  build-depends:\n    dekking-value,/' "$cabalFile"
+      sed -i -z 's/\(\n\s*\)build-depends:\s*,\?/\1build-depends: dekking-value,/g' "$cabalFile"
     fi
   '';
   # This is necessary to get the nixpkgs infrastructure to not pass in `pie` to `hardeningDisable`.
