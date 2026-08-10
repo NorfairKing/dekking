@@ -23,6 +23,8 @@ in
 , coverage ? [ ]
   # Modules that will not be source-transformed
 , exceptions ? [ ]
+  # Paths not considered when collecting coverables.
+, uncoverables ? [ "test/" ]
   # If true, the build fails when there are no covered expressions at all.
 , mustCover ? true
   # Minimum coverage percentage (0-100). If set, the build fails when coverage is below this threshold.
@@ -42,7 +44,7 @@ let
     builtins.listToAttrs (builtins.map
       (pname: {
         name = pname;
-        value = addCoverables' { inherit exceptions; } super.${pname};
+        value = addCoverables' { inherit exceptions uncoverables; } super.${pname};
       })
       allCoverables);
   addCoverageOverride = _: super:

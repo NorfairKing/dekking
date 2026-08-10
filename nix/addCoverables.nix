@@ -1,5 +1,6 @@
 { lib, haskell, haskellPackages, rsync }:
 { exceptions ? [ ]
+, uncoverables ? [ "test/" ]
 }:
 pkg:
 
@@ -79,7 +80,7 @@ in
   postBuild = (old.postBuild or "") + ''
     mkdir -p $coverables
     ${rsync}/bin/rsync -am \
-      --exclude='test/' \
+      ${lib.escapeShellArgs (lib.map (path: "--exclude=${path}") uncoverables)} \
       --include='*/' \
       --include='*.hs.coverables' \
       --include='*.lhs.coverables' \
