@@ -1,4 +1,6 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE ImpredicativeTypes #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
 
 {-# HLINT ignore #-}
@@ -39,6 +41,12 @@ server3 = foo :<|> bar
       Nothing -> "ho"
       Just name -> name
 
+-- Check that 'hoistServerWithContext' still type-checks after the source
+-- transformation.
+hoistExampleServer :: Server EmptyAPI
+hoistExampleServer = (id hoistServerWithContext) (Proxy :: Proxy EmptyAPI) (Proxy :: Proxy '[]) id emptyServer
+
+-- Check that the right-hand side of top-level patterns are coverable.
 fooClient ::
   -- | value for "x"
   Int ->
